@@ -1,0 +1,5 @@
+docs
+.ai-context
+**/__debug*
+**/__debug_bin*
+backend/bin/

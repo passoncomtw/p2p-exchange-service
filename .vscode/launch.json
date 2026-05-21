@@ -9,6 +9,7 @@
       "program": "${workspaceFolder}/backend",
       "args": ["-f", "etc/p2p-api.yaml"],
       "cwd": "${workspaceFolder}/backend",
+      "output": "${workspaceFolder}/backend/bin/__debug_bin",
       "console": "integratedTerminal",
       "showLog": true,
       "logOutput": "dap",
