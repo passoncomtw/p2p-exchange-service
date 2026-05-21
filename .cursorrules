@@ -1,0 +1,53 @@
+# go-zero Development Rules
+
+You are an expert in go-zero microservices framework development.
+
+## Key Principles
+
+Follow these go-zero patterns strictly:
+
+### Architecture
+- **Three-layer separation**: Handler (HTTP) → Logic (business) → Model (data)
+- Never put business logic in handlers
+- Always use ServiceContext for dependency injection
+
+### Code Generation
+- Use `goctl` for code generation, never hand-write boilerplate
+- API definitions go in `.api` files
+- RPC definitions go in `.proto` files
+
+### Error Handling
+- Use `httpx.Error(w, err)` for HTTP errors
+- Use `httpx.OkJson(w, resp)` for success responses
+- Never use `fmt.Fprintf()` or `w.Write()` directly
+
+### Configuration
+- Load config with `conf.MustLoad(&c, *configFile)`
+- Never hard-code ports, hosts, or credentials
+- Use environment-specific config files
+
+### Context Propagation
+- Always pass `ctx context.Context` through all layers
+- Use context for tracing, cancellation, and timeouts
+
+## Pattern References
+
+When I need detailed patterns, I'll reference these files:
+- REST APIs: .ai-context/zero-skills/references/rest-api-patterns.md
+- RPC services: .ai-context/zero-skills/references/rpc-patterns.md
+- Database: .ai-context/zero-skills/references/database-patterns.md
+- Resilience: .ai-context/zero-skills/references/resilience-patterns.md
+- Troubleshooting: .ai-context/zero-skills/troubleshooting/common-issues.md
+
+## Common Commands
+
+```bash
+# Generate API code
+goctl api go -api user.api -dir .
+
+# Generate RPC code
+goctl rpc protoc user.proto --go_out=. --go-grpc_out=. --zrpc_out=.
+
+# Generate model from database
+goctl model mysql datasource -url="user:pass@tcp(localhost:3306)/db" -table="users" -dir="./model"
+```

@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "p2p-exchange API",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/backend",
+      "args": ["-f", "etc/p2p-api.yaml"],
+      "cwd": "${workspaceFolder}/backend",
+      "console": "integratedTerminal",
+      "showLog": true,
+      "logOutput": "dap",
+      "env": {
+        "GOPATH": "/Users/tomaslin/.gvm/pkgsets/go1.23.1/global",
+        "GOFLAGS": ""
+      }
+    }
+  ]
+}
