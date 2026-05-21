@@ -1,5 +1,10 @@
 syntax = "v1"
 
+info(
+  title: "P2P Exchange API"
+  version: "1.0.0"
+)
+
 type Request {
 	Name string `path:"name,options=you|me"`
 }
@@ -8,8 +13,21 @@ type Response {
 	Message string `json:"message"`
 }
 
+type LoginRequest {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type LoginResponse {
+	Token     string `json:"token"`
+	ExpiresIn int64  `json:"expiresIn"`
+}
+
 service p2p-api {
 	@handler P2pHandler
 	get /from/:name (Request) returns (Response)
+
+	@handler LoginHandler
+	post /api/v1/auth/login (LoginRequest) returns (LoginResponse)
 }
 

@@ -50,4 +50,3 @@ goctl rpc protoc user.proto --go_out=. --go-grpc_out=. --zrpc_out=.
 
 # Generate model from database
 goctl model mysql datasource -url="user:pass@tcp(localhost:3306)/db" -table="users" -dir="./model"
-```

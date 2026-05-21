@@ -19,6 +19,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/from/:name",
 				Handler: P2pHandler(serverCtx),
 			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/api/v1/auth/login",
+				Handler: LoginHandler(serverCtx),
+			},
 		},
 	)
 }
