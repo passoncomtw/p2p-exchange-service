@@ -1,5 +1,5 @@
 API_FILE   := p2p.api
-CONFIG     := etc/p2p-api.yaml
+CONFIG     := etc/config.yaml
 SWAGGER_OUT := docs/swagger.json
 BINARY     := bin/p2p
 

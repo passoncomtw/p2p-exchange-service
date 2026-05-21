@@ -23,11 +23,51 @@ type LoginResponse {
 	ExpiresIn int64  `json:"expiresIn"`
 }
 
+type ProfileRequest {}
+
+type ProfileResponse {
+	Username string `json:"username"`
+}
+
+type DashboardRequest {}
+
+type DashboardResponse {
+	Username string `json:"username"`
+	Role     string `json:"role"`
+}
+
+// ── public ──────────────────────────────────────────────────────────────────
 service p2p-api {
 	@handler P2pHandler
 	get /from/:name (Request) returns (Response)
-
-	@handler LoginHandler
-	post /api/v1/auth/login (LoginRequest) returns (LoginResponse)
 }
 
+// ── app platform ─────────────────────────────────────────────────────────────
+service p2p-api {
+	@handler AppLoginHandler
+	post /app/auth/login (LoginRequest) returns (LoginResponse)
+}
+
+@server(
+	jwt: App
+	prefix: /app
+)
+service p2p-api {
+	@handler AppProfileHandler
+	get /profile returns (ProfileResponse)
+}
+
+// ── backend platform ─────────────────────────────────────────────────────────
+service p2p-api {
+	@handler BackendLoginHandler
+	post /backend/auth/login (LoginRequest) returns (LoginResponse)
+}
+
+@server(
+	jwt: Backend
+	prefix: /backend
+)
+service p2p-api {
+	@handler BackendDashboardHandler
+	get /dashboard returns (DashboardResponse)
+}

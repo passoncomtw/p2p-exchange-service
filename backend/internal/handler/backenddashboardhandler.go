@@ -9,16 +9,16 @@ import (
 	"p2p-exchange/internal/types"
 )
 
-func LoginHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+func BackendDashboardHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.LoginRequest
+		var req types.DashboardRequest
 		if err := httpx.Parse(r, &req); err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 			return
 		}
 
-		l := logic.NewLoginLogic(r.Context(), svcCtx)
-		resp, err := l.Login(&req)
+		l := logic.NewBackendDashboardLogic(r.Context(), svcCtx)
+		resp, err := l.Dashboard(&req)
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {

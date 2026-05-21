@@ -20,3 +20,16 @@ type LoginResponse struct {
 	Token     string `json:"token"`
 	ExpiresIn int64  `json:"expiresIn"`
 }
+
+type ProfileRequest struct{}
+
+type ProfileResponse struct {
+	Username string `json:"username"`
+}
+
+type DashboardRequest struct{}
+
+type DashboardResponse struct {
+	Username string `json:"username"`
+	Role     string `json:"role"`
+}

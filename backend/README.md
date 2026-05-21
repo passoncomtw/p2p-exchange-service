@@ -25,7 +25,7 @@
 | `p2p.api` | API 定義檔（go-zero DSL） |
 | `Makefile` | 常用指令 |
 | `go.mod` | Go 模組定義 |
-| `etc/p2p-api.yaml` | 服務設定（Port、Host 等） |
+| `etc/config.yaml` | 服務設定（Port、Host、JWT Secret 等） |
 | `docs/swagger.yaml` | Swagger 規格文件 |
 | `internal/config/` | 設定結構定義 |
 | `internal/handler/` | HTTP Handler（解析請求、呼叫 Logic） |
@@ -110,6 +110,6 @@ go-zero 採用**三層架構**，每一層職責明確：
 
 ## 設定檔說明
 
-設定檔位於 `etc/p2p-api.yaml`，包含服務名稱、監聽介面與 Port。
+設定檔位於 `etc/config.yaml`，包含服務名稱、監聽介面、Port，以及 App / Backend 各自的 JWT Secret。
 
-切換不同環境時，可建立多份設定檔（如 `p2p-api-staging.yaml`），啟動時用 `-f` 參數指定。
+切換不同環境時，可建立多份設定檔（如 `etc/config-staging.yaml`），啟動時用 `-f` 參數指定。

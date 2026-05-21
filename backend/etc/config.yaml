@@ -1,0 +1,11 @@
+Name: p2p-api
+Host: 0.0.0.0
+Port: 8888
+
+App:
+  AccessSecret: "app-secret-change-in-production"
+  AccessExpire: 86400
+
+Backend:
+  AccessSecret: "backend-secret-change-in-production"
+  AccessExpire: 86400

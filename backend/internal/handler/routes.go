@@ -12,18 +12,54 @@ import (
 )
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
+	// ── public ──────────────────────────────────────────────────────────────
+	server.AddRoutes([]rest.Route{
+		{
+			Method:  http.MethodGet,
+			Path:    "/from/:name",
+			Handler: P2pHandler(serverCtx),
+		},
+	})
+
+	// ── app public ──────────────────────────────────────────────────────────
+	server.AddRoutes([]rest.Route{
+		{
+			Method:  http.MethodPost,
+			Path:    "/app/auth/login",
+			Handler: AppLoginHandler(serverCtx),
+		},
+	})
+
+	// ── app private (JWT: App.AccessSecret) ─────────────────────────────────
 	server.AddRoutes(
 		[]rest.Route{
 			{
 				Method:  http.MethodGet,
-				Path:    "/from/:name",
-				Handler: P2pHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodPost,
-				Path:    "/api/v1/auth/login",
-				Handler: LoginHandler(serverCtx),
+				Path:    "/app/profile",
+				Handler: AppProfileHandler(serverCtx),
 			},
 		},
+		rest.WithJwt(serverCtx.Config.App.AccessSecret),
+	)
+
+	// ── backend public ──────────────────────────────────────────────────────
+	server.AddRoutes([]rest.Route{
+		{
+			Method:  http.MethodPost,
+			Path:    "/backend/auth/login",
+			Handler: BackendLoginHandler(serverCtx),
+		},
+	})
+
+	// ── backend private (JWT: Backend.AccessSecret) ──────────────────────────
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				Method:  http.MethodGet,
+				Path:    "/backend/dashboard",
+				Handler: BackendDashboardHandler(serverCtx),
+			},
+		},
+		rest.WithJwt(serverCtx.Config.Backend.AccessSecret),
 	)
 }

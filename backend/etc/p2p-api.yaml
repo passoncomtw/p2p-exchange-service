@@ -1,7 +1,0 @@
-Name: p2p-api
-Host: 0.0.0.0
-Port: 8888
-
-Auth:
-  Secret: "change-this-secret-in-production"
-  ExpireIn: 86400

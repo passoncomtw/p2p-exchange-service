@@ -7,7 +7,7 @@
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/backend",
-      "args": ["-f", "etc/p2p-api.yaml"],
+      "args": ["-f", "etc/config.yaml"],
       "cwd": "${workspaceFolder}/backend",
       "output": "${workspaceFolder}/backend/bin/__debug_bin",
       "console": "integratedTerminal",

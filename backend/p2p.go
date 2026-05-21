@@ -4,20 +4,24 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
 
+	apierrors "p2p-exchange/internal/errors"
 	"p2p-exchange/internal/config"
 	"p2p-exchange/internal/handler"
+	"p2p-exchange/internal/response"
 	"p2p-exchange/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/rest"
+	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
-var configFile = flag.String("f", "etc/p2p-api.yaml", "the config file")
+var configFile = flag.String("f", "etc/config.yaml", "the config file")
 
 func main() {
 	flag.Parse()
@@ -25,7 +29,23 @@ func main() {
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
 
-	server := rest.MustNewServer(c.RestConf)
+	httpx.SetOkHandler(func(_ context.Context, v any) any {
+		return response.Success(v)
+	})
+
+	httpx.SetErrorHandler(func(err error) (int, any) {
+		if e, ok := err.(*apierrors.AppError); ok {
+			return e.Code, response.Fail(e.Code, e.Message)
+		}
+		return http.StatusBadRequest, response.Fail(http.StatusBadRequest, err.Error())
+	})
+
+	server := rest.MustNewServer(c.RestConf,
+		rest.WithUnauthorizedCallback(func(w http.ResponseWriter, r *http.Request, _ error) {
+			httpx.WriteJsonCtx(r.Context(), w, http.StatusUnauthorized,
+				response.Fail(http.StatusUnauthorized, apierrors.ErrUnauthorized.Message))
+		}),
+	)
 	defer server.Stop()
 
 	ctx := svc.NewServiceContext(c)
