@@ -41,6 +41,7 @@ func main() {
 	})
 
 	server := rest.MustNewServer(c.RestConf,
+		rest.WithCors("*"),
 		rest.WithUnauthorizedCallback(func(w http.ResponseWriter, r *http.Request, _ error) {
 			httpx.WriteJsonCtx(r.Context(), w, http.StatusUnauthorized,
 				response.Fail(http.StatusUnauthorized, apierrors.ErrUnauthorized.Message))
