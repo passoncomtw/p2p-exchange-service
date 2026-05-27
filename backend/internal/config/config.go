@@ -10,8 +10,13 @@ type PlatformConfig struct {
 	AccessExpire int64
 }
 
+type DatabaseConf struct {
+	DSN string
+}
+
 type Config struct {
 	rest.RestConf
-	App     PlatformConfig
-	Backend PlatformConfig
+	App      PlatformConfig
+	Backend  PlatformConfig
+	Database DatabaseConf
 }

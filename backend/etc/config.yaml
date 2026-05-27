@@ -9,3 +9,6 @@ App:
 Backend:
   AccessSecret: "backend-secret-change-in-production"
   AccessExpire: 86400
+
+Database:
+  DSN: "postgresql://neondb_owner:npg_Px4TXhuDp0dA@ep-calm-star-aon6vub8-pooler.c-2.ap-southeast-1.aws.neon.tech/p2p_exchange?sslmode=require&channel_binding=require"

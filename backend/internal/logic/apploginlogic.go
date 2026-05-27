@@ -6,6 +6,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"golang.org/x/crypto/bcrypt"
 	apierrors "p2p-exchange/internal/errors"
 	"p2p-exchange/internal/svc"
 	"p2p-exchange/internal/types"
@@ -26,13 +28,22 @@ func NewAppLoginLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AppLogin
 }
 
 func (l *AppLoginLogic) Login(req *types.LoginRequest) (*types.LoginResponse, error) {
-	if err := l.verifyCredentials(req.Username, req.Password); err != nil {
-		return nil, err
+	user, err := l.svcCtx.AppUser.FindByUsername(l.ctx, req.Username)
+	if err != nil {
+		if err == sqlx.ErrNotFound {
+			return nil, apierrors.ErrInvalidCredentials
+		}
+		l.Errorf("app: query user %s failed: %v", req.Username, err)
+		return nil, apierrors.ErrInternal
 	}
 
-	token, err := l.generateToken(req.Username)
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+		return nil, apierrors.ErrInvalidCredentials
+	}
+
+	token, err := l.generateToken(user.Username)
 	if err != nil {
-		l.Errorf("app: failed to generate token for user %s: %v", req.Username, err)
+		l.Errorf("app: failed to generate token for user %s: %v", user.Username, err)
 		return nil, apierrors.ErrInternal
 	}
 
@@ -40,14 +51,6 @@ func (l *AppLoginLogic) Login(req *types.LoginRequest) (*types.LoginResponse, er
 		Token:     token,
 		ExpiresIn: l.svcCtx.Config.App.AccessExpire,
 	}, nil
-}
-
-func (l *AppLoginLogic) verifyCredentials(username, password string) error {
-	// TODO: 替換為實際的資料庫查詢與密碼雜湊驗證
-	if username == "testdemo001" && password == "a12345678" {
-		return nil
-	}
-	return apierrors.ErrInvalidCredentials
 }
 
 func (l *AppLoginLogic) generateToken(username string) (string, error) {
