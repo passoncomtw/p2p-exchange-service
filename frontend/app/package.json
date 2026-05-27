@@ -1,0 +1,49 @@
+{
+  "name": "p2p-exchange-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
+    "@react-native-async-storage/async-storage": "^2.1.2",
+    "@react-navigation/material-bottom-tabs": "^6.2.29",
+    "@react-navigation/native": "^7.2.5",
+    "@react-navigation/native-stack": "^7.16.0",
+    "axios": "^1.16.1",
+    "expo": "~56.0.5",
+    "expo-font": "~56.0.5",
+    "expo-status-bar": "~56.0.4",
+    "flux-constants": "^0.2.2",
+    "lodash": "^4.18.1",
+    "react": "19.2.3",
+    "react-native": "0.85.3",
+    "react-native-paper": "^5.15.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "4.25.2",
+    "react-native-status-bar-height": "^2.6.0",
+    "react-redux": "^9.3.0",
+    "redux": "^5.0.1",
+    "redux-persist": "^6.0.0",
+    "redux-saga": "^1.5.0",
+    "yup": "^1.7.1"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "private": true,
+  "devDependencies": {
+    "@commitlint/config-conventional": "^21.0.1",
+    "@redux-devtools/extension": "^4.0.0",
+    "babel-plugin-module-resolver": "^5.0.3",
+    "babel-plugin-root-import": "^6.6.0",
+    "commitlint": "^21.0.1",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "husky": "^9.1.7",
+    "prettier": "^3.8.3",
+    "remote-redux-devtools": "^0.5.16"
+  }
+}
