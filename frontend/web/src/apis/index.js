@@ -1,11 +1,18 @@
-import axios from 'axios';
+import axios from 'axios'
 
 const server = axios.create({
-  baseURL: process.env.REACT_APP_DOMAIN_URL,
+  baseURL: import.meta.env.VITE_API_URL,
   headers: {
     'Content-Type': 'application/json',
-  }
-});
+  },
+})
 
-export const getServer = () => server;
-export default server;
+server.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+export default server

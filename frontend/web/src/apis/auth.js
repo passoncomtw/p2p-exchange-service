@@ -1,4 +1,4 @@
-import server from './';
+import server from 'src/apis/index'
 
-export const loginResult = (payload) =>
-  server.post('/backend/auth/login', payload);
+export const loginApi = (payload) =>
+  server.post('/backend/auth/login', payload)
