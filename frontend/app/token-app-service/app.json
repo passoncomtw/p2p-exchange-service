@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "E幣錢包",
+    "slug": "token-app-service",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/images/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "scheme": "tokenappservice",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.passon.ecoinwallet",
+      "icon": "./src/assets/images/ios-icon.png",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.passon.ecoinwallet",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/images/adaptive-icon.png",
+        "backgroundColor": "#7B68C8"
+      },
+      "icon": "./src/assets/images/android-icon.png"
+    },
+    "web": {
+      "favicon": "./src/assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#7B68C8",
+          "image": "./src/assets/images/icon.png",
+          "imageWidth": 200
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "869a711e-70db-4ee7-9c62-bda2aec26ce0"
+      }
+    }
+  }
+}
