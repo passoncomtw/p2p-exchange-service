@@ -24,7 +24,7 @@ func NewAppProfileLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AppPro
 
 func (l *AppProfileLogic) Profile(_ *types.ProfileRequest) (*types.ProfileResponse, error) {
 	payload, _ := l.ctx.Value("payload").(map[string]interface{})
-	username, _ := payload["sub"].(string)
+	username, _ := payload["username"].(string)
 
 	return &types.ProfileResponse{
 		Username: username,

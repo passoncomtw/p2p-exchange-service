@@ -41,7 +41,7 @@ func (l *BackendLoginLogic) Login(req *types.LoginRequest) (*types.LoginResponse
 		return nil, apierrors.ErrInvalidCredentials
 	}
 
-	token, err := l.generateToken(user.Username)
+	token, err := l.generateToken(user.ID, user.Username)
 	if err != nil {
 		l.Errorf("backend: failed to generate token for user %s: %v", user.Username, err)
 		return nil, apierrors.ErrInternal
@@ -53,11 +53,12 @@ func (l *BackendLoginLogic) Login(req *types.LoginRequest) (*types.LoginResponse
 	}, nil
 }
 
-func (l *BackendLoginLogic) generateToken(username string) (string, error) {
+func (l *BackendLoginLogic) generateToken(userID int64, username string) (string, error) {
 	now := time.Now()
 	claims := jwt.MapClaims{
-		"sub":      username,
-		"platform": "backend",
+		"sub":      userID,    // 與 App token 一致，存 int64 userID
+		"username": username,  // 獨立欄位存使用者名稱
+		"platform": "backend", // 平台識別，用於二次驗證
 		"iat":      now.Unix(),
 		"exp":      now.Add(time.Duration(l.svcCtx.Config.Backend.AccessExpire) * time.Second).Unix(),
 	}

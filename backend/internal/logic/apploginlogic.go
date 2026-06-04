@@ -41,7 +41,7 @@ func (l *AppLoginLogic) Login(req *types.LoginRequest) (*types.LoginResponse, er
 		return nil, apierrors.ErrInvalidCredentials
 	}
 
-	token, err := l.generateToken(user.Username)
+	token, err := l.generateToken(user.ID, user.Username)
 	if err != nil {
 		l.Errorf("app: failed to generate token for user %s: %v", user.Username, err)
 		return nil, apierrors.ErrInternal
@@ -53,10 +53,11 @@ func (l *AppLoginLogic) Login(req *types.LoginRequest) (*types.LoginResponse, er
 	}, nil
 }
 
-func (l *AppLoginLogic) generateToken(username string) (string, error) {
+func (l *AppLoginLogic) generateToken(userID int64, username string) (string, error) {
 	now := time.Now()
 	claims := jwt.MapClaims{
-		"sub":      username,
+		"sub":      userID,
+		"username": username,
 		"platform": "app",
 		"iat":      now.Unix(),
 		"exp":      now.Add(time.Duration(l.svcCtx.Config.App.AccessExpire) * time.Second).Unix(),
