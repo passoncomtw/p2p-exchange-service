@@ -3,3 +3,6 @@ docs
 **/__debug*
 **/__debug_bin*
 backend/bin/
+
+# env files
+.env
