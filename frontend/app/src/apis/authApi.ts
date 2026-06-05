@@ -10,37 +10,34 @@ import type {
 export const authApi = {
   /**
    * 登入
+   * POST /app/auth/login
+   * Request:  { username, password }
+   * Response: { access_token, expireIn, user: { id, account, name } }
    */
   login: async (credentials: LoginCredentials): Promise<LoginData> => {
-    const response = await httpClient.post<ApiResponse<LoginData>>('/auth/login', {
-      account: credentials.account,
+    const response = await httpClient.post<ApiResponse<LoginData>>('/app/auth/login', {
+      username: credentials.account, // App 內部用 account，後端 field 是 username
       password: credentials.password,
-      notificationToken: credentials.notificationToken || 'expo_default_token',
     });
     return response.data.data;
   },
 
   /**
-   * 註冊
+   * 註冊（後端尚未實作，暫保留介面）
    */
   register: async (credentials: RegisterCredentials): Promise<RegisterData> => {
-    const response = await httpClient.post<ApiResponse<RegisterData>>('/users', {
-      account: credentials.account,
-      email: credentials.email,
-      name: credentials.nickname,
+    const response = await httpClient.post<ApiResponse<RegisterData>>('/app/auth/register', {
+      username: credentials.account,
       password: credentials.password,
-      transactionCode: credentials.transactionPassword,
-      referralCode: credentials.referralCode || '',
-      type: 0,
+      email: credentials.email,
     });
     return response.data.data;
   },
 
   /**
-   * 登出
+   * 登出（後端 JWT 為 stateless，清除本地 token 即可，無需呼叫後端）
    */
   logout: async (): Promise<void> => {
-    await httpClient.post<ApiResponse<void>>('/auth/logout', {});
+    return Promise.resolve();
   },
 };
-

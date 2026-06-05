@@ -27,7 +27,7 @@ func NewAppLoginLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AppLogin
 	}
 }
 
-func (l *AppLoginLogic) Login(req *types.LoginRequest) (*types.LoginResponse, error) {
+func (l *AppLoginLogic) Login(req *types.LoginRequest) (*types.AppLoginResponse, error) {
 	user, err := l.svcCtx.AppUser.FindByUsername(l.ctx, req.Username)
 	if err != nil {
 		if err == sqlx.ErrNotFound {
@@ -47,9 +47,14 @@ func (l *AppLoginLogic) Login(req *types.LoginRequest) (*types.LoginResponse, er
 		return nil, apierrors.ErrInternal
 	}
 
-	return &types.LoginResponse{
-		Token:     token,
-		ExpiresIn: l.svcCtx.Config.App.AccessExpire,
+	return &types.AppLoginResponse{
+		AccessToken: token,
+		ExpireIn:    l.svcCtx.Config.App.AccessExpire,
+		User: types.AppLoginUserInfo{
+			ID:      user.ID,
+			Account: user.Username,
+			Name:    user.Username, // 第一階段以 username 作為 name
+		},
 	}, nil
 }
 

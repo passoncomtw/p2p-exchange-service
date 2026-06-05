@@ -12,6 +12,19 @@ type LoginResponse struct {
 	ExpiresIn int64  `json:"expiresIn"`
 }
 
+// AppLoginResponse — App 端登入回應，包含 user info 供 App 初始化 store 使用
+type AppLoginUserInfo struct {
+	ID      int64  `json:"id"`
+	Account string `json:"account"` // = username
+	Name    string `json:"name"`    // 第一階段同 username，未來可獨立
+}
+
+type AppLoginResponse struct {
+	AccessToken string           `json:"access_token"`
+	ExpireIn    int64            `json:"expireIn"`
+	User        AppLoginUserInfo `json:"user"`
+}
+
 // ── app profile ───────────────────────────────────────────────────────────────
 
 type ProfileRequest struct{}

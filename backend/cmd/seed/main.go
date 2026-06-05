@@ -17,6 +17,25 @@ import (
 
 var configFile = flag.String("f", "etc/config.yaml", "the config file")
 
+// App 使用者（一般會員）
+var appUsers = []struct {
+	Username string
+	Password string
+}{
+	{"testdemo001", "a12345678"},
+	{"testdemo002", "a12345678"},
+	{"testdemo003", "a12345678"},
+}
+
+// 後台管理使用者
+var backendUsers = []struct {
+	Username string
+	Password string
+	Role     string
+}{
+	{"admin001", "admin@1234", "admin"},
+}
+
 func main() {
 	flag.Parse()
 
@@ -26,12 +45,16 @@ func main() {
 	conn := sqlx.NewSqlConn("pgx", c.Database.DSN)
 	ctx := context.Background()
 
-	if err := seedAppUser(ctx, conn, "testdemo001", "a12345678"); err != nil {
-		log.Fatalf("seed app_user failed: %v", err)
+	for _, u := range appUsers {
+		if err := seedAppUser(ctx, conn, u.Username, u.Password); err != nil {
+			log.Fatalf("seed app_user %s failed: %v", u.Username, err)
+		}
 	}
 
-	if err := seedBackendUser(ctx, conn, "admin001", "admin@1234", "admin"); err != nil {
-		log.Fatalf("seed backend_user failed: %v", err)
+	for _, u := range backendUsers {
+		if err := seedBackendUser(ctx, conn, u.Username, u.Password, u.Role); err != nil {
+			log.Fatalf("seed backend_user %s failed: %v", u.Username, err)
+		}
 	}
 
 	fmt.Println("seed completed")

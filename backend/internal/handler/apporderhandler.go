@@ -6,6 +6,7 @@ import (
 
 	"github.com/zeromicro/go-zero/rest/httpx"
 	"p2p-exchange/internal/logic"
+	"p2p-exchange/internal/response"
 	"p2p-exchange/internal/svc"
 	"p2p-exchange/internal/types"
 )
@@ -26,7 +27,7 @@ func AppCreateOrderHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
-			httpx.OkJsonCtx(r.Context(), w, resp)
+			httpx.OkJsonCtx(r.Context(), w, response.Success(resp))
 		}
 	}
 }
@@ -47,7 +48,7 @@ func AppListOrdersHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
-			httpx.OkJsonCtx(r.Context(), w, resp)
+			httpx.OkJsonCtx(r.Context(), w, response.Success(resp))
 		}
 	}
 }
@@ -65,7 +66,7 @@ func AppGetOrderHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
-			httpx.OkJsonCtx(r.Context(), w, resp)
+			httpx.OkJsonCtx(r.Context(), w, response.Success(resp))
 		}
 	}
 }
@@ -86,7 +87,7 @@ func AppPayOrderHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
-			httpx.OkJsonCtx(r.Context(), w, map[string]bool{"ok": true})
+			httpx.OkJsonCtx(r.Context(), w, response.Success(map[string]bool{"ok": true}))
 		}
 	}
 }
@@ -107,7 +108,7 @@ func AppConfirmOrderHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
-			httpx.OkJsonCtx(r.Context(), w, map[string]bool{"ok": true})
+			httpx.OkJsonCtx(r.Context(), w, response.Success(map[string]bool{"ok": true}))
 		}
 	}
 }
@@ -128,7 +129,7 @@ func AppCancelOrderHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
-			httpx.OkJsonCtx(r.Context(), w, map[string]bool{"ok": true})
+			httpx.OkJsonCtx(r.Context(), w, response.Success(map[string]bool{"ok": true}))
 		}
 	}
 }
@@ -149,7 +150,7 @@ func AppDisputeOrderHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
-			httpx.OkJsonCtx(r.Context(), w, map[string]bool{"ok": true})
+			httpx.OkJsonCtx(r.Context(), w, response.Success(map[string]bool{"ok": true}))
 		}
 	}
 }
