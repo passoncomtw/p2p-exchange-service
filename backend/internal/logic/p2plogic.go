@@ -6,10 +6,9 @@ package logic
 import (
 	"context"
 
+	"github.com/zeromicro/go-zero/core/logx"
 	"p2p-exchange/internal/svc"
 	"p2p-exchange/internal/types"
-
-	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type P2pLogic struct {
@@ -26,8 +25,8 @@ func NewP2pLogic(ctx context.Context, svcCtx *svc.ServiceContext) *P2pLogic {
 	}
 }
 
-func (l *P2pLogic) P2p(req *types.Request) (resp *types.Response, err error) {
-	// todo: add your logic here and delete this line
-
-	return
+func (l *P2pLogic) P2p(req *types.Request) (*types.Response, error) {
+	return &types.Response{
+		Message: "Hello " + req.Name,
+	}, nil
 }

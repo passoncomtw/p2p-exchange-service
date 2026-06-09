@@ -3,12 +3,13 @@ Host: 0.0.0.0
 Port: 8888
 
 App:
-  AccessSecret: "app-secret-change-in-production"
+  AccessSecret: "b3496b7e-fddb-4a91-a26c-d62acf923722"
   AccessExpire: 86400
 
 Backend:
-  AccessSecret: "backend-secret-change-in-production"
+  AccessSecret: "8b5e59bd-2f04-41f2-95db-97191f315ea3"
   AccessExpire: 86400
 
 Database:
   DSN: "postgresql://neondb_owner:npg_Px4TXhuDp0dA@ep-calm-star-aon6vub8-pooler.c-2.ap-southeast-1.aws.neon.tech/p2p_exchange?sslmode=require&channel_binding=require"
+

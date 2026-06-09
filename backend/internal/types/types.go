@@ -1,5 +1,15 @@
 package types
 
+// ── health check (goctl scaffold) ────────────────────────────────────────────
+
+type Request struct {
+	Name string `path:"name,options=you|me"`
+}
+
+type Response struct {
+	Message string `json:"message"`
+}
+
 // ── auth ─────────────────────────────────────────────────────────────────────
 
 type LoginRequest struct {
