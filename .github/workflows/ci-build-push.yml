@@ -18,9 +18,14 @@ jobs:
           - name: backend
             context: ./backend
             dockerfile: ./backend/Dockerfile
+            gitops_path: services/p2p-exchange/backend
           - name: web
             context: ./frontend/web
             dockerfile: ./frontend/web/Dockerfile
+            gitops_path: services/p2p-exchange/web
+
+    outputs:
+      sha: ${{ steps.vars.outputs.sha }}
 
     steps:
       - uses: actions/checkout@v4
@@ -50,7 +55,37 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Update gitops image tag
+        env:
+          GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+        run: |
+          TAG="prod-${{ steps.vars.outputs.sha }}"
+          GITOPS_REPO="passoncomtw/passontw-gitops"
+          GITOPS_PATH="${{ matrix.gitops_path }}"
+
+          git clone "https://x-access-token:${GITOPS_TOKEN}@github.com/${GITOPS_REPO}.git" /tmp/gitops
+
+          # 更新 kustomization.yaml 中的 newTag
+          sed -i "s|newTag: prod-.*|newTag: ${TAG}|g" \
+            /tmp/gitops/${GITOPS_PATH}/kustomization.yaml
+
+          cd /tmp/gitops
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ${GITOPS_PATH}/kustomization.yaml
+
+          # 若無異動（tag 相同）就跳過
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "deploy(${{ matrix.name }}): update image to ${TAG}
+
+          Triggered by: ${{ github.repository }}@${{ github.sha }}"
+          git push
+
       - name: Output image tag
         run: |
           echo "### ${{ matrix.name }} → \`prod-${{ steps.vars.outputs.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "改 gitops 的 newTag 為 prod-${{ steps.vars.outputs.sha }} 再 argocd sync。" >> "$GITHUB_STEP_SUMMARY"
+          echo "ArgoCD 將在 3 分鐘內自動 sync。" >> "$GITHUB_STEP_SUMMARY"
