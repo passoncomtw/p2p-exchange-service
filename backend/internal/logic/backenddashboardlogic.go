@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/zeromicro/go-zero/core/logx"
 	"p2p-exchange/internal/svc"
 	"p2p-exchange/internal/types"
+
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type BackendDashboardLogic struct {
@@ -23,7 +24,7 @@ func NewBackendDashboardLogic(ctx context.Context, svcCtx *svc.ServiceContext) *
 	}
 }
 
-func (l *BackendDashboardLogic) Dashboard(_ *types.DashboardRequest) (*types.DashboardResponse, error) {
+func (l *BackendDashboardLogic) Dashboard() (*types.DashboardResponse, error) {
 	// go-zero JWT middleware 將各 claim 個別存入 context，key 為 claim 名稱
 	// username claim（string）
 	username, _ := l.ctx.Value("username").(string)

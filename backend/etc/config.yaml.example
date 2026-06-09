@@ -1,0 +1,14 @@
+Name: p2p-api
+Host: 0.0.0.0
+Port: 8888
+
+App:
+  AccessSecret: "replace-with-random-secret"
+  AccessExpire: 86400
+
+Backend:
+  AccessSecret: "replace-with-another-random-secret"
+  AccessExpire: 86400
+
+Database:
+  DSN: "postgresql://user:password@host/dbname?sslmode=require"

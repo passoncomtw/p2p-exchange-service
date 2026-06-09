@@ -6,3 +6,9 @@ backend/bin/
 
 # env files
 .env
+
+# 含機密的 config（K8s Secret 注入，本地用真實檔案但不進 repo）
+backend/etc/config.yaml
+
+# Claude Code 暫存
+.claude/
