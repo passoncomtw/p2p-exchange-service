@@ -83,6 +83,33 @@ func (l *AppListListingsLogic) List(req *types.ListListingsRequest) (*types.List
 	return &types.ListListingsResponse{List: list}, nil
 }
 
+// ── AppMyListingsLogic ────────────────────────────────────────────────────────
+
+type AppMyListingsLogic struct {
+	logx.Logger
+	ctx    context.Context
+	svcCtx *svc.ServiceContext
+}
+
+func NewAppMyListingsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AppMyListingsLogic {
+	return &AppMyListingsLogic{Logger: logx.WithContext(ctx), ctx: ctx, svcCtx: svcCtx}
+}
+
+func (l *AppMyListingsLogic) List(uid int64, req *types.ListListingsRequest) (*types.ListListingsResponse, error) {
+	rows, err := l.svcCtx.Listing.ListByUser(l.ctx, uid, req.Type, req.Status, req.Limit, req.Offset)
+	if err != nil {
+		l.Errorf("list my listings uid=%d failed: %v", uid, err)
+		return nil, apierrors.ErrInternal
+	}
+
+	list := make([]types.ListingItem, 0, len(rows))
+	for _, row := range rows {
+		list = append(list, listingToItem(row))
+	}
+
+	return &types.ListListingsResponse{List: list}, nil
+}
+
 // ── AppGetListingLogic ────────────────────────────────────────────────────────
 
 type AppGetListingLogic struct {

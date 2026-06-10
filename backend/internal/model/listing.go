@@ -100,6 +100,35 @@ func (m *ListingModel) List(ctx context.Context, listType string, status string,
 	return rows, nil
 }
 
+func (m *ListingModel) ListByUser(ctx context.Context, userID int64, listType string, status string, limit, offset int64) ([]*Listing, error) {
+	query := `SELECT id, user_id, type, crypto_currency, fiat_currency, total_amount, remaining_amount, price,
+		  min_order_fiat, max_order_fiat, platform_fee_base, platform_fee_rate, payment_fee_base, payment_fee_rate,
+		  payment_time_limit, payment_method_id, status, created_at, updated_at
+		 FROM listings WHERE user_id = $1`
+	args := []interface{}{userID}
+	argIdx := 2
+
+	if listType != "" {
+		query += fmt.Sprintf(" AND type = $%d", argIdx)
+		args = append(args, listType)
+		argIdx++
+	}
+	if status != "" {
+		query += fmt.Sprintf(" AND status = $%d", argIdx)
+		args = append(args, status)
+		argIdx++
+	}
+	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
+	args = append(args, limit, offset)
+
+	var rows []*Listing
+	err := m.conn.QueryRowsCtx(ctx, &rows, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
 func (m *ListingModel) UpdateStatus(ctx context.Context, id int64, status string) error {
 	_, err := m.conn.ExecCtx(ctx,
 		`UPDATE listings SET status = $1, updated_at = NOW() WHERE id = $2`,

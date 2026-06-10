@@ -53,6 +53,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			},
 			{
 				Method:  http.MethodGet,
+				Path:    "/app/listings/mine",
+				Handler: AppMyListingsHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodGet,
 				Path:    "/app/listings/:id",
 				Handler: AppGetListingHandler(serverCtx),
 			},

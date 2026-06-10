@@ -70,6 +70,27 @@ func AppGetListingHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	}
 }
 
+func AppMyListingsHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req types.ListListingsRequest
+		if err := httpx.Parse(r, &req); err != nil {
+			httpx.ErrorCtx(r.Context(), w, err)
+			return
+		}
+
+		uidRaw, _ := r.Context().Value("sub").(json.Number)
+		uid, _ := uidRaw.Int64()
+
+		l := logic.NewAppMyListingsLogic(r.Context(), svcCtx)
+		resp, err := l.List(uid, &req)
+		if err != nil {
+			httpx.ErrorCtx(r.Context(), w, err)
+		} else {
+			httpx.OkJsonCtx(r.Context(), w, response.Success(resp))
+		}
+	}
+}
+
 func AppCancelListingHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req types.CancelListingRequest
