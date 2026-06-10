@@ -12,3 +12,7 @@ backend/etc/config.yaml
 
 # Claude Code 暫存
 .claude/
+
+# Expo generated native projects
+frontend/app/android/
+frontend/app/ios/
