@@ -4,7 +4,7 @@ import logger from '@pkg/logger';
 // 使用 Expo 環境變數，從 .env 讀取 BASE_URL
 // Expo 需要使用 EXPO_PUBLIC_ 前綴才能在 JavaScript 中使用
 const baseURL =
-  process.env.EXPO_PUBLIC_API_BASE_URL || 'https://token-app-api.passon.tw';
+  process.env.EXPO_PUBLIC_API_BASE_URL || 'https://p2p-exchange-api.passon.tw';
 
 // 儲存導航引用（需要在 App 初始化時設定）
 let navigationRef: any = null;
