@@ -3,4 +3,6 @@ export * from './authApi';
 export * from './userApi';
 export * from './ordersApi';
 export * from './bankCardsApi';
+export * from './listingsApi';
+export * from './p2pOrdersApi';
 
