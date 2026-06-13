@@ -1,4 +1,4 @@
-name: expo-ios-testflight
+name: expo-build-submit
 
 on:
   workflow_dispatch:
@@ -7,10 +7,19 @@ on:
         description: 'Release version (e.g. v1.0.0)'
         required: true
         type: string
+      platform:
+        description: 'Build platform'
+        required: true
+        type: choice
+        options:
+          - ios
+          - android
+          - all
+        default: ios
 
 jobs:
   build-and-submit:
-    name: Build iOS & Submit to TestFlight
+    name: EAS Build & Submit (${{ github.event.inputs.platform }})
     runs-on: ubuntu-latest
 
     steps:
@@ -54,19 +63,21 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      # EAS Cloud Build — 在 Expo 伺服器上打包 iOS .ipa
-      - name: EAS Build (iOS production)
+      # EAS 支援 --platform ios | android | all
+      # --platform all 會在 Expo 伺服器上同時啟動兩個 build
+      # --wait 等待所有 build 完成後再繼續
+      - name: EAS Build
         working-directory: frontend/app
         run: |
           eas build \
-            --platform ios \
+            --platform ${{ github.event.inputs.platform }} \
             --profile production \
             --non-interactive \
             --wait
 
-      # 上傳最新 build 到 TestFlight
-      # EAS CLI 讀取 EXPO_APPLE_APP_SPECIFIC_PASSWORD 環境變數
-      - name: Submit to TestFlight
+      # ── iOS → TestFlight ────────────────────────────────────────────────────
+      - name: Submit iOS to TestFlight
+        if: ${{ github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'all' }}
         working-directory: frontend/app
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_SPECIFIC_PASSWORD }}
@@ -76,10 +87,33 @@ jobs:
             --latest \
             --non-interactive
 
+      # ── Android → Google Play Internal ─────────────────────────────────────
+      # 需要 GOOGLE_SERVICE_ACCOUNT_KEY secret（JSON 內容）
+      - name: Write Google Service Account Key
+        if: ${{ github.event.inputs.platform == 'android' || github.event.inputs.platform == 'all' }}
+        working-directory: frontend/app
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}' > google-service-account.json
+
+      - name: Submit Android to Google Play
+        if: ${{ github.event.inputs.platform == 'android' || github.event.inputs.platform == 'all' }}
+        working-directory: frontend/app
+        run: |
+          eas submit \
+            --platform android \
+            --latest \
+            --non-interactive
+
+      # ── Summary ─────────────────────────────────────────────────────────────
       - name: Summary
         run: |
-          echo "### iOS ${{ github.event.inputs.version }} → TestFlight" >> "$GITHUB_STEP_SUMMARY"
+          echo "### ${{ github.event.inputs.platform }} ${{ github.event.inputs.version }} → Store" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- Version: \`${{ env.VERSION_NUMBER }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Bundle ID: \`com.passon.ecoinwallet\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- App Store Connect: https://appstoreconnect.apple.com/apps/6477443899/testflight" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Platform: \`${{ github.event.inputs.platform }}\`" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ github.event.inputs.platform }}" != "android" ]; then
+            echo "- TestFlight: https://appstoreconnect.apple.com/apps/6477443899/testflight" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ "${{ github.event.inputs.platform }}" != "ios" ]; then
+            echo "- Google Play: https://play.google.com/console" >> "$GITHUB_STEP_SUMMARY"
+          fi
