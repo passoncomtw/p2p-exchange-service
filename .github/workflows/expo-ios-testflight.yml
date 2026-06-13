@@ -1,0 +1,66 @@
+name: expo-ios-testflight
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/app/**'
+      - '.github/workflows/expo-ios-testflight.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-submit:
+    name: Build iOS & Submit to TestFlight
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend/app
+        run: npm ci
+
+      # expo-github-action 負責安裝 eas-cli 並用 EXPO_TOKEN 完成登入
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      # EAS Cloud Build — 在 Expo 伺服器上打包 iOS .ipa
+      # --wait 確保 build 完成後才進入下一步
+      - name: EAS Build (iOS production)
+        working-directory: frontend/app
+        run: |
+          eas build \
+            --platform ios \
+            --profile production \
+            --non-interactive \
+            --wait
+
+      # 上傳最新一包 .ipa 到 TestFlight
+      # EXPO_APPLE_APP_SPECIFIC_PASSWORD: Apple ID 應用程式專用密碼
+      #   申請位置 → appleid.apple.com → 安全性 → 應用程式專用密碼
+      - name: Submit to TestFlight
+        working-directory: frontend/app
+        env:
+          EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          eas submit \
+            --platform ios \
+            --latest \
+            --non-interactive
+
+      - name: Summary
+        run: |
+          echo "### iOS Build & TestFlight Submit" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Bundle ID: \`com.passon.ecoinwallet\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- EAS Project: \`869a711e-70db-4ee7-9c62-bda2aec26ce0\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- App Store Connect: https://appstoreconnect.apple.com/apps/6477443899/testflight" >> "$GITHUB_STEP_SUMMARY"
