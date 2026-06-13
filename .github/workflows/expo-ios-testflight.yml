@@ -1,12 +1,12 @@
 name: expo-ios-testflight
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'frontend/app/**'
-      - '.github/workflows/expo-ios-testflight.yml'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. v1.0.0)'
+        required: true
+        type: string
 
 jobs:
   build-and-submit:
@@ -15,6 +15,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Validate version format
+        run: |
+          if ! echo "${{ github.event.inputs.version }}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Invalid version format '${{ github.event.inputs.version }}'. Expected: v1.0.0"
+            exit 1
+          fi
 
       - uses: actions/setup-node@v4
         with:
@@ -26,7 +33,21 @@ jobs:
         working-directory: frontend/app
         run: npm ci
 
-      # expo-github-action 負責安裝 eas-cli 並用 EXPO_TOKEN 完成登入
+      # 將輸入的 v1.0.0 → 1.0.0 寫入 app.json expo.version
+      - name: Bump version in app.json
+        working-directory: frontend/app
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          VERSION_NUMBER="${VERSION#v}"
+          node -e "
+            const fs = require('fs');
+            const cfg = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+            cfg.expo.version = '${VERSION_NUMBER}';
+            fs.writeFileSync('app.json', JSON.stringify(cfg, null, 2) + '\n');
+          "
+          echo "Bumped version to ${VERSION_NUMBER}"
+          echo "VERSION_NUMBER=${VERSION_NUMBER}" >> "$GITHUB_ENV"
+
       - name: Setup EAS
         uses: expo/expo-github-action@v8
         with:
@@ -34,7 +55,6 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       # EAS Cloud Build — 在 Expo 伺服器上打包 iOS .ipa
-      # --wait 確保 build 完成後才進入下一步
       - name: EAS Build (iOS production)
         working-directory: frontend/app
         run: |
@@ -44,13 +64,12 @@ jobs:
             --non-interactive \
             --wait
 
-      # 上傳最新一包 .ipa 到 TestFlight
-      # EXPO_APPLE_APP_SPECIFIC_PASSWORD: Apple ID 應用程式專用密碼
-      #   申請位置 → appleid.apple.com → 安全性 → 應用程式專用密碼
+      # 上傳最新 build 到 TestFlight
+      # EAS CLI 讀取 EXPO_APPLE_APP_SPECIFIC_PASSWORD 環境變數
       - name: Submit to TestFlight
         working-directory: frontend/app
         env:
-          EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
+          EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_SPECIFIC_PASSWORD }}
         run: |
           eas submit \
             --platform ios \
@@ -59,8 +78,8 @@ jobs:
 
       - name: Summary
         run: |
-          echo "### iOS Build & TestFlight Submit" >> "$GITHUB_STEP_SUMMARY"
+          echo "### iOS ${{ github.event.inputs.version }} → TestFlight" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Version: \`${{ env.VERSION_NUMBER }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Bundle ID: \`com.passon.ecoinwallet\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- EAS Project: \`869a711e-70db-4ee7-9c62-bda2aec26ce0\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- App Store Connect: https://appstoreconnect.apple.com/apps/6477443899/testflight" >> "$GITHUB_STEP_SUMMARY"
