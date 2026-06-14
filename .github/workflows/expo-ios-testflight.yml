@@ -93,7 +93,7 @@ jobs:
         if: ${{ github.event.inputs.platform == 'android' || github.event.inputs.platform == 'all' }}
         working-directory: frontend/app
         run: |
-          echo '${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}' > google-service-account.json
+          echo '${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}' > ecoinwallet-6394ffc01290.json
 
       - name: Submit Android to Google Play
         if: ${{ github.event.inputs.platform == 'android' || github.event.inputs.platform == 'all' }}

@@ -10,5 +10,8 @@ npm-debug.*
 *.orig.*
 web-build/
 
+# Google Service Account Key (CI 由 Secret 注入，不 commit)
+ecoinwallet-*.json
+
 # macOS
 .DS_Store

@@ -44,7 +44,7 @@
         "appleTeamId": "W6K7F9HNX5"
       },
       "android": {
-        "serviceAccountKeyPath": "./google-service-account.json",
+        "serviceAccountKeyPath": "./ecoinwallet-6394ffc01290.json",
         "track": "internal"
       }
     }
