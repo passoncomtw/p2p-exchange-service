@@ -17,6 +17,9 @@ on:
           - all
         default: ios
 
+permissions:
+  contents: write
+
 jobs:
   build-and-submit:
     name: EAS Build & Submit (${{ github.event.inputs.platform }})
@@ -24,6 +27,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Validate version format
         run: |
@@ -61,7 +66,18 @@ jobs:
             fs.writeFileSync('app.json', JSON.stringify(cfg, null, 2) + '\n');
             console.log('version:', '${VERSION_NUMBER}', '| build:', newBuild);
           "
-          echo "VERSION_NUMBER=${VERSION_NUMBER}" >> "\$GITHUB_ENV"
+          echo "VERSION_NUMBER=${VERSION_NUMBER}" >> "$GITHUB_ENV"
+
+      # 將更新後的 app.json commit 回 main 並建立 git tag
+      # 讓 repo 版本號永遠與實際發布的版本一致
+      - name: Commit version bump and tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add frontend/app/app.json
+          git commit -m "chore(release): bump mobile app to ${{ github.event.inputs.version }}"
+          git tag ${{ github.event.inputs.version }}
+          git push origin main ${{ github.event.inputs.version }}
 
       - name: Setup EAS
         uses: expo/expo-github-action@v8
