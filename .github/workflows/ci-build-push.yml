@@ -3,6 +3,9 @@ name: ci-build-push
 on:
   push:
     branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/web/**'
   workflow_dispatch:
 
 permissions:
