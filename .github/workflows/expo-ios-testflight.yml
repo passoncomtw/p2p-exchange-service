@@ -43,6 +43,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       # 將輸入的 v1.0.0 → 1.0.0 寫入 app.json expo.version
+      # Build 號以 iOS buildNumber 為準，Android versionCode 同步跟進
       - name: Bump version in app.json
         working-directory: frontend/app
         run: |
@@ -52,10 +53,15 @@ jobs:
             const fs = require('fs');
             const cfg = JSON.parse(fs.readFileSync('app.json', 'utf8'));
             cfg.expo.version = '${VERSION_NUMBER}';
+            // 以 iOS buildNumber 為準，遞增後同步給 Android versionCode
+            const currentBuild = parseInt(cfg.expo.ios.buildNumber || '0', 10);
+            const newBuild = currentBuild + 1;
+            cfg.expo.ios.buildNumber = String(newBuild);
+            cfg.expo.android.versionCode = newBuild;
             fs.writeFileSync('app.json', JSON.stringify(cfg, null, 2) + '\n');
+            console.log('version:', '${VERSION_NUMBER}', '| build:', newBuild);
           "
-          echo "Bumped version to ${VERSION_NUMBER}"
-          echo "VERSION_NUMBER=${VERSION_NUMBER}" >> "$GITHUB_ENV"
+          echo "VERSION_NUMBER=${VERSION_NUMBER}" >> "\$GITHUB_ENV"
 
       - name: Setup EAS
         uses: expo/expo-github-action@v8
