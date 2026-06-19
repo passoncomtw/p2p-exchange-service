@@ -49,4 +49,12 @@ export default {
   common: {
     welcome: '欢迎使用丰盈钱包运营后台',
   },
+
+  // 无障碍
+  a11y: {
+    showPassword: '显示密码',
+    hidePassword: '隐藏密码',
+    languageChanged: '语言已切换',
+    loading: '加载中',
+  },
 }
