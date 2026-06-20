@@ -9,6 +9,40 @@ import (
 )
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
+	// ── v1 掛單（免登入，沿用 listings；createdBy 固定 demo_user） ──────────────
+	server.AddRoutes([]rest.Route{
+		{
+			Method:  http.MethodPost,
+			Path:    "/v1/orders",
+			Handler: V1CreateOrderHandler(serverCtx),
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/v1/orders/mine",
+			Handler: V1ListMyOrdersHandler(serverCtx),
+		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/v1/orders/:id/cancel",
+			Handler: V1CancelOrderHandler(serverCtx),
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/v1/admin/orders",
+			Handler: V1AdminListOrdersHandler(serverCtx),
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/v1/admin/orders/:id",
+			Handler: V1AdminGetOrderHandler(serverCtx),
+		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/v1/admin/orders/:id/complete",
+			Handler: V1AdminCompleteOrderHandler(serverCtx),
+		},
+	})
+
 	// ── app public ──────────────────────────────────────────────────────────
 	server.AddRoutes([]rest.Route{
 		{

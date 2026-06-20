@@ -222,5 +222,50 @@ export const commonStyles = {
   },
 };
 
+// ── v1 訂單畫面色票（App 專用，不與 Web 共用） ──────────────────────────────
+// 值與 Web 維持一致以保留視覺,但由各平台各自擁有。
+export const colors = {
+  primary: '#FFC107',
+  primaryDisabled: '#FFE082',
+  primaryDeep: '#FF8F00',
+
+  bgContent: '#F5F5F7',
+  bgCard: '#FFFFFF',
+
+  textPrimary: '#333333',
+  textSecondary: '#666666',
+  textTertiary: '#999999',
+  textPlaceholder: '#BFBFBF',
+
+  borderInput: '#D9D9D9',
+  borderCard: '#EBEBEB',
+
+  danger: '#F44336',
+
+  statusOpen: '#FF9800',
+  statusCompleted: '#4CAF50',
+  statusCancelled: '#9E9E9E',
+
+  typeBuy: '#4CAF50',
+  typeSell: '#F44336',
+} as const;
+
+// 依訂單狀態取得對應色票（App）
+export function statusColor(status: 'open' | 'completed' | 'cancelled'): string {
+  switch (status) {
+    case 'open':
+      return colors.statusOpen;
+    case 'completed':
+      return colors.statusCompleted;
+    case 'cancelled':
+      return colors.statusCancelled;
+  }
+}
+
+// 依訂單類型取得對應色票（App）
+export function typeColor(type: 'buy' | 'sell'): string {
+  return type === 'buy' ? colors.typeBuy : colors.typeSell;
+}
+
 export default theme;
 

@@ -16,6 +16,7 @@ type ServiceContext struct {
 	Order           *model.OrderModel
 	EscrowRecord    *model.EscrowRecordModel
 	OrderStatusLog  *model.OrderStatusLogModel
+	V1Order         *model.V1OrderModel
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -29,5 +30,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Order:          model.NewOrderModel(conn),
 		EscrowRecord:   model.NewEscrowRecordModel(conn),
 		OrderStatusLog: model.NewOrderStatusLogModel(conn),
+		V1Order:        model.NewV1OrderModel(conn),
 	}
 }

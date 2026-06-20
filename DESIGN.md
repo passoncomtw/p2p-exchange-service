@@ -83,6 +83,11 @@ All hex values are exact — do not approximate or substitute.
 | `colors.status-active` | `#4CAF50` | Order/member active status badge |
 | `colors.status-frozen` | `#FF9800` | Order frozen/timeout status badge |
 | `colors.status-stopped` | `#9E9E9E` | Disabled status badge |
+| `colors.status-open` | `#FF9800` | v1 訂單待成交(open),沿用 frozen 琥珀色 |
+| `colors.status-completed` | `#4CAF50` | v1 訂單已完成(completed),沿用 active 綠色 |
+| `colors.status-cancelled` | `#9E9E9E` | v1 訂單已取消(cancelled),沿用 stopped 灰色 |
+| `colors.type-buy` | `#4CAF50` | v1 買幣類型標籤 |
+| `colors.type-sell` | `#F44336` | v1 賣幣類型標籤 |
 
 
 ## 3. Typography

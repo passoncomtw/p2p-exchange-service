@@ -9,6 +9,9 @@
       ],
       "@pkg/*": [
         "./src/pkg/*"
+      ],
+      "@shared": [
+        "../../shared/src/index.ts"
       ]
     }
   },

@@ -224,3 +224,41 @@ type ResolveOrderRequest struct {
 	Action string `json:"action"` // complete | refund
 	Reason string `json:"reason"`
 }
+
+// ── v1 掛單（免登入，沿用 listings；createdBy 固定 demo_user） ──────────────────
+
+type V1CreateOrderRequest struct {
+	Type          string  `json:"type"`          // buy | sell
+	Asset         string  `json:"asset"`         // v1: USDT
+	Fiat          string  `json:"fiat"`          // v1: TWD
+	Price         float64 `json:"price"`         // 單價
+	Quantity      float64 `json:"quantity"`      // 數量
+	PaymentMethod string  `json:"paymentMethod"` // bank_transfer | convenience_store
+}
+
+type V1Order struct {
+	ID            string  `json:"id"`
+	Type          string  `json:"type"`
+	Asset         string  `json:"asset"`
+	Fiat          string  `json:"fiat"`
+	Price         float64 `json:"price"`
+	Quantity      float64 `json:"quantity"`
+	TotalAmount   float64 `json:"totalAmount"`
+	PaymentMethod string  `json:"paymentMethod"`
+	Status        string  `json:"status"` // open | completed | cancelled
+	CreatedBy     string  `json:"createdBy"`
+	CreatedAt     string  `json:"createdAt"`
+	UpdatedAt     string  `json:"updatedAt"`
+}
+
+type V1OrderIDRequest struct {
+	ID int64 `path:"id"`
+}
+
+type V1AdminListOrdersRequest struct {
+	Status string `form:"status,optional"` // open | completed | cancelled
+}
+
+type V1OrderListResponse struct {
+	List []V1Order `json:"list"`
+}

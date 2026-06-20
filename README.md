@@ -1,5 +1,13 @@
 # P2P Exchange Service
 
+## 原型設計 (Claude design)
+
+v1 原型(使用者端手機 + 後台桌面)設計連結:
+
+https://claude.ai/design/p/2c7b1880-aaf0-4e7c-9bd1-496d0b4560af?file=P2P+Exchange+v1.dc.html
+
+匯出的原始檔位於 `prototypes/P2P-Exchange-v1.html`(Claude design 元件格式 `.dc.html`,需搭配設計執行階段 `support.js` 才能渲染;完整可互動版請於上方連結檢視)。詳見 `prototypes/README.md`。
+
 ## Mobile App 發版流程 (iOS / Android)
 
 ### 前置條件

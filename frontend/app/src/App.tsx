@@ -1,4 +1,5 @@
 import 'react-native-reanimated';
+import './i18n';
 import { DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -8,7 +9,7 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { Colors } from './constants/Colors';
-import { Navigation } from './navigation';
+import { V1Navigation } from './navigation/v1';
 import { store, persistor } from './navigation/store/configureStore';
 import { setStoreRef } from './apis';
 
@@ -49,15 +50,8 @@ export function App() {
         } 
         persistor={persistor}
       >
-      <Navigation
+      <V1Navigation
         theme={theme}
-        linking={{
-          enabled: 'auto',
-          prefixes: [
-            // Change the scheme to match your app's scheme defined in app.json
-            'helloworld://',
-          ],
-        }}
         onReady={() => {
             SplashScreen.hideAsync();
           }}

@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html><head>
+
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Roboto", "Helvetica", "Arial", sans-serif; -webkit-font-smoothing: antialiased; }
+  @keyframes p2p-spin { to { transform: rotate(360deg); } }
+  @keyframes p2p-snack { from { opacity: 0; transform: translate(-50%, 16px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  @keyframes p2p-fade { from { opacity: 0; } to { opacity: 1; } }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #D9D9D9; border-radius: 4px; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#E8E8EB;font-family:'Roboto','Helvetica','Arial',sans-serif;color:#333;font-size:13px;">
+
+  <!-- 原型檢視列 -->
+  <div style="height:48px;background:#1F2327;color:#fff;display:flex;align-items:center;gap:16px;padding:0 20px;position:sticky;top:0;z-index:50;">
+    <span style="font-size:13px;font-weight:700;letter-spacing:.3px;">P2P Exchange v1</span>
+    <span style="font-size:11px;color:#9E9E9E;">原型</span>
+    <div style="flex:1;"></div>
+    <div style="display:flex;background:#2E333A;border-radius:6px;padding:3px;gap:2px;">
+      <button onclick="{{ showUser }}" style="{{ tabUserStyle }}">使用者端 · 手機</button>
+      <button onclick="{{ showAdmin }}" style="{{ tabAdminStyle }}">後台 · 桌面</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="font-size:11px;color:#9E9E9E;">檢視狀態</span>
+      <select value="{{ simulate }}" onchange="{{ onSimulate }}" style="background:#2E333A;color:#fff;border:1px solid #3A4048;border-radius:4px;height:28px;padding:0 8px;font-size:12px;font-family:inherit;">
+        <option value="normal">正常</option>
+        <option value="loading">載入中</option>
+        <option value="error">錯誤</option>
+        <option value="empty">空資料</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 使用者端 登入(手機) -->
+  <sc-if value="{{ showUserLogin }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;justify-content:center;padding:40px 20px;">
+    <div style="width:390px;height:780px;background:#fff;border-radius:40px;box-shadow:0 24px 60px rgba(0,0,0,.22),0 0 0 11px #0d0f12,0 0 0 13px #2a2d31;overflow:hidden;display:flex;flex-direction:column;position:relative;">
+      <div style="height:44px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#333;flex:none;">
+        <span>9:41</span>
+        <div style="width:120px;height:26px;background:#0d0f12;border-radius:0 0 18px 18px;position:absolute;left:50%;transform:translateX(-50%);top:0;"></div>
+        <span style="letter-spacing:1px;">●●●● ⌃ ▮</span>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 30px;">
+        <div style="width:56px;height:56px;border-radius:15px;background:#FFC107;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:26px;color:#1F2327;margin-bottom:18px;">P</div>
+        <div style="font-size:22px;font-weight:700;color:#333;margin-bottom:6px;">P2P 交易</div>
+        <div style="font-size:13px;color:#999;margin-bottom:28px;">登入以開始買賣 USDT</div>
+
+        <label for="ul-acc" style="display:block;font-size:12px;color:#666;margin-bottom:6px;">帳號 <span style="color:#F44336;">*</span></label>
+        <input id="ul-acc" type="text" value="{{ userAcc }}" onchange="{{ onUserAcc }}" placeholder="請輸入帳號" style="{{ userAccStyle }}">
+        <sc-if value="{{ userAccErr }}" hint-placeholder-val=""><div style="font-size:11px;color:#F44336;margin-top:5px;">{{ userAccErr }}</div></sc-if>
+
+        <div style="height:16px;"></div>
+        <label for="ul-pwd" style="display:block;font-size:12px;color:#666;margin-bottom:6px;">密碼 <span style="color:#F44336;">*</span></label>
+        <input id="ul-pwd" type="password" value="{{ userPwd }}" onchange="{{ onUserPwd }}" placeholder="請輸入密碼" style="{{ userPwdStyle }}">
+        <sc-if value="{{ userPwdErr }}" hint-placeholder-val=""><div style="font-size:11px;color:#F44336;margin-top:5px;">{{ userPwdErr }}</div></sc-if>
+
+        <sc-if value="{{ userLoginGeneral }}" hint-placeholder-val="">
+          <div style="margin-top:14px;background:#FDECEA;border:1px solid #F5C6C2;border-radius:4px;padding:9px 12px;font-size:12px;color:#C62828;">{{ userLoginGeneral }}</div>
+        </sc-if>
+
+        <button onclick="{{ submitUserLogin }}" disabled="{{ userLoggingIn }}" style="{{ userLoginBtnStyle }}">
+          <sc-if value="{{ userLoggingIn }}" hint-placeholder-val=""><span style="width:15px;height:15px;border:2px solid rgba(31,35,39,.35);border-top-color:#1F2327;border-radius:50%;display:inline-block;animation:p2p-spin .7s linear infinite;"></span></sc-if>
+          {{ userLoginLabel }}
+        </button>
+        <div style="margin-top:18px;font-size:11px;color:#BDBDBD;line-height:1.7;">示範帳號:testdemo001<br>密碼:a12345678</div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- 使用者端(手機) -->
+  <sc-if value="{{ showUserApp }}" hint-placeholder-val="">
+  <div style="display:flex;justify-content:center;padding:40px 20px;">
+    <div style="width:390px;height:780px;background:#F5F5F7;border-radius:40px;box-shadow:0 24px 60px rgba(0,0,0,.22),0 0 0 11px #0d0f12,0 0 0 13px #2a2d31;overflow:hidden;display:flex;flex-direction:column;position:relative;">
+
+      <!-- 狀態列 -->
+      <div style="height:44px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;color:#333;flex:none;">
+        <span>9:41</span>
+        <div style="width:120px;height:26px;background:#0d0f12;border-radius:0 0 18px 18px;position:absolute;left:50%;transform:translateX(-50%);top:0;"></div>
+        <span style="letter-spacing:1px;">●●●● ⌃ ▮</span>
+      </div>
+
+      <!-- AppBar -->
+      <div style="background:#fff;flex:none;border-bottom:1px solid #EBEBEB;">
+        <div style="height:52px;display:flex;align-items:center;padding:0 16px;gap:10px;">
+          <div style="width:26px;height:26px;border-radius:7px;background:#FFC107;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#1F2327;">P</div>
+          <span style="font-size:16px;font-weight:600;color:#333;">P2P 交易</span>
+          <div style="flex:1;"></div>
+          <button onclick="{{ logoutUser }}" style="border:none;background:none;color:#999;font-size:12px;cursor:pointer;padding:6px 4px;font-family:inherit;">登出</button>
+        </div>
+      </div>
+
+      <!-- 內容 -->
+      <div style="flex:1;overflow-y:auto;">
+
+        <!-- /  掛單 -->
+        <sc-if value="{{ isCreate }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:16px 16px 28px;">
+          <div style="font-size:13px;font-weight:600;color:#666;margin-bottom:8px;">我要</div>
+          <div style="display:flex;gap:10px;margin-bottom:20px;">
+            <button onclick="{{ setBuy }}" style="{{ buyBtnStyle }}">買幣 (USDT)</button>
+            <button onclick="{{ setSell }}" style="{{ sellBtnStyle }}">賣幣 (USDT)</button>
+          </div>
+
+          <div style="display:flex;gap:12px;margin-bottom:16px;">
+            <div style="flex:1;">
+              <label style="display:block;font-size:12px;color:#666;margin-bottom:6px;">幣種</label>
+              <div style="height:40px;border:1px solid #D9D9D9;border-radius:4px;background:#F5F5F7;display:flex;align-items:center;padding:0 12px;color:#333;font-size:13px;">USDT</div>
+            </div>
+            <div style="flex:1;">
+              <label style="display:block;font-size:12px;color:#666;margin-bottom:6px;">法幣</label>
+              <div style="height:40px;border:1px solid #D9D9D9;border-radius:4px;background:#F5F5F7;display:flex;align-items:center;padding:0 12px;color:#333;font-size:13px;">TWD</div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <label for="p2p-price" style="display:block;font-size:12px;color:#666;margin-bottom:6px;">單價(TWD / USDT) <span style="color:#F44336;">*</span></label>
+            <input id="p2p-price" type="number" inputmode="decimal" value="{{ formPrice }}" onchange="{{ onPrice }}" placeholder="例如 32.10" style="{{ priceInputStyle }}">
+            <sc-if value="{{ errPrice }}" hint-placeholder-val="">
+              <div style="font-size:11px;color:#F44336;margin-top:5px;">{{ errPrice }}</div>
+            </sc-if>
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <label for="p2p-qty" style="display:block;font-size:12px;color:#666;margin-bottom:6px;">數量(USDT) <span style="color:#F44336;">*</span></label>
+            <input id="p2p-qty" type="number" inputmode="decimal" value="{{ formQuantity }}" onchange="{{ onQty }}" placeholder="例如 100" style="{{ qtyInputStyle }}">
+            <sc-if value="{{ errQuantity }}" hint-placeholder-val="">
+              <div style="font-size:11px;color:#F44336;margin-top:5px;">{{ errQuantity }}</div>
+            </sc-if>
+          </div>
+
+          <div style="margin-bottom:18px;">
+            <label style="display:block;font-size:12px;color:#666;margin-bottom:8px;">付款方式 <span style="color:#F44336;">*</span></label>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button onclick="{{ setPayBank }}" style="{{ payBankStyle }}"><span style="{{ payBankDot }}"></span>銀行轉帳</button>
+              <button onclick="{{ setPayStore }}" style="{{ payStoreStyle }}"><span style="{{ payStoreDot }}"></span>超商代收</button>
+            </div>
+          </div>
+
+          <div style="background:#FFFDF5;border:1px solid #FFE082;border-radius:4px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <span style="font-size:12px;color:#666;">總額</span>
+            <span style="font-size:18px;font-weight:700;color:#FF8F00;">{{ totalDisplay }} <span style="font-size:12px;font-weight:400;color:#999;">TWD</span></span>
+          </div>
+
+          <button onclick="{{ submitOrder }}" disabled="{{ submitting }}" style="{{ submitBtnStyle }}">
+            <sc-if value="{{ submitting }}" hint-placeholder-val="">
+              <span style="width:15px;height:15px;border:2px solid rgba(31,35,39,.35);border-top-color:#1F2327;border-radius:50%;display:inline-block;animation:p2p-spin .7s linear infinite;"></span>
+            </sc-if>
+            {{ submitLabel }}
+          </button>
+        </div>
+        </sc-if>
+
+        <!-- /my-orders 我的掛單 -->
+        <sc-if value="{{ isMine }}" hint-placeholder-val="">
+        <div style="padding:16px;">
+          <div style="font-size:16px;font-weight:600;color:#333;margin-bottom:14px;">我的掛單</div>
+
+          <sc-if value="{{ listLoading }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="height:96px;background:#fff;border-radius:8px;border:1px solid #EBEBEB;opacity:.6;"></div>
+              <div style="height:96px;background:#fff;border-radius:8px;border:1px solid #EBEBEB;opacity:.4;"></div>
+              <div style="height:96px;background:#fff;border-radius:8px;border:1px solid #EBEBEB;opacity:.25;"></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ listError }}" hint-placeholder-val="">
+            <div style="text-align:center;padding:56px 20px;">
+              <div style="font-size:32px;margin-bottom:8px;color:#F44336;">!</div>
+              <div style="font-size:14px;color:#333;font-weight:500;margin-bottom:4px;">載入失敗</div>
+              <div style="font-size:12px;color:#999;margin-bottom:16px;">無法取得掛單資料,請稍後再試。</div>
+              <button onclick="{{ retryMine }}" style="height:36px;padding:0 20px;border:1px solid #D9D9D9;background:#fff;border-radius:4px;font-size:14px;font-weight:500;color:#333;cursor:pointer;">重新載入</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ mineEmpty }}" hint-placeholder-val="">
+            <div style="text-align:center;padding:64px 20px;">
+              <div style="width:56px;height:56px;border-radius:50%;background:#EFEFF2;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#BDBDBD;">＋</div>
+              <div style="font-size:14px;color:#666;margin-bottom:16px;">尚無掛單</div>
+              <button onclick="{{ goCreate }}" style="height:36px;padding:0 20px;background:#FFC107;border:none;border-radius:4px;font-size:14px;font-weight:500;color:#1F2327;cursor:pointer;">前往掛單</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ mineReady }}" hint-placeholder-val="">
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <sc-for list="{{ myOrders }}" as="o" hint-placeholder-count="2">
+              <div style="background:#fff;border:1px solid #EBEBEB;border-radius:8px;padding:14px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                  <span style="{{ o.typeChipStyle }}">{{ o.typeLabel }}</span>
+                  <span style="{{ o.statusChipStyle }}"><span style="{{ o.statusDotStyle }}"></span>{{ o.statusLabel }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:#666;margin-bottom:6px;">
+                  <span>單價</span><span style="color:#333;font-weight:500;">{{ o.priceFmt }} TWD</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:#666;margin-bottom:6px;">
+                  <span>數量</span><span style="color:#333;font-weight:500;">{{ o.qtyFmt }} USDT</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:#666;margin-bottom:6px;">
+                  <span>總額</span><span style="color:#FF8F00;font-weight:700;">{{ o.totalFmt }} TWD</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:#666;margin-bottom:6px;">
+                  <span>付款方式</span><span style="color:#333;">{{ o.payLabel }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;color:#666;padding-bottom:2px;">
+                  <span>建立時間</span><span style="color:#999;">{{ o.dateFmt }}</span>
+                </div>
+                <sc-if value="{{ o.isOpen }}" hint-placeholder-val="">
+                  <button onclick="{{ o.onCancel }}" style="margin-top:12px;width:100%;height:36px;border:1px solid #F44336;background:#fff;color:#F44336;border-radius:4px;font-size:14px;font-weight:500;cursor:pointer;">取消掛單</button>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          </sc-if>
+        </div>
+        </sc-if>
+
+      </div>
+
+      <!-- 底部導覽列 -->
+      <div style="flex:none;height:60px;background:#fff;border-top:1px solid #EBEBEB;display:flex;padding-bottom:6px;">
+        <button onclick="{{ goCreate }}" style="{{ bottomCreateStyle }}">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+          掛單
+        </button>
+        <button onclick="{{ goMine }}" style="{{ bottomMineStyle }}">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+          我的掛單
+        </button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- 後台 登入(桌面) -->
+  <sc-if value="{{ showAdminLogin }}" hint-placeholder-val="">
+  <div style="padding:72px 20px;display:flex;justify-content:center;">
+    <div style="width:380px;max-width:100%;background:#fff;border-radius:8px;box-shadow:0 18px 50px rgba(0,0,0,.12);padding:40px 36px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:26px;">
+        <div style="width:36px;height:36px;border-radius:9px;background:#FFC107;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;color:#1F2327;">P</div>
+        <div>
+          <div style="font-size:17px;font-weight:700;color:#333;line-height:1.2;">後台管理</div>
+          <div style="font-size:12px;color:#999;">P2P Exchange v1</div>
+        </div>
+      </div>
+
+      <label for="al-acc" style="display:block;font-size:12px;color:#666;margin-bottom:6px;">帳號 <span style="color:#F44336;">*</span></label>
+      <input id="al-acc" type="text" value="{{ adminAcc }}" onchange="{{ onAdminAcc }}" placeholder="請輸入管理員帳號" style="{{ adminAccStyle }}">
+      <sc-if value="{{ adminAccErr }}" hint-placeholder-val=""><div style="font-size:11px;color:#F44336;margin-top:5px;">{{ adminAccErr }}</div></sc-if>
+
+      <div style="height:16px;"></div>
+      <label for="al-pwd" style="display:block;font-size:12px;color:#666;margin-bottom:6px;">密碼 <span style="color:#F44336;">*</span></label>
+      <input id="al-pwd" type="password" value="{{ adminPwd }}" onchange="{{ onAdminPwd }}" placeholder="請輸入密碼" style="{{ adminPwdStyle }}">
+      <sc-if value="{{ adminPwdErr }}" hint-placeholder-val=""><div style="font-size:11px;color:#F44336;margin-top:5px;">{{ adminPwdErr }}</div></sc-if>
+
+      <sc-if value="{{ adminLoginGeneral }}" hint-placeholder-val="">
+        <div style="margin-top:14px;background:#FDECEA;border:1px solid #F5C6C2;border-radius:4px;padding:9px 12px;font-size:12px;color:#C62828;">{{ adminLoginGeneral }}</div>
+      </sc-if>
+
+      <button onclick="{{ submitAdminLogin }}" disabled="{{ adminLoggingIn }}" style="{{ adminLoginBtnStyle }}">
+        <sc-if value="{{ adminLoggingIn }}" hint-placeholder-val=""><span style="width:15px;height:15px;border:2px solid rgba(31,35,39,.35);border-top-color:#1F2327;border-radius:50%;display:inline-block;animation:p2p-spin .7s linear infinite;"></span></sc-if>
+        {{ adminLoginLabel }}
+      </button>
+      <div style="margin-top:18px;font-size:11px;color:#BDBDBD;line-height:1.7;">示範帳號:admin001  ·  密碼:admin@1234</div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- 後台(桌面) -->
+  <sc-if value="{{ showAdminApp }}" hint-placeholder-val="">
+  <div style="padding:32px 20px;display:flex;justify-content:center;">
+    <div style="width:1120px;max-width:100%;height:720px;background:#fff;border-radius:8px;box-shadow:0 18px 50px rgba(0,0,0,.16);overflow:hidden;display:flex;">
+
+      <!-- 側邊欄 160 -->
+      <div style="width:160px;flex:none;background:#1F2327;color:#fff;display:flex;flex-direction:column;padding:16px 0;">
+        <div style="padding:0 16px 18px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #2E333A;margin-bottom:10px;">
+          <div style="width:24px;height:24px;border-radius:6px;background:#FFC107;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#1F2327;">P</div>
+          <span style="font-size:13px;font-weight:600;">後台管理</span>
+        </div>
+        <div style="{{ navAdminListStyle }}" onclick="{{ goAdminList }}">訂單管理</div>
+        <div style="margin-top:auto;border-top:1px solid #2E333A;padding-top:12px;">
+          <div style="padding:2px 16px 8px;font-size:11px;color:#6B7178;">admin001</div>
+          <button onclick="{{ logoutAdmin }}" style="width:100%;text-align:left;border:none;background:none;color:#C7CCD2;font-size:12px;cursor:pointer;padding:6px 16px;font-family:inherit;">登出</button>
+        </div>
+      </div>
+
+      <!-- 主區 -->
+      <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+        <!-- Header 56 -->
+        <div style="height:56px;flex:none;border-bottom:1px solid #EBEBEB;display:flex;align-items:center;padding:0 24px;gap:12px;">
+          <sc-if value="{{ isDetail }}" hint-placeholder-val="">
+            <button onclick="{{ goAdminList }}" style="border:none;background:none;color:#666;font-size:13px;cursor:pointer;padding:6px 8px;margin-left:-8px;">← 返回</button>
+          </sc-if>
+          <span style="font-size:16px;font-weight:600;color:#333;">{{ adminTitle }}</span>
+          <div style="flex:1;"></div>
+          <div style="width:32px;height:32px;border-radius:50%;background:#FFE082;color:#FF8F00;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;">A</div>
+        </div>
+
+        <div style="flex:1;overflow-y:auto;background:#F5F5F7;">
+
+          <!-- /admin 訂單管理 -->
+          <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:20px 24px;">
+            <!-- tabs -->
+            <div style="display:flex;gap:4px;border-bottom:1px solid #EBEBEB;margin-bottom:16px;">
+              <sc-for list="{{ adminTabs }}" as="t" hint-placeholder-count="4">
+                <button onclick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}<span style="{{ t.countStyle }}">{{ t.count }}</span></button>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ listLoading }}" hint-placeholder-val="">
+              <div style="background:#fff;border:1px solid #EBEBEB;border-radius:8px;overflow:hidden;">
+                <div style="height:44px;background:#FAFAFA;border-bottom:1px solid #EBEBEB;"></div>
+                <div style="height:52px;border-bottom:1px solid #F2F2F2;opacity:.6;"></div>
+                <div style="height:52px;border-bottom:1px solid #F2F2F2;opacity:.4;"></div>
+                <div style="height:52px;opacity:.25;"></div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ listError }}" hint-placeholder-val="">
+              <div style="background:#fff;border:1px solid #EBEBEB;border-radius:8px;text-align:center;padding:60px 20px;">
+                <div style="font-size:32px;color:#F44336;margin-bottom:8px;">!</div>
+                <div style="font-size:14px;font-weight:500;color:#333;margin-bottom:4px;">載入失敗</div>
+                <div style="font-size:12px;color:#999;margin-bottom:16px;">無法取得訂單資料,請稍後再試。</div>
+                <button onclick="{{ retryAdmin }}" style="height:36px;padding:0 20px;border:1px solid #D9D9D9;background:#fff;border-radius:4px;font-size:14px;font-weight:500;color:#333;cursor:pointer;">重新載入</button>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ adminEmpty }}" hint-placeholder-val="">
+              <div style="background:#fff;border:1px solid #EBEBEB;border-radius:8px;text-align:center;padding:72px 20px;color:#999;font-size:14px;">尚無訂單</div>
+            </sc-if>
+
+            <sc-if value="{{ adminReady }}" hint-placeholder-val="">
+            <div style="background:#fff;border:1px solid #EBEBEB;border-radius:8px;overflow-x:auto;">
+              <div style="display:flex;height:44px;min-width:820px;background:#FAFAFA;border-bottom:1px solid #EBEBEB;align-items:center;font-size:12px;color:#999;font-weight:500;padding:0 16px;white-space:nowrap;">
+                <span style="width:130px;">訂單編號</span>
+                <span style="width:72px;">類型</span>
+                <span style="width:64px;">幣種</span>
+                <span style="width:96px;text-align:right;">單價</span>
+                <span style="width:84px;text-align:right;">數量</span>
+                <span style="width:108px;text-align:right;">總額</span>
+                <span style="width:96px;text-align:center;">付款</span>
+                <span style="flex:1;text-align:center;">狀態</span>
+                <span style="width:140px;text-align:right;">建立時間</span>
+              </div>
+              <sc-for list="{{ adminOrders }}" as="o" hint-placeholder-count="4">
+                <div onclick="{{ o.onOpen }}" style="display:flex;height:52px;min-width:820px;align-items:center;font-size:13px;color:#333;padding:0 16px;border-bottom:1px solid #F2F2F2;cursor:pointer;white-space:nowrap;" style-hover="background:#FFFDF5;">
+                  <span style="width:130px;color:#666;font-family:monospace;font-size:12px;">{{ o.shortId }}</span>
+                  <span style="width:72px;"><span style="{{ o.typeChipStyle }}">{{ o.typeLabel }}</span></span>
+                  <span style="width:64px;">{{ o.asset }}</span>
+                  <span style="width:96px;text-align:right;">{{ o.priceFmt }}</span>
+                  <span style="width:84px;text-align:right;">{{ o.qtyFmt }}</span>
+                  <span style="width:108px;text-align:right;font-weight:600;color:#FF8F00;">{{ o.totalFmt }}</span>
+                  <span style="width:96px;text-align:center;color:#666;font-size:12px;">{{ o.payLabel }}</span>
+                  <span style="flex:1;text-align:center;"><span style="{{ o.statusChipStyle }}"><span style="{{ o.statusDotStyle }}"></span>{{ o.statusLabel }}</span></span>
+                  <span style="width:140px;text-align:right;color:#999;font-size:12px;">{{ o.dateFmt }}</span>
+                </div>
+              </sc-for>
+            </div>
+            </sc-if>
+          </div>
+          </sc-if>
+
+          <!-- /admin/orders/:id 詳情 -->
+          <sc-if value="{{ isDetail }}" hint-placeholder-val="">
+          <div style="padding:24px;">
+            <sc-if value="{{ detailMissing }}" hint-placeholder-val="">
+              <div style="background:#fff;border:1px solid #EBEBEB;border-radius:8px;text-align:center;padding:72px 20px;">
+                <div style="font-size:32px;color:#F44336;margin-bottom:8px;">!</div>
+                <div style="font-size:14px;font-weight:500;color:#333;margin-bottom:4px;">載入失敗</div>
+                <div style="font-size:12px;color:#999;">找不到這筆訂單。</div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ detailReady }}" hint-placeholder-val="">
+            <div style="max-width:640px;">
+              <div style="background:#fff;border:1px solid #EBEBEB;border-radius:8px;overflow:hidden;">
+                <div style="display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid #F2F2F2;">
+                  <span style="{{ detail.typeChipStyle }}">{{ detail.typeLabel }}</span>
+                  <span style="{{ detail.statusChipStyle }}"><span style="{{ detail.statusDotStyle }}"></span>{{ detail.statusLabel }}</span>
+                  <div style="flex:1;"></div>
+                  <span style="font-family:monospace;font-size:12px;color:#999;">{{ detail.id }}</span>
+                </div>
+                <div style="padding:8px 20px;">
+                  <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #F5F5F5;font-size:13px;"><span style="color:#999;">幣種</span><span style="color:#333;font-weight:500;">{{ detail.asset }}</span></div>
+                  <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #F5F5F5;font-size:13px;"><span style="color:#999;">法幣</span><span style="color:#333;font-weight:500;">{{ detail.fiat }}</span></div>
+                  <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #F5F5F5;font-size:13px;"><span style="color:#999;">單價</span><span style="color:#333;font-weight:500;">{{ detail.priceFmt }} TWD</span></div>
+                  <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #F5F5F5;font-size:13px;"><span style="color:#999;">數量</span><span style="color:#333;font-weight:500;">{{ detail.qtyFmt }} USDT</span></div>
+                  <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #F5F5F5;font-size:13px;"><span style="color:#999;">總額</span><span style="color:#FF8F00;font-weight:700;">{{ detail.totalFmt }} TWD</span></div>
+                  <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #F5F5F5;font-size:13px;"><span style="color:#999;">付款方式</span><span style="color:#333;font-weight:500;">{{ detail.payLabel }}</span></div>
+                  <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #F5F5F5;font-size:13px;"><span style="color:#999;">建立者</span><span style="color:#333;">{{ detail.createdBy }}</span></div>
+                  <div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #F5F5F5;font-size:13px;"><span style="color:#999;">建立時間</span><span style="color:#666;">{{ detail.dateFmt }}</span></div>
+                  <div style="display:flex;justify-content:space-between;padding:11px 0;font-size:13px;"><span style="color:#999;">更新時間</span><span style="color:#666;">{{ detail.updatedFmt }}</span></div>
+                </div>
+              </div>
+              <sc-if value="{{ detail.isOpen }}" hint-placeholder-val="">
+                <button onclick="{{ openCompleteDialog }}" style="margin-top:16px;height:36px;padding:0 24px;background:#FFC107;border:none;border-radius:4px;font-size:14px;font-weight:500;color:#1F2327;cursor:pointer;">標記完成</button>
+              </sc-if>
+              <sc-if value="{{ detailClosed }}" hint-placeholder-val="">
+                <div style="margin-top:16px;font-size:12px;color:#999;">此訂單已為「{{ detail.statusLabel }}」,無可執行動作。</div>
+              </sc-if>
+            </div>
+            </sc-if>
+          </div>
+          </sc-if>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- 確認對話框 -->
+  <sc-if value="{{ dialogOpen }}" hint-placeholder-val="">
+  <div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#fff;border-radius:8px;width:340px;max-width:100%;box-shadow:0 12px 40px rgba(0,0,0,.3);overflow:hidden;">
+      <div style="padding:20px 22px 8px;font-size:16px;font-weight:600;color:#333;">{{ dialogTitle }}</div>
+      <div style="padding:0 22px 20px;font-size:13px;color:#666;line-height:1.6;">{{ dialogBody }}</div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:0 16px 16px;">
+        <button onclick="{{ closeDialog }}" disabled="{{ dialogBusy }}" style="height:36px;padding:0 16px;border:none;background:none;color:#666;font-size:14px;font-weight:500;cursor:pointer;border-radius:4px;">取消</button>
+        <button onclick="{{ confirmDialog }}" disabled="{{ dialogBusy }}" style="{{ dialogConfirmStyle }}">
+          <sc-if value="{{ dialogBusy }}" hint-placeholder-val="">
+            <span style="width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;display:inline-block;animation:p2p-spin .7s linear infinite;"></span>
+          </sc-if>
+          {{ dialogConfirmLabel }}
+        </button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- Snackbar -->
+  <sc-if value="{{ snackOpen }}" hint-placeholder-val="">
+  <div style="{{ snackStyle }}">
+    <span style="{{ snackDotStyle }}"></span>{{ snackMessage }}
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:860}}">
+class Component extends DCLogic {
+  state = {
+    orders: [
+      { id: "ORD-20260618-0007", type: "buy",  asset: "USDT", fiat: "TWD", price: 32.10, quantity: 100, totalAmount: 3210, paymentMethod: "bank_transfer",      status: "open",      createdBy: "me",  createdAt: "2026-06-18T09:24:00", updatedAt: "2026-06-18T09:24:00" },
+      { id: "ORD-20260617-0004", type: "sell", asset: "USDT", fiat: "TWD", price: 32.50, quantity: 50,  totalAmount: 1625, paymentMethod: "bank_transfer",      status: "completed", createdBy: "me",  createdAt: "2026-06-17T14:05:00", updatedAt: "2026-06-17T15:40:00" },
+      { id: "ORD-20260618-0011", type: "sell", asset: "USDT", fiat: "TWD", price: 31.80, quantity: 200, totalAmount: 6360, paymentMethod: "convenience_store", status: "open",      createdBy: "u2",  createdAt: "2026-06-18T10:12:00", updatedAt: "2026-06-18T10:12:00" },
+      { id: "ORD-20260616-0002", type: "buy",  asset: "USDT", fiat: "TWD", price: 31.90, quantity: 300, totalAmount: 9570, paymentMethod: "bank_transfer",      status: "cancelled", createdBy: "u3",  createdAt: "2026-06-16T20:31:00", updatedAt: "2026-06-16T21:02:00" },
+    ],
+    side: "user",
+    userRoute: "create",
+    adminRoute: "list",
+    selectedId: null,
+    adminTab: "all",
+    userAuthed: false,
+    adminAuthed: false,
+    userLogin: { account: "", password: "" },
+    userLoginErr: {},
+    userLoggingIn: false,
+    adminLogin: { account: "", password: "" },
+    adminLoginErr: {},
+    adminLoggingIn: false,
+    form: { type: "buy", asset: "USDT", fiat: "TWD", price: "", quantity: "", paymentMethod: "bank_transfer" },
+    errors: {},
+    submitting: false,
+    listLoading: false,
+    dialog: { open: false, kind: null, orderId: null, busy: false },
+    snackbar: { open: false, message: "", severity: "success" },
+    simulate: "normal",
+    seq: 12,
+  };
+
+  TYPE = { buy: { label: "買幣", color: "#4CAF50" }, sell: { label: "賣幣", color: "#F44336" } };
+  USER_CREDS = { testdemo001: "a12345678", testdemo002: "a12345678", testdemo003: "a12345678" };
+  ADMIN_CREDS = { admin001: "admin@1234" };
+  STATUS = {
+    open:      { label: "進行中", color: "#FF9800", bg: "#FFF3E0", text: "#E65100" },
+    completed: { label: "已完成", color: "#4CAF50", bg: "#E8F5E9", text: "#2E7D32" },
+    cancelled: { label: "已取消", color: "#9E9E9E", bg: "#F2F2F2", text: "#616161" },
+  };
+
+  fmt(n) { return Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 }); }
+  payLabel(p) { return p === "bank_transfer" ? "銀行轉帳" : "超商代收"; }
+  fmtDate(iso) {
+    const d = new Date(iso);
+    const p = (x) => String(x).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  canCancel(s) { return s === "open"; }
+  canComplete(s) { return s === "open"; }
+
+  typeChip(t) {
+    const m = this.TYPE[t];
+    return `display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:4px;background:${m.color};color:#fff;font-size:12px;font-weight:600;line-height:1;white-space:nowrap;`;
+  }
+  statusChip(s) {
+    const m = this.STATUS[s];
+    return `display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:11px;background:${m.bg};border:1px solid ${m.color};color:${m.text};font-size:12px;font-weight:500;line-height:1;white-space:nowrap;`;
+  }
+  statusDot(s) {
+    return `width:6px;height:6px;border-radius:50%;background:${this.STATUS[s].color};display:inline-block;flex:none;`;
+  }
+
+  toVM(o, handlers) {
+    const t = this.TYPE[o.type], s = this.STATUS[o.status];
+    return {
+      ...o,
+      shortId: o.id.replace("ORD-", ""),
+      typeLabel: t.label,
+      statusLabel: s.label,
+      typeChipStyle: this.typeChip(o.type),
+      statusChipStyle: this.statusChip(o.status),
+      statusDotStyle: this.statusDot(o.status),
+      payLabel: this.payLabel(o.paymentMethod),
+      priceFmt: this.fmt(o.price),
+      qtyFmt: this.fmt(o.quantity),
+      totalFmt: this.fmt(o.totalAmount),
+      dateFmt: this.fmtDate(o.createdAt),
+      updatedFmt: this.fmtDate(o.updatedAt),
+      isOpen: o.status === "open",
+      ...handlers,
+    };
+  }
+
+  // 導覽
+  showUser = () => this.setState({ side: "user" });
+  showAdmin = () => this.setState({ side: "admin", adminRoute: "list" });
+  goCreate = () => this.setState({ userRoute: "create" });
+  goMine = () => { this.setState({ userRoute: "mine" }); this.loadList(); };
+  goAdminList = () => { this.setState({ adminRoute: "list", selectedId: null }); this.loadList(); };
+  openDetail = (id) => this.setState({ adminRoute: "detail", selectedId: id });
+
+  onSimulate = (e) => this.setState({ simulate: e.target.value });
+
+  // 登入
+  onUserAcc = (e) => { const v = e.target.value; this.setState((st) => ({ userLogin: { ...st.userLogin, account: v }, userLoginErr: { ...st.userLoginErr, account: undefined, general: undefined } })); };
+  onUserPwd = (e) => { const v = e.target.value; this.setState((st) => ({ userLogin: { ...st.userLogin, password: v }, userLoginErr: { ...st.userLoginErr, password: undefined, general: undefined } })); };
+  onAdminAcc = (e) => { const v = e.target.value; this.setState((st) => ({ adminLogin: { ...st.adminLogin, account: v }, adminLoginErr: { ...st.adminLoginErr, account: undefined, general: undefined } })); };
+  onAdminPwd = (e) => { const v = e.target.value; this.setState((st) => ({ adminLogin: { ...st.adminLogin, password: v }, adminLoginErr: { ...st.adminLoginErr, password: undefined, general: undefined } })); };
+
+  validateLogin(form) {
+    const errors = {};
+    if (!form.account.trim()) errors.account = "請輸入帳號";
+    if (!form.password) errors.password = "請輸入密碼";
+    return errors;
+  }
+
+  submitUserLogin = () => {
+    if (this.state.userLoggingIn) return;
+    const errors = this.validateLogin(this.state.userLogin);
+    if (Object.keys(errors).length) { this.setState({ userLoginErr: errors }); return; }
+    this.setState({ userLoggingIn: true, userLoginErr: {} });
+    setTimeout(() => {
+      const { account, password } = this.state.userLogin;
+      if (this.USER_CREDS[account.trim()] !== password) {
+        this.setState({ userLoggingIn: false, userLoginErr: { general: "帳號或密碼錯誤" } });
+        return;
+      }
+      this.setState({ userAuthed: true, userLoggingIn: false, userLogin: { account: "", password: "" }, userLoginErr: {} });
+      this.snack("登入成功", "success");
+    }, 650);
+  };
+
+  submitAdminLogin = () => {
+    if (this.state.adminLoggingIn) return;
+    const errors = this.validateLogin(this.state.adminLogin);
+    if (Object.keys(errors).length) { this.setState({ adminLoginErr: errors }); return; }
+    this.setState({ adminLoggingIn: true, adminLoginErr: {} });
+    setTimeout(() => {
+      const { account, password } = this.state.adminLogin;
+      if (this.ADMIN_CREDS[account.trim()] !== password) {
+        this.setState({ adminLoggingIn: false, adminLoginErr: { general: "帳號或密碼錯誤" } });
+        return;
+      }
+      this.setState({ adminAuthed: true, adminLoggingIn: false, adminLogin: { account: "", password: "" }, adminLoginErr: {} });
+      this.snack("登入成功", "success");
+      this.loadList();
+    }, 650);
+  };
+
+  logoutUser = () => this.setState({ userAuthed: false, userRoute: "create", userLogin: { account: "", password: "" }, userLoginErr: {} });
+  logoutAdmin = () => this.setState({ adminAuthed: false, adminRoute: "list", selectedId: null, adminLogin: { account: "", password: "" }, adminLoginErr: {} });
+
+  loadList() {
+    if (this.state.simulate === "loading") { this.setState({ listLoading: true }); return; }
+    this.setState({ listLoading: true });
+    setTimeout(() => this.setState({ listLoading: false }), 600);
+  }
+
+  // 表單
+  setBuy = () => this.setState((st) => ({ form: { ...st.form, type: "buy" } }));
+  setSell = () => this.setState((st) => ({ form: { ...st.form, type: "sell" } }));
+  setPayBank = () => this.setState((st) => ({ form: { ...st.form, paymentMethod: "bank_transfer" } }));
+  setPayStore = () => this.setState((st) => ({ form: { ...st.form, paymentMethod: "convenience_store" } }));
+  onPrice = (e) => { const v = e.target.value; this.setState((st) => ({ form: { ...st.form, price: v }, errors: { ...st.errors, price: undefined } })); };
+  onQty = (e) => { const v = e.target.value; this.setState((st) => ({ form: { ...st.form, quantity: v }, errors: { ...st.errors, quantity: undefined } })); };
+
+  validate(form) {
+    const errors = {};
+    const price = parseFloat(form.price);
+    const qty = parseFloat(form.quantity);
+    if (form.price === "" || form.price == null) errors.price = "請輸入單價";
+    else if (isNaN(price) || price <= 0) errors.price = "單價必須大於 0";
+    if (form.quantity === "" || form.quantity == null) errors.quantity = "請輸入數量";
+    else if (isNaN(qty) || qty <= 0) errors.quantity = "數量必須大於 0";
+    return errors;
+  }
+
+  submitOrder = () => {
+    if (this.state.submitting) return;
+    const errors = this.validate(this.state.form);
+    if (Object.keys(errors).length) { this.setState({ errors }); return; }
+    this.setState({ submitting: true, errors: {} });
+    setTimeout(() => {
+      if (this.state.simulate === "error") {
+        this.setState({ submitting: false });
+        this.snack("建立失敗,請稍後再試", "error");
+        return;
+      }
+      const f = this.state.form;
+      const price = parseFloat(f.price), qty = parseFloat(f.quantity);
+      const now = new Date().toISOString().slice(0, 19);
+      const seq = this.state.seq + 1;
+      const id = `ORD-${now.slice(0,10).replace(/-/g,"")}-${String(seq).padStart(4,"0")}`;
+      const order = {
+        id, type: f.type, asset: f.asset, fiat: f.fiat,
+        price, quantity: qty, totalAmount: price * qty,
+        paymentMethod: f.paymentMethod, status: "open",
+        createdBy: "me", createdAt: now, updatedAt: now,
+      };
+      this.setState((st) => ({
+        orders: [order, ...st.orders],
+        submitting: false, seq,
+        form: { type: "buy", asset: "USDT", fiat: "TWD", price: "", quantity: "", paymentMethod: "bank_transfer" },
+        userRoute: "mine",
+      }));
+      this.snack("掛單建立成功", "success");
+      this.loadList();
+    }, 700);
+  };
+
+  // 對話框
+  openCancelDialog = (id) => this.setState({ dialog: { open: true, kind: "cancel", orderId: id, busy: false } });
+  openCompleteDialog = () => this.setState({ dialog: { open: true, kind: "complete", orderId: this.state.selectedId, busy: false } });
+  closeDialog = () => { if (this.state.dialog.busy) return; this.setState({ dialog: { open: false, kind: null, orderId: null, busy: false } }); };
+
+  confirmDialog = () => {
+    const { kind, orderId } = this.state.dialog;
+    this.setState((st) => ({ dialog: { ...st.dialog, busy: true } }));
+    setTimeout(() => {
+      if (this.state.simulate === "error") {
+        this.setState((st) => ({ dialog: { ...st.dialog, busy: false } }));
+        this.snack("操作失敗,請稍後再試", "error");
+        return;
+      }
+      const next = kind === "cancel" ? "cancelled" : "completed";
+      const now = new Date().toISOString().slice(0, 19);
+      this.setState((st) => ({
+        orders: st.orders.map((o) => o.id === orderId ? { ...o, status: next, updatedAt: now } : o),
+        dialog: { open: false, kind: null, orderId: null, busy: false },
+      }));
+      this.snack(kind === "cancel" ? "已取消掛單" : "已標記完成", "success");
+    }, 550);
+  };
+
+  snack(message, severity) {
+    this.setState({ snackbar: { open: true, message, severity } });
+    clearTimeout(this._snackT);
+    this._snackT = setTimeout(() => this.setState((st) => ({ snackbar: { ...st.snackbar, open: false } })), 2600);
+  }
+
+  renderVals() {
+    const st = this.state;
+    const sim = st.simulate;
+    const isUser = st.side === "user";
+    const isAdmin = st.side === "admin";
+    const isCreate = isUser && st.userRoute === "create";
+    const isMine = isUser && st.userRoute === "mine";
+    const isList = isAdmin && st.adminRoute === "list";
+    const isDetail = isAdmin && st.adminRoute === "detail";
+
+    const showUserLogin = isUser && !st.userAuthed;
+    const showUserApp = isUser && st.userAuthed;
+    const showAdminLogin = isAdmin && !st.adminAuthed;
+    const showAdminApp = isAdmin && st.adminAuthed;
+
+    const loginField = (err) => "width:100%;height:40px;border-radius:4px;padding:0 12px;font-size:14px;font-family:inherit;color:#333;outline:none;background:#fff;border:1px solid " + (err ? "#F44336" : "#D9D9D9") + ";";
+    const loginBtn = (busy) => "width:100%;height:44px;margin-top:24px;border:none;border-radius:4px;background:" + (busy ? "#FFE082" : "#FFC107") + ";color:#1F2327;font-size:15px;font-weight:600;cursor:" + (busy ? "default" : "pointer") + ";display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;";
+    const ul = st.userLogin, ule = st.userLoginErr, al = st.adminLogin, ale = st.adminLoginErr;
+
+    // 列表狀態
+    const listLoading = st.listLoading && sim !== "error";
+    const listError = sim === "error" && !st.listLoading;
+
+    // 我的掛單
+    const mineSource = sim === "empty" ? [] : st.orders.filter((o) => o.createdBy === "me");
+    const myOrders = mineSource.map((o) => this.toVM(o, { onCancel: () => this.openCancelDialog(o.id) }));
+    const mineEmpty = !listLoading && !listError && myOrders.length === 0;
+    const mineReady = !listLoading && !listError && myOrders.length > 0;
+
+    // 後台列表
+    const adminAll = sim === "empty" ? [] : st.orders;
+    const filtered = st.adminTab === "all" ? adminAll : adminAll.filter((o) => o.status === st.adminTab);
+    const adminOrders = filtered.map((o) => this.toVM(o, { onOpen: () => this.openDetail(o.id) }));
+    const adminEmpty = !listLoading && !listError && adminOrders.length === 0;
+    const adminReady = !listLoading && !listError && adminOrders.length > 0;
+
+    const counts = {
+      all: adminAll.length,
+      open: adminAll.filter((o) => o.status === "open").length,
+      completed: adminAll.filter((o) => o.status === "completed").length,
+      cancelled: adminAll.filter((o) => o.status === "cancelled").length,
+    };
+    const tabDef = [["all","全部"],["open","進行中"],["completed","已完成"],["cancelled","已取消"]];
+    const adminTabs = tabDef.map(([key, label]) => {
+      const active = st.adminTab === key;
+      return {
+        label, count: counts[key],
+        onClick: () => { this.setState({ adminTab: key }); },
+        style: `position:relative;height:40px;padding:0 14px;border:none;background:none;font-size:13px;font-weight:${active?"600":"400"};color:${active?"#FF8F00":"#666"};cursor:pointer;border-bottom:2px solid ${active?"#FFC107":"transparent"};margin-bottom:-1px;display:inline-flex;align-items:center;gap:6px;font-family:inherit;`,
+        countStyle: `min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:${active?"#FFE082":"#EFEFF2"};color:${active?"#FF8F00":"#999"};font-size:11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;`,
+      };
+    });
+
+    // 詳情
+    const selected = st.orders.find((o) => o.id === st.selectedId);
+    const detailMissing = isDetail && !selected;
+    const detailReady = isDetail && !!selected;
+    const detail = selected ? this.toVM(selected, {}) : {};
+    const detailClosed = detailReady && !detail.isOpen;
+
+    // 表單樣式
+    const f = st.form;
+    const price = parseFloat(f.price), qty = parseFloat(f.quantity);
+    const totalDisplay = (!isNaN(price) && price > 0 && !isNaN(qty) && qty > 0) ? this.fmt(price * qty) : "0";
+    const fieldBase = "width:100%;height:40px;border-radius:4px;padding:0 12px;font-size:14px;font-family:inherit;color:#333;outline:none;background:#fff;";
+    const okBorder = "border:1px solid #D9D9D9;";
+    const errBorder = "border:1px solid #F44336;";
+    const errPrice = st.errors.price || "";
+    const errQuantity = st.errors.quantity || "";
+
+    const typeBtn = (active, color) => active
+      ? `flex:1;height:40px;border-radius:4px;border:1.5px solid ${color};background:${color}14;color:${color};font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;`
+      : `flex:1;height:40px;border-radius:4px;border:1px solid #D9D9D9;background:#fff;color:#666;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;`;
+
+    const payBtn = (active) => `display:flex;align-items:center;gap:10px;height:42px;padding:0 14px;border-radius:4px;border:1px solid ${active?"#FFC107":"#D9D9D9"};background:${active?"#FFFDF5":"#fff"};color:#333;font-size:13px;cursor:pointer;font-family:inherit;text-align:left;`;
+    const payDot = (active) => `width:16px;height:16px;border-radius:50%;border:${active?"5px solid #FFC107":"2px solid #BDBDBD"};flex:none;box-sizing:border-box;`;
+
+    const navBtn = (active) => `position:relative;flex:1;height:42px;border:none;background:none;font-size:14px;font-weight:${active?"600":"400"};color:${active?"#333":"#999"};cursor:pointer;font-family:inherit;`;
+    const navBar = (active) => `position:absolute;left:16px;right:16px;bottom:0;height:2px;background:${active?"#FFC107":"transparent"};border-radius:2px 2px 0 0;`;
+
+    const submitDisabled = st.submitting;
+    const submitBtnStyle = `width:100%;height:44px;border:none;border-radius:4px;background:${submitDisabled?"#FFE082":"#FFC107"};color:#1F2327;font-size:15px;font-weight:600;cursor:${submitDisabled?"default":"pointer"};display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;`;
+
+    // 對話框
+    const d = st.dialog;
+    const dialogTitle = d.kind === "cancel" ? "取消掛單" : "標記完成";
+    const dialogBody = d.kind === "cancel" ? "確定要取消這筆掛單嗎?取消後狀態將變為「已取消」且無法復原。" : "確定要將這筆訂單標記為完成嗎?完成後狀態將變為「已完成」。";
+    const dialogConfirmLabel = d.kind === "cancel" ? "確定取消" : "確定完成";
+    const dialogConfirmColor = d.kind === "cancel" ? "#F44336" : "#FFC107";
+    const dialogConfirmText = d.kind === "cancel" ? "#fff" : "#1F2327";
+    const dialogConfirmStyle = `height:36px;padding:0 16px;border:none;border-radius:4px;background:${dialogConfirmColor};color:${dialogConfirmText};font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-family:inherit;opacity:${d.busy?".7":"1"};`;
+
+    // Snackbar
+    const sn = st.snackbar;
+    const snColor = sn.severity === "error" ? "#F44336" : "#4CAF50";
+    const snackStyle = `position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:90;background:#1F2327;color:#fff;border-radius:6px;padding:12px 18px;font-size:13px;font-weight:500;box-shadow:0 8px 28px rgba(0,0,0,.32);display:flex;align-items:center;gap:9px;animation:p2p-snack .25s ease;max-width:90vw;`;
+    const snackDotStyle = `width:8px;height:8px;border-radius:50%;background:${snColor};flex:none;`;
+
+    // 原型檢視列分頁
+    const chromeTab = (active) => `height:30px;padding:0 12px;border:none;border-radius:4px;background:${active?"#FFC107":"transparent"};color:${active?"#1F2327":"#C7CCD2"};font-size:12px;font-weight:${active?"600":"400"};cursor:pointer;font-family:inherit;`;
+
+    const adminTitle = isDetail ? "訂單詳情" : "訂單管理";
+
+    return {
+      isUser, isAdmin, isCreate, isMine, isList, isDetail,
+      showUserLogin, showUserApp, showAdminLogin, showAdminApp,
+      logoutUser: this.logoutUser, logoutAdmin: this.logoutAdmin,
+      userAcc: ul.account, userPwd: ul.password,
+      onUserAcc: this.onUserAcc, onUserPwd: this.onUserPwd,
+      userAccStyle: loginField(ule.account), userPwdStyle: loginField(ule.password),
+      userAccErr: ule.account || "", userPwdErr: ule.password || "", userLoginGeneral: ule.general || "",
+      submitUserLogin: this.submitUserLogin, userLoggingIn: st.userLoggingIn,
+      userLoginBtnStyle: loginBtn(st.userLoggingIn), userLoginLabel: st.userLoggingIn ? "登入中…" : "登入",
+      adminAcc: al.account, adminPwd: al.password,
+      onAdminAcc: this.onAdminAcc, onAdminPwd: this.onAdminPwd,
+      adminAccStyle: loginField(ale.account), adminPwdStyle: loginField(ale.password),
+      adminAccErr: ale.account || "", adminPwdErr: ale.password || "", adminLoginGeneral: ale.general || "",
+      submitAdminLogin: this.submitAdminLogin, adminLoggingIn: st.adminLoggingIn,
+      adminLoginBtnStyle: loginBtn(st.adminLoggingIn), adminLoginLabel: st.adminLoggingIn ? "登入中…" : "登入",
+      simulate: sim,
+      showUser: this.showUser, showAdmin: this.showAdmin, onSimulate: this.onSimulate,
+      goCreate: this.goCreate, goMine: this.goMine, goAdminList: this.goAdminList,
+      retryMine: this.goMine, retryAdmin: this.goAdminList,
+      tabUserStyle: chromeTab(isUser), tabAdminStyle: chromeTab(isAdmin),
+      navCreateStyle: navBtn(isCreate), navMineStyle: navBtn(isMine),
+      navCreateBar: navBar(isCreate), navMineBar: navBar(isMine),
+      bottomCreateStyle: `flex:1;height:100%;border:none;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:${isCreate?"600":"400"};color:${isCreate?"#FF8F00":"#9E9E9E"};cursor:pointer;font-family:inherit;`,
+      bottomMineStyle: `flex:1;height:100%;border:none;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:${isMine?"600":"400"};color:${isMine?"#FF8F00":"#9E9E9E"};cursor:pointer;font-family:inherit;`,
+      navAdminListStyle: `height:38px;display:flex;align-items:center;padding:0 16px;font-size:13px;cursor:pointer;color:${isAdmin?"#FFC107":"#C7CCD2"};background:${isAdmin?"#2E333A":"transparent"};border-left:3px solid ${isAdmin?"#FFC107":"transparent"};`,
+
+      // 表單
+      setBuy: this.setBuy, setSell: this.setSell,
+      buyBtnStyle: typeBtn(f.type === "buy", "#4CAF50"),
+      sellBtnStyle: typeBtn(f.type === "sell", "#F44336"),
+      formPrice: f.price, formQuantity: f.quantity,
+      onPrice: this.onPrice, onQty: this.onQty,
+      priceInputStyle: fieldBase + (errPrice ? errBorder : okBorder),
+      qtyInputStyle: fieldBase + (errQuantity ? errBorder : okBorder),
+      errPrice, errQuantity,
+      setPayBank: this.setPayBank, setPayStore: this.setPayStore,
+      payBankStyle: payBtn(f.paymentMethod === "bank_transfer"),
+      payStoreStyle: payBtn(f.paymentMethod === "convenience_store"),
+      payBankDot: payDot(f.paymentMethod === "bank_transfer"),
+      payStoreDot: payDot(f.paymentMethod === "convenience_store"),
+      totalDisplay,
+      submitOrder: this.submitOrder, submitting: st.submitting,
+      submitBtnStyle, submitLabel: st.submitting ? "建立中…" : "送出掛單",
+
+      // 列表狀態
+      listLoading, listError,
+      myOrders, mineEmpty, mineReady,
+      adminOrders, adminEmpty, adminReady, adminTabs, adminTitle,
+
+      // 詳情
+      detailMissing, detailReady, detailClosed, detail,
+      openCompleteDialog: this.openCompleteDialog,
+
+      // 對話框
+      dialogOpen: d.open, dialogBusy: d.busy,
+      dialogTitle, dialogBody, dialogConfirmLabel, dialogConfirmStyle,
+      closeDialog: this.closeDialog, confirmDialog: this.confirmDialog,
+
+      // Snackbar
+      snackOpen: sn.open, snackMessage: sn.message, snackStyle, snackDotStyle,
+    };
+  }
+}
+</script>
+
+
+</body></html>

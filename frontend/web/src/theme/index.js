@@ -40,7 +40,23 @@ export const tokens = {
   statusActive: '#4CAF50',
   statusFrozen: '#FF9800',
   statusStopped: '#9E9E9E',
+
+  // v1 訂單狀態色（Web 專用，不與 App 共用）
+  statusOpen: '#FF9800', // 待成交
+  statusCompleted: '#4CAF50', // 已完成
+  statusCancelled: '#9E9E9E', // 已取消
+
+  // v1 買 / 賣類型色（Web 專用）
+  typeBuy: '#4CAF50',
+  typeSell: '#F44336',
 }
+
+// 依訂單狀態取得對應色票（Web）
+export const statusColor = (status) =>
+  ({ open: tokens.statusOpen, completed: tokens.statusCompleted, cancelled: tokens.statusCancelled }[status])
+
+// 依訂單類型取得對應色票（Web）
+export const typeColor = (type) => (type === 'buy' ? tokens.typeBuy : tokens.typeSell)
 
 const theme = createTheme({
   palette: {
