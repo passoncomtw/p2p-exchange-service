@@ -11,6 +11,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { Colors } from './constants/Colors';
 import { V1Navigation } from './navigation/v1';
 import { store, persistor } from './navigation/store/configureStore';
+import { resetTransient } from './navigation/store/slices/authSlices';
 import { setStoreRef } from './apis';
 
 SplashScreen.preventAutoHideAsync();
@@ -42,13 +43,14 @@ export function App() {
 
   return (
     <Provider store={store}>
-      <PersistGate 
+      <PersistGate
         loading={
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
             <ActivityIndicator size="large" color="#007AFF" />
           </View>
-        } 
+        }
         persistor={persistor}
+        onBeforeLift={() => store.dispatch(resetTransient())}
       >
       <V1Navigation
         theme={theme}

@@ -43,6 +43,11 @@ const authSlice = createSlice({
     clearError(state) {
       state.error = null;
     },
+    // 重置暫態旗標：app 重開還原後呼叫，避免卡在「登入中」或殘留錯誤。
+    resetTransient(state) {
+      state.loading = false;
+      state.error = null;
+    },
     updateUser(state, action: PayloadAction<User>) {
       state.user = action.payload;
     },
@@ -53,6 +58,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { loginStart, loginSuccess, loginFailure, logout, registerSuccess, clearError, updateUser } = authSlice.actions;
+export const { loginStart, loginSuccess, loginFailure, logout, registerSuccess, clearError, resetTransient, updateUser } = authSlice.actions;
 
 export default authSlice.reducer;
