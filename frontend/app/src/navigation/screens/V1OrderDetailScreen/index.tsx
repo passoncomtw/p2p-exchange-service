@@ -97,6 +97,17 @@ export default function V1OrderDetailScreen() {
   const sColor = orderStatusColors[order.status] ?? colors.statusCancelled;
   const roleKey = isBuyer ? 'asBuyer' : 'asSeller';
 
+  const hintKey = (() => {
+    switch (order.status) {
+      case 'matched': return isBuyer ? 'order.message.hintMatchedBuyer' : 'order.message.hintMatchedSeller';
+      case 'paid': return isBuyer ? 'order.message.hintPaidBuyer' : 'order.message.hintPaidSeller';
+      case 'completed': return 'order.message.hintCompleted';
+      case 'cancelled': case 'timeout': return 'order.message.hintCancelled';
+      case 'disputed': return 'order.message.hintDisputed';
+      default: return null;
+    }
+  })();
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       {/* Status header */}
@@ -106,6 +117,13 @@ export default function V1OrderDetailScreen() {
         </View>
         <Text style={styles.roleLabel}>{t(`order.role.${roleKey}`)}</Text>
       </View>
+
+      {/* Status hint */}
+      {hintKey && (
+        <View style={[styles.hintBox, { borderColor: sColor + '40', backgroundColor: sColor + '10' }]}>
+          <Text style={[styles.hintText, { color: sColor }]}>{t(hintKey)}</Text>
+        </View>
+      )}
 
       {/* Order info */}
       <View style={styles.section}>
@@ -232,6 +250,8 @@ const styles = StyleSheet.create({
   statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 4 },
   statusBadgeText: { fontSize: 14, fontWeight: '600', color: '#fff' },
   roleLabel: { fontSize: 13, color: colors.textTertiary },
+  hintBox: { borderWidth: 1, borderRadius: 6, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 16 },
+  hintText: { fontSize: 13, fontWeight: '500', lineHeight: 18 },
   section: { backgroundColor: colors.bgCard, borderRadius: 8, borderWidth: 1, borderColor: colors.borderCard, padding: 14, marginBottom: 20 },
   row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 },
   rowLabel: { fontSize: 13, color: colors.textSecondary },

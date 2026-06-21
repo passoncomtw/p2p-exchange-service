@@ -112,7 +112,7 @@ export const zhTW = {
       passwordPlaceholder: '請輸入密碼',
       submit: '登入',
       submitting: '登入中',
-      demoHint: '示範帳號:testdemo001\n密碼:a12345678',
+      demoHint: '買方帳號:testdemo001\n賣方帳號:testdemo002\n密碼:a12345678',
       logout: '登出',
       accountRequired: '請輸入帳號',
       passwordRequired: '請輸入密碼',
@@ -172,6 +172,13 @@ export const zhTW = {
       emptyTrade: '目前沒有可交易的掛單',
       emptyOrders: '尚無訂單',
       addPaymentSuccess: '收款帳戶新增成功',
+      hintMatchedBuyer: '請完成付款並點擊「我已付款」',
+      hintMatchedSeller: '等待買方付款中',
+      hintPaidBuyer: '已付款，等待賣方確認收款',
+      hintPaidSeller: '買方已付款，請確認收款以完成交易',
+      hintCompleted: '交易已完成',
+      hintCancelled: '訂單已取消',
+      hintDisputed: '申訴處理中，請等待客服介入',
     },
 
     // 驗證錯誤（對應 validation/order.ts 的 messageKey）

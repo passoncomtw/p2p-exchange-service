@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/zeromicro/go-zero/rest/httpx"
@@ -19,8 +18,7 @@ func AppCreatePaymentMethodHandler(svcCtx *svc.ServiceContext) http.HandlerFunc 
 			return
 		}
 
-		uidRaw, _ := r.Context().Value("sub").(json.Number)
-		uid, _ := uidRaw.Int64()
+		uid := ctxUID(r)
 
 		l := logic.NewAppCreatePaymentMethodLogic(r.Context(), svcCtx)
 		resp, err := l.Create(uid, &req)
@@ -34,8 +32,7 @@ func AppCreatePaymentMethodHandler(svcCtx *svc.ServiceContext) http.HandlerFunc 
 
 func AppListPaymentMethodsHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		uidRaw, _ := r.Context().Value("sub").(json.Number)
-		uid, _ := uidRaw.Int64()
+		uid := ctxUID(r)
 
 		l := logic.NewAppListPaymentMethodsLogic(r.Context(), svcCtx)
 		resp, err := l.List(uid)
@@ -57,8 +54,7 @@ func AppDeletePaymentMethodHandler(svcCtx *svc.ServiceContext) http.HandlerFunc 
 			return
 		}
 
-		uidRaw, _ := r.Context().Value("sub").(json.Number)
-		uid, _ := uidRaw.Int64()
+		uid := ctxUID(r)
 
 		l := logic.NewAppDeletePaymentMethodLogic(r.Context(), svcCtx)
 		err := l.Delete(uid, req.ID)

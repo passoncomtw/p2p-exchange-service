@@ -61,7 +61,7 @@ func (l *AppLoginLogic) Login(req *types.LoginRequest) (*types.AppLoginResponse,
 func (l *AppLoginLogic) generateToken(userID int64, username string) (string, error) {
 	now := time.Now()
 	claims := jwt.MapClaims{
-		"sub":      userID,
+		"uid":      userID,
 		"username": username,
 		"platform": "app",
 		"iat":      now.Unix(),

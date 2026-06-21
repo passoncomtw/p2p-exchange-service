@@ -56,7 +56,7 @@ func (l *BackendLoginLogic) Login(req *types.LoginRequest) (*types.LoginResponse
 func (l *BackendLoginLogic) generateToken(userID int64, username string) (string, error) {
 	now := time.Now()
 	claims := jwt.MapClaims{
-		"sub":      userID,    // 與 App token 一致，存 int64 userID
+		"uid":      userID,
 		"username": username,  // 獨立欄位存使用者名稱
 		"platform": "backend", // 平台識別，用於二次驗證
 		"iat":      now.Unix(),

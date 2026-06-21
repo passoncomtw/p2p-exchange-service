@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/zeromicro/go-zero/rest/httpx"
@@ -19,8 +18,7 @@ func AppCreateListingHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			return
 		}
 
-		uidRaw, _ := r.Context().Value("sub").(json.Number)
-		uid, _ := uidRaw.Int64()
+		uid := ctxUID(r)
 
 		l := logic.NewAppCreateListingLogic(r.Context(), svcCtx)
 		resp, err := l.Create(uid, &req)
@@ -78,8 +76,7 @@ func AppMyListingsHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			return
 		}
 
-		uidRaw, _ := r.Context().Value("sub").(json.Number)
-		uid, _ := uidRaw.Int64()
+		uid := ctxUID(r)
 
 		l := logic.NewAppMyListingsLogic(r.Context(), svcCtx)
 		resp, err := l.List(uid, &req)
@@ -99,8 +96,7 @@ func AppCancelListingHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			return
 		}
 
-		uidRaw, _ := r.Context().Value("sub").(json.Number)
-		uid, _ := uidRaw.Int64()
+		uid := ctxUID(r)
 
 		l := logic.NewAppCancelListingLogic(r.Context(), svcCtx)
 		err := l.Cancel(uid, req.ID)

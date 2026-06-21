@@ -14,9 +14,11 @@ import * as tokens from '@/theme';
 import { listingsApi } from '@/apis/listingsApi';
 import { p2pOrdersApi } from '@/apis/p2pOrdersApi';
 import { paymentMethodsApi } from '@/apis/paymentMethodsApi';
+import { useAppSelector } from '@/navigation/store/hooks';
 import type { ListingItem } from '@/interfaces/listing';
+import type { Order } from '@/interfaces/order';
 
-const { colors } = tokens;
+const { colors, orderStatusColors } = tokens;
 const formatDateTime = (iso: string) => new Date(iso).toLocaleString();
 
 export default function V1ListingDetailScreen() {
@@ -24,8 +26,10 @@ export default function V1ListingDetailScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const listingId: number = route.params?.id;
+  const currentUserId = useAppSelector((s) => s.auth.user?.id);
 
   const [listing, setListing] = React.useState<ListingItem | null>(null);
+  const [relatedOrders, setRelatedOrders] = React.useState<Order[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(false);
   const [taking, setTaking] = React.useState(false);
@@ -34,8 +38,12 @@ export default function V1ListingDetailScreen() {
     setLoading(true);
     setError(false);
     try {
-      const data = await listingsApi.getById(listingId);
+      const [data, orders] = await Promise.all([
+        listingsApi.getById(listingId),
+        p2pOrdersApi.list(),
+      ]);
       setListing(data);
+      setRelatedOrders(orders.filter((o) => o.listingId === listingId));
     } catch {
       setError(true);
     } finally {
@@ -130,11 +138,7 @@ export default function V1ListingDetailScreen() {
         <Row label={t('order.field.createdAt')} value={formatDateTime(listing.createdAt)} muted />
       </View>
 
-      {!isActive ? (
-        <View style={styles.unavailableBox}>
-          <Text style={styles.unavailableText}>{t('order.message.listingUnavailable')}</Text>
-        </View>
-      ) : (
+      {isActive ? (
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: tColor }, taking && styles.actionBtnDisabled]}
           onPress={handleTakeOrder}
@@ -144,6 +148,42 @@ export default function V1ListingDetailScreen() {
           {taking ? <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} /> : null}
           <Text style={styles.actionBtnText}>{actionLabel}</Text>
         </TouchableOpacity>
+      ) : relatedOrders.length > 0 ? (
+        <View style={styles.ordersSection}>
+          <Text style={styles.ordersSectionTitle}>{t('order.nav.orders')} ({relatedOrders.length})</Text>
+          {relatedOrders.map((order) => {
+            const oColor = orderStatusColors[order.status] ?? colors.statusCancelled;
+            const isBuyer = order.buyerId === currentUserId;
+            const roleKey = isBuyer ? 'asBuyer' : 'asSeller';
+            return (
+              <TouchableOpacity
+                key={order.id}
+                style={styles.orderCard}
+                onPress={() => navigation.navigate('OrderDetail', { id: order.id })}
+                accessibilityRole="button"
+              >
+                <View style={styles.orderCardHeader}>
+                  <Text style={styles.orderNo}>{order.orderNo}</Text>
+                  <View style={[styles.orderStatusTag, { borderColor: oColor }]}>
+                    <View style={[styles.dot, { backgroundColor: oColor }]} />
+                    <Text style={[styles.orderStatusText, { color: oColor }]}>{t(`order.orderStatus.${order.status}`)}</Text>
+                  </View>
+                </View>
+                <View style={styles.orderMeta}>
+                  <Text style={styles.orderRole}>{t(`order.role.${roleKey}`)}</Text>
+                  <Text style={styles.orderAmount}>
+                    {order.cryptoAmount} {order.cryptoCurrency} / {order.totalAmount.toLocaleString()} {order.fiatCurrency}
+                  </Text>
+                </View>
+                <Text style={styles.viewDetail}>{t('order.action.viewDetail')} &gt;</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      ) : (
+        <View style={styles.unavailableBox}>
+          <Text style={styles.unavailableText}>{t('order.message.listingUnavailable')}</Text>
+        </View>
       )}
     </ScrollView>
   );
@@ -195,4 +235,16 @@ const styles = StyleSheet.create({
   },
   actionBtnDisabled: { opacity: 0.6 },
   actionBtnText: { fontSize: 16, fontWeight: '600', color: '#fff' },
+  ordersSection: { gap: 8 },
+  ordersSectionTitle: { fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 4 },
+  orderCard: { backgroundColor: colors.bgCard, borderRadius: 8, borderWidth: 1, borderColor: colors.borderCard, padding: 12 },
+  orderCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  orderNo: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
+  orderStatusTag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, borderWidth: 1 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  orderStatusText: { fontSize: 11, fontWeight: '500' },
+  orderMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  orderRole: { fontSize: 11, color: colors.textTertiary },
+  orderAmount: { fontSize: 11, color: colors.textSecondary },
+  viewDetail: { fontSize: 12, color: colors.primary, fontWeight: '500', textAlign: 'right' },
 });

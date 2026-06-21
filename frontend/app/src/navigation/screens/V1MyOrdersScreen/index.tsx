@@ -13,15 +13,20 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import * as tokens from '@/theme';
 import { listingsApi } from '@/apis/listingsApi';
+import { p2pOrdersApi } from '@/apis/p2pOrdersApi';
+import { useAppSelector } from '@/navigation/store/hooks';
 import type { ListingItem } from '@/interfaces/listing';
+import type { Order } from '@/interfaces/order';
 
-const { colors } = tokens;
+const { colors, orderStatusColors } = tokens;
 const formatDateTime = (iso: string) => new Date(iso).toLocaleString();
 
 export default function V1MyOrdersScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
+  const currentUserId = useAppSelector((s) => s.auth.user?.id);
   const [listings, setListings] = React.useState<ListingItem[]>([]);
+  const [ordersByListing, setOrdersByListing] = React.useState<Record<number, Order[]>>({});
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(false);
 
@@ -29,8 +34,17 @@ export default function V1MyOrdersScreen() {
     setLoading(true);
     setError(false);
     try {
-      const list = await listingsApi.mine();
-      setListings(list);
+      const [listingList, orderList] = await Promise.all([
+        listingsApi.mine(),
+        p2pOrdersApi.list(),
+      ]);
+      setListings(listingList);
+      const grouped: Record<number, Order[]> = {};
+      for (const order of orderList) {
+        if (!grouped[order.listingId]) grouped[order.listingId] = [];
+        grouped[order.listingId].push(order);
+      }
+      setOrdersByListing(grouped);
     } catch {
       setError(true);
     } finally {
@@ -44,7 +58,7 @@ export default function V1MyOrdersScreen() {
     }, [load]),
   );
 
-  const confirmCancel = (listing: ListingItem) => {
+  const confirmCancelListing = (listing: ListingItem) => {
     Alert.alert('', t('order.message.cancelConfirm'), [
       { text: t('order.action.dismiss'), style: 'cancel' },
       {
@@ -64,7 +78,6 @@ export default function V1MyOrdersScreen() {
 
   const Title = () => <Text style={styles.title}>{t('order.pageTitle.myOrders')}</Text>;
 
-  // 載入中:skeleton
   if (loading) {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.pad}>
@@ -78,7 +91,6 @@ export default function V1MyOrdersScreen() {
     );
   }
 
-  // 錯誤:頁內畫面 + 重新載入
   if (error) {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.pad}>
@@ -95,13 +107,12 @@ export default function V1MyOrdersScreen() {
     );
   }
 
-  // 空狀態:圖示 + 前往掛單
   if (listings.length === 0) {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.pad}>
         <Title />
         <View style={styles.centerBox}>
-          <View style={styles.emptyIcon}><Text style={styles.emptyIconText}>＋</Text></View>
+          <View style={styles.emptyIcon}><Text style={styles.emptyIconText}>+</Text></View>
           <Text style={styles.emptyText}>{t('order.message.emptyMine')}</Text>
           <TouchableOpacity
             style={styles.primaryBtn}
@@ -115,12 +126,16 @@ export default function V1MyOrdersScreen() {
     );
   }
 
-  // 有資料:卡片列表
   const renderItem = ({ item }: { item: ListingItem }) => {
-    const sColor = tokens.statusColor(item.status);
     const tColor = tokens.typeColor(item.type);
     const fiatTotal = item.price * item.totalAmount;
-    const canCancelListing = item.status === 'active';
+    const relatedOrders = ordersByListing[item.id] ?? [];
+
+    const allOrdersCompleted = relatedOrders.length > 0 && relatedOrders.every((o) => o.status === 'completed');
+    const displayStatus = allOrdersCompleted ? 'completed' : item.status;
+    const sColor = tokens.statusColor(displayStatus);
+    const canCancelListing = item.status === 'active' && !allOrdersCompleted;
+
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
@@ -129,7 +144,7 @@ export default function V1MyOrdersScreen() {
           </View>
           <View style={[styles.statusTag, { borderColor: sColor }]}>
             <View style={[styles.dot, { backgroundColor: sColor }]} />
-            <Text style={[styles.statusTagText, { color: sColor }]}>{t(`order.status.${item.status}`)}</Text>
+            <Text style={[styles.statusTagText, { color: sColor }]}>{t(`order.status.${displayStatus}`)}</Text>
           </View>
         </View>
 
@@ -140,9 +155,43 @@ export default function V1MyOrdersScreen() {
         <Row label={t('order.field.createdAt')} value={formatDateTime(item.createdAt)} muted />
 
         {canCancelListing && (
-          <TouchableOpacity style={styles.cancelBtn} onPress={() => confirmCancel(item)} accessibilityRole="button">
+          <TouchableOpacity style={styles.cancelBtn} onPress={() => confirmCancelListing(item)} accessibilityRole="button">
             <Text style={styles.cancelBtnText}>{t('order.action.cancel')}</Text>
           </TouchableOpacity>
+        )}
+
+        {relatedOrders.length > 0 && (
+          <View style={styles.ordersSection}>
+            <Text style={styles.ordersSectionTitle}>{t('order.nav.orders')} ({relatedOrders.length})</Text>
+            {relatedOrders.map((order) => {
+              const oColor = orderStatusColors[order.status] ?? colors.statusCancelled;
+              const isBuyer = order.buyerId === currentUserId;
+              const roleKey = isBuyer ? 'asBuyer' : 'asSeller';
+
+              return (
+                <TouchableOpacity
+                  key={order.id}
+                  style={styles.orderCard}
+                  onPress={() => navigation.navigate('OrderDetail', { id: order.id })}
+                  accessibilityRole="button"
+                >
+                  <View style={styles.orderCardHeader}>
+                    <Text style={styles.orderNo}>{order.orderNo}</Text>
+                    <View style={[styles.orderStatusTag, { borderColor: oColor }]}>
+                      <View style={[styles.dot, { backgroundColor: oColor }]} />
+                      <Text style={[styles.orderStatusText, { color: oColor }]}>{t(`order.orderStatus.${order.status}`)}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.orderMeta}>
+                    <Text style={styles.orderRole}>{t(`order.role.${roleKey}`)}</Text>
+                    <Text style={styles.orderAmount}>
+                      {order.cryptoAmount} {order.cryptoCurrency} / {order.totalAmount.toLocaleString()} {order.fiatCurrency}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         )}
       </View>
     );
@@ -205,4 +254,15 @@ const styles = StyleSheet.create({
   rowMuted: { color: colors.textTertiary, fontWeight: '400' },
   cancelBtn: { marginTop: 12, height: 36, borderRadius: 4, borderWidth: 1, borderColor: colors.danger, alignItems: 'center', justifyContent: 'center' },
   cancelBtnText: { fontSize: 14, color: colors.danger, fontWeight: '500' },
+
+  ordersSection: { marginTop: 14, borderTopWidth: 1, borderTopColor: colors.borderCard, paddingTop: 12 },
+  ordersSectionTitle: { fontSize: 13, fontWeight: '600', color: colors.textPrimary, marginBottom: 8 },
+  orderCard: { backgroundColor: colors.bgContent, borderRadius: 6, borderWidth: 1, borderColor: colors.borderCard, padding: 10, marginBottom: 8 },
+  orderCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  orderNo: { fontSize: 12, fontWeight: '600', color: colors.textPrimary },
+  orderStatusTag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4, borderWidth: 1 },
+  orderStatusText: { fontSize: 11, fontWeight: '500' },
+  orderMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  orderRole: { fontSize: 11, color: colors.textTertiary },
+  orderAmount: { fontSize: 11, color: colors.textSecondary },
 });

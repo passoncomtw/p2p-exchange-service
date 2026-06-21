@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"encoding/json"
 
 	"p2p-exchange/internal/svc"
 	"p2p-exchange/internal/types"
@@ -38,8 +37,7 @@ func (l *BackendDashboardLogic) Dashboard() (*types.DashboardResponse, error) {
 		_ = platform // 靜默處理，不中斷服務，僅供未來加告警用
 	}
 
-	// sub 存 userID（json.Number），取 username 改從 username claim
-	_ = l.ctx.Value("sub").(json.Number) // 確認型別正確，不使用值
+	_ = l.ctx.Value("uid")
 
 	return &types.DashboardResponse{
 		Username: username,

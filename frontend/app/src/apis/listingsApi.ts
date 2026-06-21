@@ -30,7 +30,7 @@ export const listingsApi = {
         ...params,
         cryptoCurrency: params.cryptoCurrency ?? 'USDT',
         fiatCurrency: params.fiatCurrency ?? 'TWD',
-        paymentTimeLimit: params.paymentTimeLimit ?? 30,
+        paymentTimeLimit: params.paymentTimeLimit ?? 900,
       }
     );
     return response.data.data.data;

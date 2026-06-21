@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/zeromicro/go-zero/rest/httpx"
@@ -19,8 +18,7 @@ func AppCreateOrderHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			return
 		}
 
-		uidRaw, _ := r.Context().Value("sub").(json.Number)
-		uid, _ := uidRaw.Int64()
+		uid := ctxUID(r)
 
 		l := logic.NewAppCreateOrderLogic(r.Context(), svcCtx)
 		resp, err := l.Create(uid, &req)
@@ -40,8 +38,7 @@ func AppListOrdersHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			return
 		}
 
-		uidRaw, _ := r.Context().Value("sub").(json.Number)
-		uid, _ := uidRaw.Int64()
+		uid := ctxUID(r)
 
 		l := logic.NewAppListOrdersLogic(r.Context(), svcCtx)
 		resp, err := l.List(uid, &req)
@@ -79,8 +76,7 @@ func AppPayOrderHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			return
 		}
 
-		uidRaw, _ := r.Context().Value("sub").(json.Number)
-		uid, _ := uidRaw.Int64()
+		uid := ctxUID(r)
 
 		l := logic.NewAppPayOrderLogic(r.Context(), svcCtx)
 		err := l.Pay(uid, req.ID)
@@ -100,8 +96,7 @@ func AppConfirmOrderHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			return
 		}
 
-		uidRaw, _ := r.Context().Value("sub").(json.Number)
-		uid, _ := uidRaw.Int64()
+		uid := ctxUID(r)
 
 		l := logic.NewAppConfirmOrderLogic(r.Context(), svcCtx)
 		err := l.Confirm(uid, req.ID)
@@ -121,8 +116,7 @@ func AppCancelOrderHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			return
 		}
 
-		uidRaw, _ := r.Context().Value("sub").(json.Number)
-		uid, _ := uidRaw.Int64()
+		uid := ctxUID(r)
 
 		l := logic.NewAppCancelOrderLogic(r.Context(), svcCtx)
 		err := l.Cancel(uid, &req)
@@ -142,8 +136,7 @@ func AppDisputeOrderHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			return
 		}
 
-		uidRaw, _ := r.Context().Value("sub").(json.Number)
-		uid, _ := uidRaw.Int64()
+		uid := ctxUID(r)
 
 		l := logic.NewAppDisputeOrderLogic(r.Context(), svcCtx)
 		err := l.Dispute(uid, &req)
