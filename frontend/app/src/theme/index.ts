@@ -248,18 +248,45 @@ export const colors = {
 
   typeBuy: '#4CAF50',
   typeSell: '#F44336',
+
+  // 總額高亮(琥珀)
+  amberBg: '#FFFDF5',
+  amberBorder: '#FFE082',
+  amberText: '#FF8F00',
+
+  // 錯誤提示框
+  errorBg: '#FDECEA',
+  errorBorder: '#F5C6C2',
+  errorText: '#C62828',
 } as const;
 
-// 依訂單狀態取得對應色票（App）
-export function statusColor(status: 'open' | 'completed' | 'cancelled'): string {
-  switch (status) {
-    case 'open':
-      return colors.statusOpen;
-    case 'completed':
-      return colors.statusCompleted;
-    case 'cancelled':
-      return colors.statusCancelled;
-  }
+// P2P 訂單狀態色
+export const orderStatusColors = {
+  matched: '#FF9800',
+  paid: '#2196F3',
+  releasing: '#2196F3',
+  completed: '#4CAF50',
+  cancelled: '#9E9E9E',
+  timeout: '#9E9E9E',
+  disputed: '#F44336',
+} as const;
+
+// 掛單狀態色
+export const listingStatusColors = {
+  active: '#FF9800',
+  paused: '#9E9E9E',
+  completed: '#4CAF50',
+  cancelled: '#9E9E9E',
+} as const;
+
+// 依訂單狀態取得對應色票（App）— 支援 v1 掛單和 P2P 訂單
+export function statusColor(status: string): string {
+  const map: Record<string, string> = {
+    ...orderStatusColors,
+    ...listingStatusColors,
+    open: colors.statusOpen,
+  };
+  return map[status] ?? colors.statusCancelled;
 }
 
 // 依訂單類型取得對應色票（App）
