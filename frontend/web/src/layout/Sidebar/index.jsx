@@ -5,9 +5,6 @@ import { Box, Collapse, Typography } from '@mui/material'
 import {
   Person as PersonIcon,
   ViewList as ViewListIcon,
-  Diamond as DiamondIcon,
-  AccountBalance as AccountBalanceIcon,
-  Settings as SettingsIcon,
   ExpandLess,
   ExpandMore,
 } from '@mui/icons-material'
@@ -41,32 +38,12 @@ const buildMenuItems = (t) => [
     icon: <PersonIcon sx={{ fontSize: 18 }} />,
     children: [
       { key: '/members', label: t('sidebar.menu.memberList') },
-      { key: '/members/accounts', label: t('sidebar.menu.accountList') },
-      { key: '/members/new-merchant', label: t('sidebar.menu.newMerchant') },
     ],
   },
   {
     key: '/orders',
     label: t('sidebar.menu.orders'),
     icon: <ViewListIcon sx={{ fontSize: 18 }} />,
-  },
-  {
-    key: '/listings',
-    label: t('sidebar.menu.listings'),
-    icon: <DiamondIcon sx={{ fontSize: 18 }} />,
-  },
-  {
-    key: '/banks',
-    label: t('sidebar.menu.banks'),
-    icon: <AccountBalanceIcon sx={{ fontSize: 18 }} />,
-  },
-  {
-    key: 'settings',
-    label: t('sidebar.menu.settings'),
-    icon: <SettingsIcon sx={{ fontSize: 18 }} />,
-    children: [
-      { key: '/settings/general', label: t('sidebar.menu.generalSettings') },
-    ],
   },
 ]
 

@@ -7,6 +7,7 @@ import MainLayout from 'src/layout/MainLayout'
 const LoginScreen = Loadable(lazy(() => import('src/screens/LoginScreen')))
 const DashboardScreen = Loadable(lazy(() => import('src/screens/DashboardScreen')))
 const MemberListScreen = Loadable(lazy(() => import('src/screens/MemberListScreen')))
+const OrderListScreen = Loadable(lazy(() => import('src/screens/OrderListScreen')))
 
 export default function AppRoutes() {
   return useRoutes([
@@ -27,12 +28,7 @@ export default function AppRoutes() {
       children: [
         { index: true, element: <DashboardScreen /> },
         { path: 'members', element: <MemberListScreen /> },
-        { path: 'members/accounts', element: <DashboardScreen /> },
-        { path: 'members/new-merchant', element: <DashboardScreen /> },
-        { path: 'orders', element: <DashboardScreen /> },
-        { path: 'listings', element: <DashboardScreen /> },
-        { path: 'banks', element: <DashboardScreen /> },
-        { path: 'settings/general', element: <DashboardScreen /> },
+        { path: 'orders', element: <OrderListScreen /> },
       ],
     },
 

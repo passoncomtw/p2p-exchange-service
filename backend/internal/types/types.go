@@ -235,9 +235,15 @@ type BackendListListingsRequest struct {
 }
 
 type BackendListOrdersRequest struct {
-	Status string `form:"status,optional"`
-	Limit  int64  `form:"limit,optional,default=20"`
-	Offset int64  `form:"offset,optional,default=0"`
+	Keyword string `form:"keyword,optional"`
+	Status  string `form:"status,optional"`
+	Limit   int64  `form:"limit,optional,default=10"`
+	Offset  int64  `form:"offset,optional,default=0"`
+}
+
+type BackendListOrdersResponse struct {
+	List  []OrderItem `json:"list"`
+	Total int64       `json:"total"`
 }
 
 type ResolveOrderRequest struct {

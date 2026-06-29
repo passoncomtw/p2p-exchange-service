@@ -68,8 +68,8 @@ func NewBackendListOrdersLogic(ctx context.Context, svcCtx *svc.ServiceContext) 
 	return &BackendListOrdersLogic{Logger: logx.WithContext(ctx), ctx: ctx, svcCtx: svcCtx}
 }
 
-func (l *BackendListOrdersLogic) List(req *types.BackendListOrdersRequest) (*types.ListOrdersResponse, error) {
-	rows, err := l.svcCtx.Order.List(l.ctx, 0, "", req.Status, req.Limit, req.Offset)
+func (l *BackendListOrdersLogic) List(req *types.BackendListOrdersRequest) (*types.BackendListOrdersResponse, error) {
+	rows, err := l.svcCtx.Order.BackendList(l.ctx, req.Keyword, req.Status, req.Limit, req.Offset)
 	if err != nil {
 		return nil, apierrors.ErrInternal
 	}
@@ -119,7 +119,12 @@ func (l *BackendListOrdersLogic) List(req *types.BackendListOrdersRequest) (*typ
 		items = append(items, item)
 	}
 
-	return &types.ListOrdersResponse{List: items}, nil
+	total, err := l.svcCtx.Order.BackendCount(l.ctx, req.Keyword, req.Status)
+	if err != nil {
+		return nil, apierrors.ErrInternal
+	}
+
+	return &types.BackendListOrdersResponse{List: items, Total: total}, nil
 }
 
 // ── BackendResolveOrderLogic ──────────────────────────────────────────────────

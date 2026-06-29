@@ -18,13 +18,7 @@ export default {
     menu: {
       members: '会员管理',
       memberList: '会员列表',
-      accountList: '账户列表',
-      newMerchant: '新增商家',
       orders: '订单管理',
-      listings: '挂单管理',
-      banks: '银行管理',
-      settings: '系统设置',
-      generalSettings: '基本设置',
     },
   },
 
@@ -37,12 +31,7 @@ export default {
   page: {
     dashboard: '首页',
     memberList: '会员列表',
-    accountList: '账户列表',
-    newMerchant: '新增商家',
     orders: '订单管理',
-    listings: '挂单管理',
-    banks: '银行管理',
-    settings: '系统设置',
   },
 
   // 会员列表
@@ -58,6 +47,44 @@ export default {
       email: '电子邮件',
       createdAt: '创建时间',
       updatedAt: '更新时间',
+    },
+    pagination: {
+      total: '共 {{total}} 条',
+      page: '第 {{current}}/{{total}} 页',
+      pageSize: '每页笔数：',
+      items: '笔',
+    },
+  },
+
+  // 订单列表
+  order: {
+    keyword: '关键字',
+    keywordPlaceholder: '请输入订单编号',
+    statusLabel: '状态',
+    statusAll: '全部',
+    reset: '重置',
+    filter: '筛选',
+    loading: '加载中...',
+    empty: '暂无数据',
+    column: {
+      orderNo: '订单编号',
+      type: '类型',
+      crypto: '数字货币',
+      fiatAmount: '法币金额',
+      price: '单价',
+      status: '状态',
+      createdAt: '创建时间',
+    },
+    type: {
+      buy: '买入',
+      sell: '卖出',
+    },
+    status: {
+      pending: '待付款',
+      paid: '已付款',
+      completed: '已完成',
+      cancelled: '已取消',
+      disputed: '申诉中',
     },
     pagination: {
       total: '共 {{total}} 条',

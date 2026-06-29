@@ -133,6 +133,60 @@ func (m *OrderModel) List(ctx context.Context, userID int64, role string, status
 	return rows, nil
 }
 
+func (m *OrderModel) BackendList(ctx context.Context, keyword string, status string, limit, offset int64) ([]*Order, error) {
+	query := `SELECT id, order_no, listing_id, listing_type, seller_id, buyer_id, crypto_currency, fiat_currency,
+		  crypto_amount, price, fiat_amount, platform_fee_base, platform_fee_amount, payment_fee_base, payment_fee_amount,
+		  total_fee, total_amount, payment_method_id, status, payment_deadline, paid_at, confirmed_at, completed_at,
+		  cancelled_at, cancel_reason, created_at, updated_at
+		 FROM orders WHERE 1=1`
+	args := []interface{}{}
+	argIdx := 1
+
+	if keyword != "" {
+		query += fmt.Sprintf(" AND order_no ILIKE $%d", argIdx)
+		args = append(args, "%"+keyword+"%")
+		argIdx++
+	}
+	if status != "" {
+		query += fmt.Sprintf(" AND status = $%d", argIdx)
+		args = append(args, status)
+		argIdx++
+	}
+	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
+	args = append(args, limit, offset)
+
+	var rows []*Order
+	err := m.conn.QueryRowsCtx(ctx, &rows, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
+func (m *OrderModel) BackendCount(ctx context.Context, keyword string, status string) (int64, error) {
+	query := `SELECT COUNT(*) FROM orders WHERE 1=1`
+	args := []interface{}{}
+	argIdx := 1
+
+	if keyword != "" {
+		query += fmt.Sprintf(" AND order_no ILIKE $%d", argIdx)
+		args = append(args, "%"+keyword+"%")
+		argIdx++
+	}
+	if status != "" {
+		query += fmt.Sprintf(" AND status = $%d", argIdx)
+		args = append(args, status)
+		argIdx++
+	}
+
+	var count int64
+	err := m.conn.QueryRowCtx(ctx, &count, query, args...)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 func (m *OrderModel) UpdateStatus(ctx context.Context, id int64, status string, extras map[string]interface{}) error {
 	query := "UPDATE orders SET status = $1, updated_at = NOW()"
 	args := []interface{}{status}
