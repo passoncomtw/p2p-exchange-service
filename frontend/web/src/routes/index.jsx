@@ -1,37 +1,37 @@
 import { lazy } from 'react'
 import { useRoutes, Navigate } from 'react-router-dom'
 import Loadable from 'src/components/Loadable'
+import ProtectedRoute from 'src/components/ProtectedRoute'
 import MainLayout from 'src/layout/MainLayout'
-import UserLayout from 'src/layout/UserLayout'
 
-// 使用者端
-const CreateOrderScreen = Loadable(lazy(() => import('src/screens/CreateOrderScreen')))
-const MyOrdersScreen = Loadable(lazy(() => import('src/screens/MyOrdersScreen')))
+const LoginScreen = Loadable(lazy(() => import('src/screens/LoginScreen')))
+const DashboardScreen = Loadable(lazy(() => import('src/screens/DashboardScreen')))
 
-// 後台
-const AdminOrdersScreen = Loadable(lazy(() => import('src/screens/AdminOrdersScreen')))
-const AdminOrderDetailScreen = Loadable(lazy(() => import('src/screens/AdminOrderDetailScreen')))
-
-// v1 無登入：使用者端與後台皆免登入；目前使用者固定 demo_user。
 export default function AppRoutes() {
   return useRoutes([
-    // 使用者端
+    // 公開路由
     {
-      path: '/',
-      element: <UserLayout />,
-      children: [
-        { index: true, element: <CreateOrderScreen /> },
-        { path: 'my-orders', element: <MyOrdersScreen /> },
-      ],
+      path: '/login',
+      element: <LoginScreen />,
     },
 
-    // 後台訂單管理（沿用既有 MainLayout 視覺）
+    // 需要登入的路由，套用 MainLayout
     {
-      path: '/admin',
-      element: <MainLayout />,
+      path: '/',
+      element: (
+        <ProtectedRoute>
+          <MainLayout />
+        </ProtectedRoute>
+      ),
       children: [
-        { index: true, element: <AdminOrdersScreen /> },
-        { path: 'orders/:id', element: <AdminOrderDetailScreen /> },
+        { index: true, element: <DashboardScreen /> },
+        { path: 'members', element: <DashboardScreen /> },
+        { path: 'members/accounts', element: <DashboardScreen /> },
+        { path: 'members/new-merchant', element: <DashboardScreen /> },
+        { path: 'orders', element: <DashboardScreen /> },
+        { path: 'listings', element: <DashboardScreen /> },
+        { path: 'banks', element: <DashboardScreen /> },
+        { path: 'settings/general', element: <DashboardScreen /> },
       ],
     },
 

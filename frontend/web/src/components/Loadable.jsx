@@ -5,7 +5,7 @@ const Loadable = (Component) => (props) => (
   <Suspense
     fallback={
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
-        <CircularProgress aria-label="載入中" />
+        <CircularProgress />
       </Box>
     }
   >

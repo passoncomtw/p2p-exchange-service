@@ -49,12 +49,4 @@ export default {
   common: {
     welcome: '歡迎使用豐盈錢包運營後台',
   },
-
-  // 無障礙
-  a11y: {
-    showPassword: '顯示密碼',
-    hidePassword: '隱藏密碼',
-    languageChanged: '語言已切換',
-    loading: '載入中',
-  },
 }

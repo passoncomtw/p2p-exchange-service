@@ -15,14 +15,6 @@ import { KeyboardArrowDown as ArrowDownIcon, Logout as LogoutIcon } from '@mui/i
 import Sidebar, { SIDEBAR_WIDTH } from 'src/layout/Sidebar'
 import { signOut } from 'src/slices/authSlice'
 import { changeLanguage, SUPPORTED_LANGS } from 'src/i18n'
-import { tokens } from 'src/theme'
-
-const announceLanguageChange = (lang) => {
-  const region = document.getElementById('aria-live-region')
-  if (!region) return
-  const msgs = { 'zh-TW': '語言已切換', 'zh-CN': '语言已切换' }
-  region.textContent = msgs[lang] ?? '語言已切換'
-}
 
 const Header = () => {
   const dispatch = useDispatch()
@@ -36,8 +28,8 @@ const Header = () => {
     <Box
       sx={{
         height: '56px',
-        bgcolor: tokens.bgCard,
-        borderBottom: `1px solid ${tokens.borderCard}`,
+        bgcolor: 'white',
+        borderBottom: '1px solid #EBEBEB',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'flex-end',
@@ -49,12 +41,12 @@ const Header = () => {
       {/* 語系切換 */}
       <Select
         value={i18n.language}
-        onChange={(e) => { changeLanguage(e.target.value); announceLanguageChange(e.target.value) }}
+        onChange={(e) => changeLanguage(e.target.value)}
         size="small"
         sx={{
           fontSize: '12px',
-          '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.borderSelect },
-          '& .MuiSelect-select': { py: '6px', px: '10px' },
+          '& .MuiOutlinedInput-notchedOutline': { borderColor: '#E0E0E0' },
+          '& .MuiSelect-select': { py: '5px', px: '10px' },
         }}
       >
         {SUPPORTED_LANGS.map((lang) => (
@@ -75,11 +67,11 @@ const Header = () => {
           '&:hover': { opacity: 0.8 },
         }}
       >
-        <Avatar sx={{ width: 28, height: 28, fontSize: '13px', fontWeight: 600, bgcolor: tokens.textAvatar }}>
+        <Avatar sx={{ width: 28, height: 28, fontSize: '13px', fontWeight: 600, bgcolor: '#9E9E9E' }}>
           {initial}
         </Avatar>
-        <Typography sx={{ fontSize: '13px', color: tokens.textPrimary }}>{username}</Typography>
-        <ArrowDownIcon sx={{ fontSize: 16, color: tokens.textTertiary }} />
+        <Typography sx={{ fontSize: '13px', color: '#333' }}>{username}</Typography>
+        <ArrowDownIcon sx={{ fontSize: 16, color: '#999' }} />
       </Box>
 
       <Menu
@@ -90,13 +82,13 @@ const Header = () => {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <MenuItem disabled sx={{ fontSize: '13px', color: tokens.textTertiary, opacity: '1 !important' }}>
+        <MenuItem disabled sx={{ fontSize: '13px', color: '#999', opacity: '1 !important' }}>
           {username}
         </MenuItem>
         <Divider />
         <MenuItem
           onClick={() => { setAnchorEl(null); dispatch(signOut()) }}
-          sx={{ fontSize: '13px', color: tokens.danger, gap: '8px' }}
+          sx={{ fontSize: '13px', color: '#F44336', gap: '8px' }}
         >
           <LogoutIcon sx={{ fontSize: 16 }} />
           {t('header.logout')}
@@ -107,7 +99,7 @@ const Header = () => {
 }
 
 const MainLayout = () => (
-  <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: tokens.bgContent }}>
+  <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#F5F5F7' }}>
     <Sidebar />
     <Box
       sx={{

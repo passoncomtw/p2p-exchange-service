@@ -17,31 +17,36 @@ import {
 import { Visibility, VisibilityOff } from '@mui/icons-material'
 import { signIn } from 'src/slices/authSlice'
 import { changeLanguage, SUPPORTED_LANGS } from 'src/i18n'
-import OwlLogo from 'src/components/OwlLogo'
-import { tokens } from 'src/theme'
 
-const announceLanguageChange = (lang) => {
-  const region = document.getElementById('aria-live-region')
-  if (!region) return
-  const msgs = { 'zh-TW': '語言已切換', 'zh-CN': '语言已切换' }
-  region.textContent = msgs[lang] ?? '語言已切換'
-}
+const OwlLogo = () => (
+  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="48" height="48" rx="8" fill="#FFC107" />
+    <circle cx="17" cy="22" r="7" fill="white" />
+    <circle cx="31" cy="22" r="7" fill="white" />
+    <circle cx="17" cy="22" r="4" fill="#333" />
+    <circle cx="31" cy="22" r="4" fill="#333" />
+    <circle cx="18" cy="21" r="1.5" fill="white" />
+    <circle cx="32" cy="21" r="1.5" fill="white" />
+    <path d="M20 30 Q24 34 28 30" stroke="#333" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+    <polygon points="24,12 21,17 27,17" fill="#FF8F00" />
+  </svg>
+)
 
 const FormField = ({ label, value, onChange, type = 'text', placeholder, endAdornment }) => (
   <Box sx={{ mb: '16px' }}>
-    <Typography sx={{ fontSize: '12px', color: tokens.textSecondary, mb: '4px', fontWeight: 400 }}>
+    <Typography sx={{ fontSize: '12px', color: '#666', mb: '4px', fontWeight: 400 }}>
       {label}
     </Typography>
     <Box
       sx={{
-        border: `1px solid ${tokens.borderInput}`,
+        border: '1px solid #D9D9D9',
         borderRadius: '4px',
         px: '12px',
         py: '8px',
         display: 'flex',
         alignItems: 'center',
-        bgcolor: tokens.bgCard,
-        '&:focus-within': { borderColor: tokens.primary },
+        bgcolor: 'white',
+        '&:focus-within': { borderColor: '#FFC107' },
       }}
     >
       <InputBase
@@ -52,8 +57,8 @@ const FormField = ({ label, value, onChange, type = 'text', placeholder, endAdor
         placeholder={placeholder}
         sx={{
           fontSize: '13px',
-          color: tokens.textPrimary,
-          '& input::placeholder': { color: tokens.textPlaceholder, fontSize: '13px' },
+          color: '#333',
+          '& input::placeholder': { color: '#BFBFBF', fontSize: '13px' },
         }}
       />
       {endAdornment}
@@ -81,17 +86,12 @@ const LoginScreen = () => {
     setSubmitting(false)
   }
 
-  const handleLanguageChange = (lang) => {
-    changeLanguage(lang)
-    announceLanguageChange(lang)
-  }
-
   return (
     <Box
       sx={{
         width: '100vw',
         minHeight: '100vh',
-        bgcolor: tokens.bgLogin,
+        bgcolor: '#EBEDF2',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -101,12 +101,12 @@ const LoginScreen = () => {
       <Box sx={{ position: 'fixed', top: '16px', right: '20px' }}>
         <Select
           value={i18n.language}
-          onChange={(e) => handleLanguageChange(e.target.value)}
+          onChange={(e) => changeLanguage(e.target.value)}
           size="small"
           sx={{
             fontSize: '12px',
-            bgcolor: tokens.bgCard,
-            '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.borderInput },
+            bgcolor: 'white',
+            '& .MuiOutlinedInput-notchedOutline': { borderColor: '#D9D9D9' },
             '& .MuiSelect-select': { py: '6px', px: '10px' },
           }}
         >
@@ -124,7 +124,7 @@ const LoginScreen = () => {
         onSubmit={handleSubmit}
         sx={{
           width: '344px',
-          bgcolor: tokens.bgCard,
+          bgcolor: 'white',
           borderRadius: '4px',
           p: '32px 28px 20px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
@@ -132,12 +132,12 @@ const LoginScreen = () => {
       >
         {/* Logo */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: '24px', gap: '10px' }}>
-          <OwlLogo size={48} />
+          <OwlLogo />
           <Box>
-            <Typography sx={{ fontSize: '18px', fontWeight: 700, color: tokens.textPrimary, lineHeight: 1.2 }}>
+            <Typography sx={{ fontSize: '18px', fontWeight: 700, color: '#333', lineHeight: 1.2 }}>
               {t('login.brand')}
             </Typography>
-            <Typography sx={{ fontSize: '11px', color: tokens.textTertiary, mt: '2px' }}>
+            <Typography sx={{ fontSize: '11px', color: '#999', mt: '2px' }}>
               {t('login.subtitle')}
             </Typography>
           </Box>
@@ -161,8 +161,7 @@ const LoginScreen = () => {
               <IconButton
                 size="small"
                 onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? t('a11y.hidePassword') : t('a11y.showPassword')}
-                sx={{ color: tokens.textPlaceholder, p: '2px' }}
+                sx={{ color: '#BFBFBF', p: '2px' }}
               >
                 {showPassword
                   ? <VisibilityOff sx={{ fontSize: 16 }} />
@@ -173,7 +172,7 @@ const LoginScreen = () => {
         />
 
         {error && (
-          <FormHelperText error role="alert" sx={{ mb: '8px', fontSize: '12px' }}>
+          <FormHelperText error sx={{ mb: '8px', fontSize: '12px' }}>
             {error}
           </FormHelperText>
         )}
@@ -185,20 +184,20 @@ const LoginScreen = () => {
           sx={{
             mt: '8px',
             height: '36px',
-            bgcolor: tokens.primary,
+            bgcolor: '#FFC107',
             color: 'white',
             fontSize: '14px',
             fontWeight: 500,
             borderRadius: '4px',
             boxShadow: 'none',
-            '&:hover': { bgcolor: tokens.primaryDark, boxShadow: 'none' },
-            '&:disabled': { bgcolor: tokens.primaryDisabled, color: 'white' },
+            '&:hover': { bgcolor: '#FFB300', boxShadow: 'none' },
+            '&:disabled': { bgcolor: '#FFE082', color: 'white' },
           }}
         >
           {submitting ? <CircularProgress size={18} sx={{ color: 'white' }} /> : t('login.submit')}
         </Button>
 
-        <Typography sx={{ textAlign: 'center', fontSize: '11px', color: tokens.textTertiary, mt: '16px' }}>
+        <Typography sx={{ textAlign: 'center', fontSize: '11px', color: '#BFBFBF', mt: '16px' }}>
           {t('login.version')}
         </Typography>
       </Box>
