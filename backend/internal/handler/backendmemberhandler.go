@@ -9,14 +9,14 @@ import (
 	"p2p-exchange/internal/types"
 )
 
-func BackendListListingsHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+func BackendListMembersHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req types.BackendListListingsRequest
+		var req types.BackendListMembersRequest
 		if err := httpx.Parse(r, &req); err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 			return
 		}
-		l := logic.NewBackendListListingsLogic(r.Context(), svcCtx)
+		l := logic.NewBackendListMembersLogic(r.Context(), svcCtx)
 		resp, err := l.List(&req)
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)

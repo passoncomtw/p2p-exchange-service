@@ -204,6 +204,27 @@ type DisputeOrderRequest struct {
 	Reason string `json:"reason"`
 }
 
+// ── backend members ──────────────────────────────────────────────────────────
+
+type BackendListMembersRequest struct {
+	Keyword string `form:"keyword,optional"`
+	Limit   int64  `form:"limit,optional,default=10"`
+	Offset  int64  `form:"offset,optional,default=0"`
+}
+
+type MemberItem struct {
+	ID        int64  `json:"id"`
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	CreatedAt string `json:"createdAt"`
+	UpdatedAt string `json:"updatedAt"`
+}
+
+type BackendListMembersResponse struct {
+	List  []MemberItem `json:"list"`
+	Total int64        `json:"total"`
+}
+
 // ── backend admin ─────────────────────────────────────────────────────────────
 
 type BackendListListingsRequest struct {

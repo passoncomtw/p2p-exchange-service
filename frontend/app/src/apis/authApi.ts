@@ -19,7 +19,7 @@ export const authApi = {
       username: credentials.account, // App 內部用 account，後端 field 是 username
       password: credentials.password,
     });
-    return response.data.data.data;
+    return response.data.data;
   },
 
   /**

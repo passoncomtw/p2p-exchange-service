@@ -45,6 +45,28 @@ export default {
     settings: '系统设置',
   },
 
+  // 会员列表
+  member: {
+    keyword: '关键字',
+    keywordPlaceholder: '请输入账号或邮箱',
+    reset: '重置',
+    filter: '筛选',
+    loading: '加载中...',
+    empty: '暂无数据',
+    column: {
+      username: '账号',
+      email: '电子邮件',
+      createdAt: '创建时间',
+      updatedAt: '更新时间',
+    },
+    pagination: {
+      total: '共 {{total}} 条',
+      page: '第 {{current}}/{{total}} 页',
+      pageSize: '每页笔数：',
+      items: '笔',
+    },
+  },
+
   // 通用
   common: {
     welcome: '欢迎使用丰盈钱包运营后台',

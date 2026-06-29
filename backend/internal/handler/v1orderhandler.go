@@ -5,7 +5,6 @@ import (
 
 	"github.com/zeromicro/go-zero/rest/httpx"
 	"p2p-exchange/internal/logic"
-	"p2p-exchange/internal/response"
 	"p2p-exchange/internal/svc"
 	"p2p-exchange/internal/types"
 )
@@ -24,7 +23,7 @@ func V1CreateOrderHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
-			httpx.OkJsonCtx(r.Context(), w, response.Success(resp))
+			httpx.OkJsonCtx(r.Context(), w, resp)
 		}
 	}
 }
@@ -37,7 +36,7 @@ func V1ListMyOrdersHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
-			httpx.OkJsonCtx(r.Context(), w, response.Success(resp))
+			httpx.OkJsonCtx(r.Context(), w, resp)
 		}
 	}
 }
@@ -55,7 +54,7 @@ func V1CancelOrderHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		if err := l.Cancel(req.ID); err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
-			httpx.OkJsonCtx(r.Context(), w, response.Success(map[string]bool{"ok": true}))
+			httpx.OkJsonCtx(r.Context(), w, map[string]bool{"ok": true})
 		}
 	}
 }
@@ -74,7 +73,7 @@ func V1AdminListOrdersHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
-			httpx.OkJsonCtx(r.Context(), w, response.Success(resp))
+			httpx.OkJsonCtx(r.Context(), w, resp)
 		}
 	}
 }
@@ -93,7 +92,7 @@ func V1AdminGetOrderHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
-			httpx.OkJsonCtx(r.Context(), w, response.Success(resp))
+			httpx.OkJsonCtx(r.Context(), w, resp)
 		}
 	}
 }
@@ -111,7 +110,7 @@ func V1AdminCompleteOrderHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		if err := l.AdminComplete(req.ID); err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {
-			httpx.OkJsonCtx(r.Context(), w, response.Success(map[string]bool{"ok": true}))
+			httpx.OkJsonCtx(r.Context(), w, map[string]bool{"ok": true})
 		}
 	}
 }

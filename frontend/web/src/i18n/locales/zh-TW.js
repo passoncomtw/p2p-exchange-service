@@ -45,6 +45,28 @@ export default {
     settings: '系統設置',
   },
 
+  // 會員列表
+  member: {
+    keyword: '關鍵字',
+    keywordPlaceholder: '請輸入帳號或信箱',
+    reset: '重置',
+    filter: '篩選',
+    loading: '載入中...',
+    empty: '暫無資料',
+    column: {
+      username: '帳號',
+      email: '電子郵件',
+      createdAt: '建立時間',
+      updatedAt: '更新時間',
+    },
+    pagination: {
+      total: '共 {{total}} 條',
+      page: '第 {{current}}/{{total}} 頁',
+      pageSize: '每頁筆數：',
+      items: '筆',
+    },
+  },
+
   // 通用
   common: {
     welcome: '歡迎使用豐盈錢包運營後台',

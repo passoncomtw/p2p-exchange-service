@@ -23,18 +23,18 @@ interface CreatePaymentMethodParams {
 
 export const paymentMethodsApi = {
   list: async (): Promise<PaymentMethodItem[]> => {
-    const response = await httpClientWithAuth.getWithToken<ApiResponse<{ data: ListPaymentMethodsResponse }>>(
+    const response = await httpClientWithAuth.getWithToken<ApiResponse<ListPaymentMethodsResponse>>(
       '/app/payment-methods'
     );
-    return response.data.data.data.list;
+    return response.data.data.list;
   },
 
   create: async (params: CreatePaymentMethodParams): Promise<{ id: number }> => {
-    const response = await httpClientWithAuth.postWithToken<ApiResponse<{ data: { id: number } }>>(
+    const response = await httpClientWithAuth.postWithToken<ApiResponse<{ id: number }>>(
       '/app/payment-methods',
       params
     );
-    return response.data.data.data;
+    return response.data.data;
   },
 
   remove: async (id: number): Promise<void> => {
