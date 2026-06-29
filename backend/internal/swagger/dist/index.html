@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8"/>
+  <title>P2P Exchange API</title>
+  <link rel="stylesheet" type="text/css" href="/swagger/swagger-ui.css">
+  <style>
+    html { box-sizing: border-box; overflow-y: scroll; }
+    *, *::before, *::after { box-sizing: inherit; }
+    body { margin: 0; background: #fafafa; }
+  </style>
+</head>
+<body>
+<div id="swagger-ui"></div>
+<script src="/swagger/swagger-ui-bundle.js"></script>
+<script src="/swagger/swagger-ui-standalone-preset.js"></script>
+<script>
+SwaggerUIBundle({
+  url: '/swagger/spec.json',
+  dom_id: '#swagger-ui',
+  deepLinking: true,
+  persistAuthorization: true,
+  presets: [
+    SwaggerUIBundle.presets.apis,
+    SwaggerUIStandalonePreset
+  ],
+  plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+  layout: 'StandaloneLayout'
+});
+</script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 Name: p2p-api
 Host: 0.0.0.0
 Port: 8888
+Mode: dev
 
 App:
   AccessSecret: "b3496b7e-fddb-4a91-a26c-d62acf923722"

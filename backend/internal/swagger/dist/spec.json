@@ -1,0 +1,2191 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "title": "P2P Exchange API",
+    "version": "1.0.0"
+  },
+  "basePath": "/",
+  "paths": {
+    "/app/auth/login": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "App 使用者登入",
+        "operationId": "app-AuthAppLoginHandler",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "username",
+                "password"
+              ],
+              "properties": {
+                "password": {
+                  "type": "string"
+                },
+                "username": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "access_token": {
+                  "type": "string"
+                },
+                "expireIn": {
+                  "type": "integer"
+                },
+                "user": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "account",
+                    "name"
+                  ],
+                  "properties": {
+                    "account": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "App - Auth"
+        ]
+      }
+    },
+    "/app/listings": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "查詢掛單列表",
+        "operationId": "app-ListingsAppListListingsHandler",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "type",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "string",
+            "name": "status",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "integer",
+            "default": 20,
+            "example": 20,
+            "name": "limit",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "integer",
+            "default": 0,
+            "example": 0,
+            "name": "offset",
+            "in": "query",
+            "allowEmptyValue": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "userId",
+                      "type",
+                      "cryptoCurrency",
+                      "fiatCurrency",
+                      "totalAmount",
+                      "remainingAmount",
+                      "price",
+                      "minOrderFiat",
+                      "maxOrderFiat",
+                      "platformFeeBase",
+                      "platformFeeRate",
+                      "paymentFeeBase",
+                      "paymentFeeRate",
+                      "paymentTimeLimit",
+                      "status",
+                      "createdAt"
+                    ],
+                    "properties": {
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "cryptoCurrency": {
+                        "type": "string"
+                      },
+                      "fiatCurrency": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "integer"
+                      },
+                      "maxOrderFiat": {
+                        "type": "number"
+                      },
+                      "minOrderFiat": {
+                        "type": "number"
+                      },
+                      "paymentFeeBase": {
+                        "type": "number"
+                      },
+                      "paymentFeeRate": {
+                        "type": "number"
+                      },
+                      "paymentMethodId": {
+                        "type": "integer"
+                      },
+                      "paymentTimeLimit": {
+                        "type": "integer"
+                      },
+                      "platformFeeBase": {
+                        "type": "number"
+                      },
+                      "platformFeeRate": {
+                        "type": "number"
+                      },
+                      "price": {
+                        "type": "number"
+                      },
+                      "remainingAmount": {
+                        "type": "number"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "totalAmount": {
+                        "type": "number"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "userId": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "App - Listings"
+        ],
+        "security": [
+          {
+            "AppAuth": []
+          }
+        ]
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "建立掛單",
+        "operationId": "app-ListingsAppCreateListingHandler",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "type",
+                "cryptoCurrency",
+                "fiatCurrency",
+                "totalAmount",
+                "price",
+                "minOrderFiat",
+                "maxOrderFiat",
+                "paymentTimeLimit"
+              ],
+              "properties": {
+                "cryptoCurrency": {
+                  "type": "string"
+                },
+                "fiatCurrency": {
+                  "type": "string"
+                },
+                "maxOrderFiat": {
+                  "type": "number"
+                },
+                "minOrderFiat": {
+                  "type": "number"
+                },
+                "paymentMethodId": {
+                  "type": "integer"
+                },
+                "paymentTimeLimit": {
+                  "type": "integer"
+                },
+                "price": {
+                  "type": "number"
+                },
+                "totalAmount": {
+                  "type": "number"
+                },
+                "type": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "App - Listings"
+        ],
+        "security": [
+          {
+            "AppAuth": []
+          }
+        ]
+      }
+    },
+    "/app/listings/mine": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "查詢我的掛單",
+        "operationId": "app-ListingsAppMyListingsHandler",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "type",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "string",
+            "name": "status",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "integer",
+            "default": 20,
+            "example": 20,
+            "name": "limit",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "integer",
+            "default": 0,
+            "example": 0,
+            "name": "offset",
+            "in": "query",
+            "allowEmptyValue": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "userId",
+                      "type",
+                      "cryptoCurrency",
+                      "fiatCurrency",
+                      "totalAmount",
+                      "remainingAmount",
+                      "price",
+                      "minOrderFiat",
+                      "maxOrderFiat",
+                      "platformFeeBase",
+                      "platformFeeRate",
+                      "paymentFeeBase",
+                      "paymentFeeRate",
+                      "paymentTimeLimit",
+                      "status",
+                      "createdAt"
+                    ],
+                    "properties": {
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "cryptoCurrency": {
+                        "type": "string"
+                      },
+                      "fiatCurrency": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "integer"
+                      },
+                      "maxOrderFiat": {
+                        "type": "number"
+                      },
+                      "minOrderFiat": {
+                        "type": "number"
+                      },
+                      "paymentFeeBase": {
+                        "type": "number"
+                      },
+                      "paymentFeeRate": {
+                        "type": "number"
+                      },
+                      "paymentMethodId": {
+                        "type": "integer"
+                      },
+                      "paymentTimeLimit": {
+                        "type": "integer"
+                      },
+                      "platformFeeBase": {
+                        "type": "number"
+                      },
+                      "platformFeeRate": {
+                        "type": "number"
+                      },
+                      "price": {
+                        "type": "number"
+                      },
+                      "remainingAmount": {
+                        "type": "number"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "totalAmount": {
+                        "type": "number"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "userId": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "App - Listings"
+        ],
+        "security": [
+          {
+            "AppAuth": []
+          }
+        ]
+      }
+    },
+    "/app/listings/{id}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "查詢掛單詳情",
+        "operationId": "app-ListingsAppGetListingHandler",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "createdAt": {
+                  "type": "string"
+                },
+                "cryptoCurrency": {
+                  "type": "string"
+                },
+                "fiatCurrency": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "integer"
+                },
+                "maxOrderFiat": {
+                  "type": "number"
+                },
+                "minOrderFiat": {
+                  "type": "number"
+                },
+                "paymentFeeBase": {
+                  "type": "number"
+                },
+                "paymentFeeRate": {
+                  "type": "number"
+                },
+                "paymentMethodId": {
+                  "type": "integer"
+                },
+                "paymentTimeLimit": {
+                  "type": "integer"
+                },
+                "platformFeeBase": {
+                  "type": "number"
+                },
+                "platformFeeRate": {
+                  "type": "number"
+                },
+                "price": {
+                  "type": "number"
+                },
+                "remainingAmount": {
+                  "type": "number"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "totalAmount": {
+                  "type": "number"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "userId": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "App - Listings"
+        ],
+        "security": [
+          {
+            "AppAuth": []
+          }
+        ]
+      }
+    },
+    "/app/listings/{id}/cancel": {
+      "put": {
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "取消掛單",
+        "operationId": "app-ListingsAppCancelListingHandler",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {}
+          }
+        },
+        "tags": [
+          "App - Listings"
+        ],
+        "security": [
+          {
+            "AppAuth": []
+          }
+        ]
+      }
+    },
+    "/app/orders": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "查詢訂單列表",
+        "operationId": "app-OrdersAppListOrdersHandler",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "role",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "string",
+            "name": "status",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "integer",
+            "default": 20,
+            "example": 20,
+            "name": "limit",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "integer",
+            "default": 0,
+            "example": 0,
+            "name": "offset",
+            "in": "query",
+            "allowEmptyValue": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "orderNo",
+                      "listingId",
+                      "listingType",
+                      "sellerId",
+                      "buyerId",
+                      "cryptoCurrency",
+                      "fiatCurrency",
+                      "cryptoAmount",
+                      "price",
+                      "fiatAmount",
+                      "platformFeeBase",
+                      "platformFeeAmount",
+                      "paymentFeeBase",
+                      "paymentFeeAmount",
+                      "totalFee",
+                      "totalAmount",
+                      "paymentMethodId",
+                      "status",
+                      "paymentDeadline",
+                      "createdAt"
+                    ],
+                    "properties": {
+                      "buyerId": {
+                        "type": "integer"
+                      },
+                      "cancelReason": {
+                        "type": "string"
+                      },
+                      "cancelledAt": {
+                        "type": "string"
+                      },
+                      "completedAt": {
+                        "type": "string"
+                      },
+                      "confirmedAt": {
+                        "type": "string"
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "cryptoAmount": {
+                        "type": "number"
+                      },
+                      "cryptoCurrency": {
+                        "type": "string"
+                      },
+                      "fiatAmount": {
+                        "type": "number"
+                      },
+                      "fiatCurrency": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "integer"
+                      },
+                      "listingId": {
+                        "type": "integer"
+                      },
+                      "listingType": {
+                        "type": "string"
+                      },
+                      "orderNo": {
+                        "type": "string"
+                      },
+                      "paidAt": {
+                        "type": "string"
+                      },
+                      "paymentDeadline": {
+                        "type": "string"
+                      },
+                      "paymentFeeAmount": {
+                        "type": "number"
+                      },
+                      "paymentFeeBase": {
+                        "type": "number"
+                      },
+                      "paymentMethodId": {
+                        "type": "integer"
+                      },
+                      "platformFeeAmount": {
+                        "type": "number"
+                      },
+                      "platformFeeBase": {
+                        "type": "number"
+                      },
+                      "price": {
+                        "type": "number"
+                      },
+                      "sellerId": {
+                        "type": "integer"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "totalAmount": {
+                        "type": "number"
+                      },
+                      "totalFee": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "App - Orders"
+        ],
+        "security": [
+          {
+            "AppAuth": []
+          }
+        ]
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "建立訂單（接單）",
+        "operationId": "app-OrdersAppCreateOrderHandler",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "listingId",
+                "cryptoAmount"
+              ],
+              "properties": {
+                "cryptoAmount": {
+                  "type": "number"
+                },
+                "listingId": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "orderNo": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "App - Orders"
+        ],
+        "security": [
+          {
+            "AppAuth": []
+          }
+        ]
+      }
+    },
+    "/app/orders/{id}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "查詢訂單詳情",
+        "operationId": "app-OrdersAppGetOrderHandler",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "buyerId": {
+                  "type": "integer"
+                },
+                "cancelReason": {
+                  "type": "string"
+                },
+                "cancelledAt": {
+                  "type": "string"
+                },
+                "completedAt": {
+                  "type": "string"
+                },
+                "confirmedAt": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "cryptoAmount": {
+                  "type": "number"
+                },
+                "cryptoCurrency": {
+                  "type": "string"
+                },
+                "fiatAmount": {
+                  "type": "number"
+                },
+                "fiatCurrency": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "integer"
+                },
+                "listingId": {
+                  "type": "integer"
+                },
+                "listingType": {
+                  "type": "string"
+                },
+                "orderNo": {
+                  "type": "string"
+                },
+                "paidAt": {
+                  "type": "string"
+                },
+                "paymentDeadline": {
+                  "type": "string"
+                },
+                "paymentFeeAmount": {
+                  "type": "number"
+                },
+                "paymentFeeBase": {
+                  "type": "number"
+                },
+                "paymentMethodId": {
+                  "type": "integer"
+                },
+                "platformFeeAmount": {
+                  "type": "number"
+                },
+                "platformFeeBase": {
+                  "type": "number"
+                },
+                "price": {
+                  "type": "number"
+                },
+                "sellerId": {
+                  "type": "integer"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "totalAmount": {
+                  "type": "number"
+                },
+                "totalFee": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "App - Orders"
+        ],
+        "security": [
+          {
+            "AppAuth": []
+          }
+        ]
+      }
+    },
+    "/app/orders/{id}/cancel": {
+      "put": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "取消訂單",
+        "operationId": "app-OrdersAppCancelOrderHandler",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "reason"
+              ],
+              "properties": {
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {}
+          }
+        },
+        "tags": [
+          "App - Orders"
+        ],
+        "security": [
+          {
+            "AppAuth": []
+          }
+        ]
+      }
+    },
+    "/app/orders/{id}/confirm": {
+      "put": {
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "確認收款",
+        "operationId": "app-OrdersAppConfirmOrderHandler",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {}
+          }
+        },
+        "tags": [
+          "App - Orders"
+        ],
+        "security": [
+          {
+            "AppAuth": []
+          }
+        ]
+      }
+    },
+    "/app/orders/{id}/dispute": {
+      "put": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "提出申訴",
+        "operationId": "app-OrdersAppDisputeOrderHandler",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "reason"
+              ],
+              "properties": {
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {}
+          }
+        },
+        "tags": [
+          "App - Orders"
+        ],
+        "security": [
+          {
+            "AppAuth": []
+          }
+        ]
+      }
+    },
+    "/app/orders/{id}/pay": {
+      "put": {
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "標記已付款",
+        "operationId": "app-OrdersAppPayOrderHandler",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {}
+          }
+        },
+        "tags": [
+          "App - Orders"
+        ],
+        "security": [
+          {
+            "AppAuth": []
+          }
+        ]
+      }
+    },
+    "/app/payment-methods": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "查詢收款帳戶列表",
+        "operationId": "app-Payment-MethodsAppListPaymentMethodsHandler",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "type",
+                      "bankName",
+                      "accountName",
+                      "accountNumber",
+                      "isActive"
+                    ],
+                    "properties": {
+                      "accountName": {
+                        "type": "string"
+                      },
+                      "accountNumber": {
+                        "type": "string"
+                      },
+                      "bankName": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "integer"
+                      },
+                      "isActive": {
+                        "type": "boolean"
+                      },
+                      "type": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "App - Payment Methods"
+        ],
+        "security": [
+          {
+            "AppAuth": []
+          }
+        ]
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "新增收款帳戶",
+        "operationId": "app-Payment-MethodsAppCreatePaymentMethodHandler",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "type",
+                "bankName",
+                "accountName",
+                "accountNumber"
+              ],
+              "properties": {
+                "accountName": {
+                  "type": "string"
+                },
+                "accountNumber": {
+                  "type": "string"
+                },
+                "bankName": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "App - Payment Methods"
+        ],
+        "security": [
+          {
+            "AppAuth": []
+          }
+        ]
+      }
+    },
+    "/app/payment-methods/{id}": {
+      "delete": {
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "刪除收款帳戶",
+        "operationId": "app-Payment-MethodsAppDeletePaymentMethodHandler",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {}
+          }
+        },
+        "tags": [
+          "App - Payment Methods"
+        ],
+        "security": [
+          {
+            "AppAuth": []
+          }
+        ]
+      }
+    },
+    "/app/profile": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "取得使用者資料",
+        "operationId": "app-ProfileAppProfileHandler",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "App - Profile"
+        ],
+        "security": [
+          {
+            "AppAuth": []
+          }
+        ]
+      }
+    },
+    "/backend/auth/login": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "後台管理員登入",
+        "operationId": "backend-AuthBackendLoginHandler",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "username",
+                "password"
+              ],
+              "properties": {
+                "password": {
+                  "type": "string"
+                },
+                "username": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "expiresIn": {
+                  "type": "integer"
+                },
+                "token": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Backend - Auth"
+        ]
+      }
+    },
+    "/backend/dashboard": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "後台 Dashboard",
+        "operationId": "backend-AdminBackendDashboardHandler",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string"
+                },
+                "username": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Backend - Admin"
+        ],
+        "security": [
+          {
+            "BackendAuth": []
+          }
+        ]
+      }
+    },
+    "/backend/listings": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "後台查詢掛單列表",
+        "operationId": "backend-AdminBackendListListingsHandler",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "type",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "string",
+            "name": "status",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "integer",
+            "default": 20,
+            "example": 20,
+            "name": "limit",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "integer",
+            "default": 0,
+            "example": 0,
+            "name": "offset",
+            "in": "query",
+            "allowEmptyValue": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "userId",
+                      "type",
+                      "cryptoCurrency",
+                      "fiatCurrency",
+                      "totalAmount",
+                      "remainingAmount",
+                      "price",
+                      "minOrderFiat",
+                      "maxOrderFiat",
+                      "platformFeeBase",
+                      "platformFeeRate",
+                      "paymentFeeBase",
+                      "paymentFeeRate",
+                      "paymentTimeLimit",
+                      "status",
+                      "createdAt"
+                    ],
+                    "properties": {
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "cryptoCurrency": {
+                        "type": "string"
+                      },
+                      "fiatCurrency": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "integer"
+                      },
+                      "maxOrderFiat": {
+                        "type": "number"
+                      },
+                      "minOrderFiat": {
+                        "type": "number"
+                      },
+                      "paymentFeeBase": {
+                        "type": "number"
+                      },
+                      "paymentFeeRate": {
+                        "type": "number"
+                      },
+                      "paymentMethodId": {
+                        "type": "integer"
+                      },
+                      "paymentTimeLimit": {
+                        "type": "integer"
+                      },
+                      "platformFeeBase": {
+                        "type": "number"
+                      },
+                      "platformFeeRate": {
+                        "type": "number"
+                      },
+                      "price": {
+                        "type": "number"
+                      },
+                      "remainingAmount": {
+                        "type": "number"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "totalAmount": {
+                        "type": "number"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "userId": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Backend - Admin"
+        ],
+        "security": [
+          {
+            "BackendAuth": []
+          }
+        ]
+      }
+    },
+    "/backend/orders": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "後台查詢訂單列表",
+        "operationId": "backend-AdminBackendListOrdersHandler",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "status",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "integer",
+            "default": 20,
+            "example": 20,
+            "name": "limit",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "integer",
+            "default": 0,
+            "example": 0,
+            "name": "offset",
+            "in": "query",
+            "allowEmptyValue": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "orderNo",
+                      "listingId",
+                      "listingType",
+                      "sellerId",
+                      "buyerId",
+                      "cryptoCurrency",
+                      "fiatCurrency",
+                      "cryptoAmount",
+                      "price",
+                      "fiatAmount",
+                      "platformFeeBase",
+                      "platformFeeAmount",
+                      "paymentFeeBase",
+                      "paymentFeeAmount",
+                      "totalFee",
+                      "totalAmount",
+                      "paymentMethodId",
+                      "status",
+                      "paymentDeadline",
+                      "createdAt"
+                    ],
+                    "properties": {
+                      "buyerId": {
+                        "type": "integer"
+                      },
+                      "cancelReason": {
+                        "type": "string"
+                      },
+                      "cancelledAt": {
+                        "type": "string"
+                      },
+                      "completedAt": {
+                        "type": "string"
+                      },
+                      "confirmedAt": {
+                        "type": "string"
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "cryptoAmount": {
+                        "type": "number"
+                      },
+                      "cryptoCurrency": {
+                        "type": "string"
+                      },
+                      "fiatAmount": {
+                        "type": "number"
+                      },
+                      "fiatCurrency": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "integer"
+                      },
+                      "listingId": {
+                        "type": "integer"
+                      },
+                      "listingType": {
+                        "type": "string"
+                      },
+                      "orderNo": {
+                        "type": "string"
+                      },
+                      "paidAt": {
+                        "type": "string"
+                      },
+                      "paymentDeadline": {
+                        "type": "string"
+                      },
+                      "paymentFeeAmount": {
+                        "type": "number"
+                      },
+                      "paymentFeeBase": {
+                        "type": "number"
+                      },
+                      "paymentMethodId": {
+                        "type": "integer"
+                      },
+                      "platformFeeAmount": {
+                        "type": "number"
+                      },
+                      "platformFeeBase": {
+                        "type": "number"
+                      },
+                      "price": {
+                        "type": "number"
+                      },
+                      "sellerId": {
+                        "type": "integer"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "totalAmount": {
+                        "type": "number"
+                      },
+                      "totalFee": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Backend - Admin"
+        ],
+        "security": [
+          {
+            "BackendAuth": []
+          }
+        ]
+      }
+    },
+    "/backend/orders/{id}/resolve": {
+      "put": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "後台處理訂單",
+        "operationId": "backend-AdminBackendResolveOrderHandler",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "action",
+                "reason"
+              ],
+              "properties": {
+                "action": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {}
+          }
+        },
+        "tags": [
+          "Backend - Admin"
+        ],
+        "security": [
+          {
+            "BackendAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/orders": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "[Legacy] 後台查詢掛單",
+        "operationId": "v1-LegacyV1AdminListOrdersHandler",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "status",
+            "in": "query",
+            "allowEmptyValue": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "type",
+                      "asset",
+                      "fiat",
+                      "price",
+                      "quantity",
+                      "totalAmount",
+                      "paymentMethod",
+                      "status",
+                      "createdBy",
+                      "createdAt",
+                      "updatedAt"
+                    ],
+                    "properties": {
+                      "asset": {
+                        "type": "string"
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "createdBy": {
+                        "type": "string"
+                      },
+                      "fiat": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "paymentMethod": {
+                        "type": "string"
+                      },
+                      "price": {
+                        "type": "number"
+                      },
+                      "quantity": {
+                        "type": "number"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "totalAmount": {
+                        "type": "number"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "updatedAt": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "V1 Legacy - Admin"
+        ]
+      }
+    },
+    "/v1/admin/orders/{id}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "[Legacy] 後台查詢掛單詳情",
+        "operationId": "v1-LegacyV1AdminGetOrderHandler",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "asset": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "createdBy": {
+                  "type": "string"
+                },
+                "fiat": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "paymentMethod": {
+                  "type": "string"
+                },
+                "price": {
+                  "type": "number"
+                },
+                "quantity": {
+                  "type": "number"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "totalAmount": {
+                  "type": "number"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "updatedAt": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "V1 Legacy - Admin"
+        ]
+      }
+    },
+    "/v1/admin/orders/{id}/complete": {
+      "post": {
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "[Legacy] 後台標記完成",
+        "operationId": "v1-LegacyV1AdminCompleteOrderHandler",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {}
+          }
+        },
+        "tags": [
+          "V1 Legacy - Admin"
+        ]
+      }
+    },
+    "/v1/orders": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "[Legacy] 建立掛單",
+        "operationId": "v1-LegacyV1CreateOrderHandler",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "type",
+                "asset",
+                "fiat",
+                "price",
+                "quantity",
+                "paymentMethod"
+              ],
+              "properties": {
+                "asset": {
+                  "type": "string"
+                },
+                "fiat": {
+                  "type": "string"
+                },
+                "paymentMethod": {
+                  "type": "string"
+                },
+                "price": {
+                  "type": "number"
+                },
+                "quantity": {
+                  "type": "number"
+                },
+                "type": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "asset": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string"
+                },
+                "createdBy": {
+                  "type": "string"
+                },
+                "fiat": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "paymentMethod": {
+                  "type": "string"
+                },
+                "price": {
+                  "type": "number"
+                },
+                "quantity": {
+                  "type": "number"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "totalAmount": {
+                  "type": "number"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "updatedAt": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "V1 Legacy"
+        ]
+      }
+    },
+    "/v1/orders/mine": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "[Legacy] 查詢我的掛單",
+        "operationId": "v1-LegacyV1ListMyOrdersHandler",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "type",
+                      "asset",
+                      "fiat",
+                      "price",
+                      "quantity",
+                      "totalAmount",
+                      "paymentMethod",
+                      "status",
+                      "createdBy",
+                      "createdAt",
+                      "updatedAt"
+                    ],
+                    "properties": {
+                      "asset": {
+                        "type": "string"
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "createdBy": {
+                        "type": "string"
+                      },
+                      "fiat": {
+                        "type": "string"
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "paymentMethod": {
+                        "type": "string"
+                      },
+                      "price": {
+                        "type": "number"
+                      },
+                      "quantity": {
+                        "type": "number"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "totalAmount": {
+                        "type": "number"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "updatedAt": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "V1 Legacy"
+        ]
+      }
+    },
+    "/v1/orders/{id}/cancel": {
+      "post": {
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "[Legacy] 取消掛單",
+        "operationId": "v1-LegacyV1CancelOrderHandler",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {}
+          }
+        },
+        "tags": [
+          "V1 Legacy"
+        ]
+      }
+    }
+  },
+  "x-date": "2026-06-28 11:26:42",
+  "x-description": "This is a goctl generated swagger file.",
+  "x-github": "https://github.com/zeromicro/go-zero",
+  "x-go-zero-doc": "https://go-zero.dev/",
+  "x-goctl-version": "1.10.1",
+  "securityDefinitions": {
+    "AppAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "App JWT token. Format: Bearer {token}"
+    },
+    "BackendAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "Backend JWT token. Format: Bearer {token}"
+    }
+  }
+}

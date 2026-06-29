@@ -1,73 +1,407 @@
+// 本檔案僅用於 goctl api swagger 產生 API 文件，不用於程式碼生成。
+// 實際 handler、logic、types 均為手動維護。
 syntax = "v1"
 
-info(
-  title: "P2P Exchange API"
-  version: "1.0.0"
+info (
+	title:   "P2P Exchange API"
+	desc:    "P2P 加密貨幣交易平台 API"
+	version: "1.0.0"
 )
 
-type Request {
-	Name string `path:"name,options=you|me"`
-}
+// ============================================================================
+// Type definitions
+// ============================================================================
 
-type Response {
-	Message string `json:"message"`
-}
+type (
+	// ── auth ─────────────────────────────────────────────────────────────────
+	LoginRequest {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	LoginResponse {
+		Token     string `json:"token"`
+		ExpiresIn int64  `json:"expiresIn"`
+	}
+	AppLoginUserInfo {
+		ID      int64  `json:"id"`
+		Account string `json:"account"`
+		Name    string `json:"name"`
+	}
+	AppLoginResponse {
+		AccessToken string           `json:"access_token"`
+		ExpireIn    int64            `json:"expireIn"`
+		User        AppLoginUserInfo `json:"user"`
+	}
 
-type LoginRequest {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
+	// ── profile / dashboard ──────────────────────────────────────────────────
+	ProfileResponse {
+		Username string `json:"username"`
+	}
+	DashboardResponse {
+		Username string `json:"username"`
+		Role     string `json:"role"`
+	}
 
-type LoginResponse {
-	Token     string `json:"token"`
-	ExpiresIn int64  `json:"expiresIn"`
-}
+	// ── payment methods ──────────────────────────────────────────────────────
+	CreatePaymentMethodRequest {
+		Type          string `json:"type"`
+		BankName      string `json:"bankName"`
+		AccountName   string `json:"accountName"`
+		AccountNumber string `json:"accountNumber"`
+	}
+	CreatePaymentMethodResponse {
+		ID int64 `json:"id"`
+	}
+	PaymentMethodItem {
+		ID            int64  `json:"id"`
+		Type          string `json:"type"`
+		BankName      string `json:"bankName"`
+		AccountName   string `json:"accountName"`
+		AccountNumber string `json:"accountNumber"`
+		IsActive      bool   `json:"isActive"`
+	}
+	ListPaymentMethodsResponse {
+		List []PaymentMethodItem `json:"list"`
+	}
+	DeletePaymentMethodRequest {
+		ID int64 `path:"id"`
+	}
 
-type ProfileRequest {}
+	// ── listings ─────────────────────────────────────────────────────────────
+	CreateListingRequest {
+		Type             string  `json:"type"`
+		CryptoCurrency   string  `json:"cryptoCurrency"`
+		FiatCurrency     string  `json:"fiatCurrency"`
+		TotalAmount      float64 `json:"totalAmount"`
+		Price            float64 `json:"price"`
+		MinOrderFiat     float64 `json:"minOrderFiat"`
+		MaxOrderFiat     float64 `json:"maxOrderFiat"`
+		PaymentTimeLimit int64   `json:"paymentTimeLimit"`
+		PaymentMethodID  int64   `json:"paymentMethodId,optional"`
+	}
+	CreateListingResponse {
+		ID int64 `json:"id"`
+	}
+	ListingItem {
+		ID               int64   `json:"id"`
+		UserID           int64   `json:"userId"`
+		Type             string  `json:"type"`
+		CryptoCurrency   string  `json:"cryptoCurrency"`
+		FiatCurrency     string  `json:"fiatCurrency"`
+		TotalAmount      float64 `json:"totalAmount"`
+		RemainingAmount  float64 `json:"remainingAmount"`
+		Price            float64 `json:"price"`
+		MinOrderFiat     float64 `json:"minOrderFiat"`
+		MaxOrderFiat     float64 `json:"maxOrderFiat"`
+		PlatformFeeBase  float64 `json:"platformFeeBase"`
+		PlatformFeeRate  float64 `json:"platformFeeRate"`
+		PaymentFeeBase   float64 `json:"paymentFeeBase"`
+		PaymentFeeRate   float64 `json:"paymentFeeRate"`
+		PaymentTimeLimit int64   `json:"paymentTimeLimit"`
+		PaymentMethodID  int64   `json:"paymentMethodId,optional"`
+		Status           string  `json:"status"`
+		CreatedAt        string  `json:"createdAt"`
+	}
+	ListListingsRequest {
+		Type   string `form:"type,optional"`
+		Status string `form:"status,optional"`
+		Limit  int64  `form:"limit,optional,default=20"`
+		Offset int64  `form:"offset,optional,default=0"`
+	}
+	ListListingsResponse {
+		List []ListingItem `json:"list"`
+	}
+	GetListingRequest {
+		ID int64 `path:"id"`
+	}
+	CancelListingRequest {
+		ID int64 `path:"id"`
+	}
 
-type ProfileResponse {
-	Username string `json:"username"`
-}
+	// ── orders ───────────────────────────────────────────────────────────────
+	CreateOrderRequest {
+		ListingID    int64   `json:"listingId"`
+		CryptoAmount float64 `json:"cryptoAmount"`
+	}
+	CreateOrderResponse {
+		ID      int64  `json:"id"`
+		OrderNo string `json:"orderNo"`
+	}
+	OrderItem {
+		ID                int64   `json:"id"`
+		OrderNo           string  `json:"orderNo"`
+		ListingID         int64   `json:"listingId"`
+		ListingType       string  `json:"listingType"`
+		SellerID          int64   `json:"sellerId"`
+		BuyerID           int64   `json:"buyerId"`
+		CryptoCurrency    string  `json:"cryptoCurrency"`
+		FiatCurrency      string  `json:"fiatCurrency"`
+		CryptoAmount      float64 `json:"cryptoAmount"`
+		Price             float64 `json:"price"`
+		FiatAmount        float64 `json:"fiatAmount"`
+		PlatformFeeBase   float64 `json:"platformFeeBase"`
+		PlatformFeeAmount float64 `json:"platformFeeAmount"`
+		PaymentFeeBase    float64 `json:"paymentFeeBase"`
+		PaymentFeeAmount  float64 `json:"paymentFeeAmount"`
+		TotalFee          float64 `json:"totalFee"`
+		TotalAmount       float64 `json:"totalAmount"`
+		PaymentMethodID   int64   `json:"paymentMethodId"`
+		Status            string  `json:"status"`
+		PaymentDeadline   string  `json:"paymentDeadline"`
+		PaidAt            string  `json:"paidAt,optional"`
+		ConfirmedAt       string  `json:"confirmedAt,optional"`
+		CompletedAt       string  `json:"completedAt,optional"`
+		CancelledAt       string  `json:"cancelledAt,optional"`
+		CancelReason      string  `json:"cancelReason,optional"`
+		CreatedAt         string  `json:"createdAt"`
+	}
+	GetOrderRequest {
+		ID int64 `path:"id"`
+	}
+	ListOrdersRequest {
+		Role   string `form:"role,optional"`
+		Status string `form:"status,optional"`
+		Limit  int64  `form:"limit,optional,default=20"`
+		Offset int64  `form:"offset,optional,default=0"`
+	}
+	ListOrdersResponse {
+		List []OrderItem `json:"list"`
+	}
+	UpdateOrderPathRequest {
+		ID int64 `path:"id"`
+	}
+	CancelOrderRequest {
+		ID     int64  `path:"id"`
+		Reason string `json:"reason"`
+	}
+	DisputeOrderRequest {
+		ID     int64  `path:"id"`
+		Reason string `json:"reason"`
+	}
 
-type DashboardRequest {}
+	// ── backend admin ────────────────────────────────────────────────────────
+	BackendListListingsRequest {
+		Type   string `form:"type,optional"`
+		Status string `form:"status,optional"`
+		Limit  int64  `form:"limit,optional,default=20"`
+		Offset int64  `form:"offset,optional,default=0"`
+	}
+	BackendListOrdersRequest {
+		Status string `form:"status,optional"`
+		Limit  int64  `form:"limit,optional,default=20"`
+		Offset int64  `form:"offset,optional,default=0"`
+	}
+	ResolveOrderRequest {
+		ID     int64  `path:"id"`
+		Action string `json:"action"`
+		Reason string `json:"reason"`
+	}
 
-type DashboardResponse {
-	Username string `json:"username"`
-	Role     string `json:"role"`
-}
+	// ── v1 legacy ────────────────────────────────────────────────────────────
+	V1CreateOrderRequest {
+		Type          string  `json:"type"`
+		Asset         string  `json:"asset"`
+		Fiat          string  `json:"fiat"`
+		Price         float64 `json:"price"`
+		Quantity      float64 `json:"quantity"`
+		PaymentMethod string  `json:"paymentMethod"`
+	}
+	V1Order {
+		ID            string  `json:"id"`
+		Type          string  `json:"type"`
+		Asset         string  `json:"asset"`
+		Fiat          string  `json:"fiat"`
+		Price         float64 `json:"price"`
+		Quantity      float64 `json:"quantity"`
+		TotalAmount   float64 `json:"totalAmount"`
+		PaymentMethod string  `json:"paymentMethod"`
+		Status        string  `json:"status"`
+		CreatedBy     string  `json:"createdBy"`
+		CreatedAt     string  `json:"createdAt"`
+		UpdatedAt     string  `json:"updatedAt"`
+	}
+	V1OrderIDRequest {
+		ID int64 `path:"id"`
+	}
+	V1AdminListOrdersRequest {
+		Status string `form:"status,optional"`
+	}
+	V1OrderListResponse {
+		List []V1Order `json:"list"`
+	}
+)
 
-// ── public ──────────────────────────────────────────────────────────────────
+// ============================================================================
+// Service definitions
+// ============================================================================
+
+// ── App: login (public) ──────────────────────────────────────────────────────
+@server (
+	group: app-auth
+)
 service p2p-api {
-	@handler P2pHandler
-	get /from/:name (Request) returns (Response)
-}
-
-// ── app platform ─────────────────────────────────────────────────────────────
-service p2p-api {
+	@doc "App 使用者登入"
 	@handler AppLoginHandler
-	post /app/auth/login (LoginRequest) returns (LoginResponse)
+	post /app/auth/login (LoginRequest) returns (AppLoginResponse)
 }
 
-@server(
-	jwt: App
+// ── App: profile ─────────────────────────────────────────────────────────────
+@server (
+	jwt:    App
 	prefix: /app
+	group:  app-profile
 )
 service p2p-api {
+	@doc "取得使用者資料"
 	@handler AppProfileHandler
 	get /profile returns (ProfileResponse)
 }
 
-// ── backend platform ─────────────────────────────────────────────────────────
+// ── App: payment methods ─────────────────────────────────────────────────────
+@server (
+	jwt:    App
+	prefix: /app
+	group:  app-payment-methods
+)
 service p2p-api {
+	@doc "新增收款帳戶"
+	@handler AppCreatePaymentMethodHandler
+	post /payment-methods (CreatePaymentMethodRequest) returns (CreatePaymentMethodResponse)
+
+	@doc "查詢收款帳戶列表"
+	@handler AppListPaymentMethodsHandler
+	get /payment-methods returns (ListPaymentMethodsResponse)
+
+	@doc "刪除收款帳戶"
+	@handler AppDeletePaymentMethodHandler
+	delete /payment-methods/:id (DeletePaymentMethodRequest)
+}
+
+// ── App: listings ────────────────────────────────────────────────────────────
+@server (
+	jwt:    App
+	prefix: /app
+	group:  app-listings
+)
+service p2p-api {
+	@doc "建立掛單"
+	@handler AppCreateListingHandler
+	post /listings (CreateListingRequest) returns (CreateListingResponse)
+
+	@doc "查詢掛單列表"
+	@handler AppListListingsHandler
+	get /listings (ListListingsRequest) returns (ListListingsResponse)
+
+	@doc "查詢我的掛單"
+	@handler AppMyListingsHandler
+	get /listings/mine (ListListingsRequest) returns (ListListingsResponse)
+
+	@doc "查詢掛單詳情"
+	@handler AppGetListingHandler
+	get /listings/:id (GetListingRequest) returns (ListingItem)
+
+	@doc "取消掛單"
+	@handler AppCancelListingHandler
+	put /listings/:id/cancel (CancelListingRequest)
+}
+
+// ── App: orders ──────────────────────────────────────────────────────────────
+@server (
+	jwt:    App
+	prefix: /app
+	group:  app-orders
+)
+service p2p-api {
+	@doc "建立訂單（接單）"
+	@handler AppCreateOrderHandler
+	post /orders (CreateOrderRequest) returns (CreateOrderResponse)
+
+	@doc "查詢訂單列表"
+	@handler AppListOrdersHandler
+	get /orders (ListOrdersRequest) returns (ListOrdersResponse)
+
+	@doc "查詢訂單詳情"
+	@handler AppGetOrderHandler
+	get /orders/:id (GetOrderRequest) returns (OrderItem)
+
+	@doc "標記已付款"
+	@handler AppPayOrderHandler
+	put /orders/:id/pay (UpdateOrderPathRequest)
+
+	@doc "確認收款"
+	@handler AppConfirmOrderHandler
+	put /orders/:id/confirm (UpdateOrderPathRequest)
+
+	@doc "取消訂單"
+	@handler AppCancelOrderHandler
+	put /orders/:id/cancel (CancelOrderRequest)
+
+	@doc "提出申訴"
+	@handler AppDisputeOrderHandler
+	put /orders/:id/dispute (DisputeOrderRequest)
+}
+
+// ── Backend: login (public) ──────────────────────────────────────────────────
+@server (
+	group: backend-auth
+)
+service p2p-api {
+	@doc "後台管理員登入"
 	@handler BackendLoginHandler
 	post /backend/auth/login (LoginRequest) returns (LoginResponse)
 }
 
-@server(
-	jwt: Backend
+// ── Backend: admin ───────────────────────────────────────────────────────────
+@server (
+	jwt:    Backend
 	prefix: /backend
+	group:  backend-admin
 )
 service p2p-api {
+	@doc "後台 Dashboard"
 	@handler BackendDashboardHandler
 	get /dashboard returns (DashboardResponse)
+
+	@doc "後台查詢掛單列表"
+	@handler BackendListListingsHandler
+	get /listings (BackendListListingsRequest) returns (ListListingsResponse)
+
+	@doc "後台查詢訂單列表"
+	@handler BackendListOrdersHandler
+	get /orders (BackendListOrdersRequest) returns (ListOrdersResponse)
+
+	@doc "後台處理訂單"
+	@handler BackendResolveOrderHandler
+	put /orders/:id/resolve (ResolveOrderRequest)
+}
+
+// ── V1 legacy (public) ──────────────────────────────────────────────────────
+@server (
+	prefix: /v1
+	group:  v1-legacy
+)
+service p2p-api {
+	@doc "[Legacy] 建立掛單"
+	@handler V1CreateOrderHandler
+	post /orders (V1CreateOrderRequest) returns (V1Order)
+
+	@doc "[Legacy] 查詢我的掛單"
+	@handler V1ListMyOrdersHandler
+	get /orders/mine returns (V1OrderListResponse)
+
+	@doc "[Legacy] 取消掛單"
+	@handler V1CancelOrderHandler
+	post /orders/:id/cancel (V1OrderIDRequest)
+
+	@doc "[Legacy] 後台查詢掛單"
+	@handler V1AdminListOrdersHandler
+	get /admin/orders (V1AdminListOrdersRequest) returns (V1OrderListResponse)
+
+	@doc "[Legacy] 後台查詢掛單詳情"
+	@handler V1AdminGetOrderHandler
+	get /admin/orders/:id (V1OrderIDRequest) returns (V1Order)
+
+	@doc "[Legacy] 後台標記完成"
+	@handler V1AdminCompleteOrderHandler
+	post /admin/orders/:id/complete (V1OrderIDRequest)
 }
