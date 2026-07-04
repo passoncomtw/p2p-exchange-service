@@ -1,16 +1,14 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, StatusBar } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { p2pOrdersApi } from '@/apis';
-import type { Order } from '@/interfaces';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchOrderListRequest } from '../../store/actions/ordersActions';
 import OrderItem from './components/OrderItem';
-import logger from '@pkg/logger';
 
 type OrderCategory = 'ongoing' | 'completed';
 type OngoingTab = 'pending_payment' | 'pending_release';
 type CompletedTab = 'completed' | 'cancelled';
 
-const ONGOING_STATUSES = new Set(['matched', 'paid', 'releasing', 'disputed']);
 const PENDING_PAYMENT = new Set(['matched']);
 const PENDING_RELEASE = new Set(['paid', 'releasing']);
 const COMPLETED = new Set(['completed']);
@@ -18,25 +16,17 @@ const CANCELLED = new Set(['cancelled', 'timeout']);
 
 export default function OrderListScreen() {
   const navigation = useNavigation();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(false);
+  const dispatch = useAppDispatch();
+  const orders = useAppSelector((state) => state.orders.orderList);
+  const loading = useAppSelector((state) => state.orders.orderListLoading);
 
-  const [category, setCategory] = useState<OrderCategory>('ongoing');
-  const [ongoingTab, setOngoingTab] = useState<OngoingTab>('pending_payment');
-  const [completedTab, setCompletedTab] = useState<CompletedTab>('completed');
+  const [category, setCategory] = React.useState<OrderCategory>('ongoing');
+  const [ongoingTab, setOngoingTab] = React.useState<OngoingTab>('pending_payment');
+  const [completedTab, setCompletedTab] = React.useState<CompletedTab>('completed');
 
-  const fetchOrders = useCallback(async () => {
-    if (loading) return;
-    setLoading(true);
-    try {
-      const list = await p2pOrdersApi.list({ limit: 100 });
-      setOrders(list);
-    } catch (err) {
-      logger.error('OrderListScreen - 取得訂單失敗', { err });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fetchOrders = useCallback(() => {
+    dispatch(fetchOrderListRequest({ limit: 100 }));
+  }, [dispatch]);
 
   useFocusEffect(
     useCallback(() => {

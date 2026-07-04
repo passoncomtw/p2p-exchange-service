@@ -23,8 +23,7 @@ import {
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { fetchBankCardsRequest } from '../../store/actions/bankCardsActions';
-import { createPendingOrderRequest } from '../../store/actions/ordersActions';
-import { clearCreateError } from '../../store/slices/ordersSlice';
+import { createListingRequest } from '../../store/actions/ordersActions';
 import logger from '@pkg/logger';
 
 // 帳戶類型
@@ -47,7 +46,7 @@ export default function CreateOrderScreen() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { cards: bankCards, loading: bankCardsLoading } = useAppSelector((state) => state.bankCards);
-  const { buy, sell, creating, createError } = useAppSelector((state) => state.orders);
+  const { creating } = useAppSelector((state) => state.orders);
   
   // 從路由名稱判斷是買幣還是賣幣
   const routeName = route.name;
@@ -59,20 +58,10 @@ export default function CreateOrderScreen() {
   // 當頁面聚焦時，取得銀行卡列表並檢查是否已有掛單
   useFocusEffect(
     React.useCallback(() => {
-      logger.info('CreateOrderScreen - 檢查掛單狀態', {
-        isBuy,
-        hasBuy: !!buy,
-        hasSell: !!sell,
-        buyId: buy?.id,
-        sellId: sell?.id,
-      });
-
-      
-
-      logger.info('CreateOrderScreen - 無掛單，繼續載入');
-      dispatch(fetchBankCardsRequest());
-      dispatch(clearCreateError());
-    }, [dispatch, isBuy, buy, sell, navigation])
+      if (!isBuy) {
+        dispatch(fetchBankCardsRequest());
+      }
+    }, [dispatch, isBuy])
   );
 
   // 將銀行卡資料轉換為 PaymentAccount 格式
@@ -100,7 +89,6 @@ export default function CreateOrderScreen() {
   const [amount, setAmount] = useState('');
   const [selectedAccount, setSelectedAccount] = useState<PaymentAccount | null>(null);
   const [minAmount, setMinAmount] = useState('');
-  const [transactionPassword, setTransactionPassword] = useState('');
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [amountError, setAmountError] = useState<string>('');
 
@@ -174,7 +162,6 @@ export default function CreateOrderScreen() {
     setAmount('');
     setSelectedAccount(null);
     setMinAmount('');
-    setTransactionPassword('');
     setAmountError('');
     
     Alert.alert('成功', `${isBuy ? '購買' : '出售'}掛單建立成功`, [
@@ -184,100 +171,60 @@ export default function CreateOrderScreen() {
 
   // 建立掛單失敗的回調
   const handleCreateError = React.useCallback((errorMessage: string) => {
-    Alert.alert('建立失敗', errorMessage, [
-      { text: '確定', onPress: () => dispatch(clearCreateError()) },
-    ]);
-  }, [dispatch]);
+    Alert.alert('建立失敗', errorMessage);
+  }, []);
 
   const handleSubmit = () => {
-    // 驗證
     const amountNum = parseFloat(amount);
     if (!amount || isNaN(amountNum) || amountNum <= 0) {
       Alert.alert('錯誤', `請輸入${isBuy ? '購買' : '出售'}數量`);
       return;
     }
-    
-    // 賣幣時驗證數量不能超過可用餘額
+
     if (!isBuy && amountNum > availableBalance) {
       Alert.alert('錯誤', '數量不可超過E幣可用餘額');
       return;
     }
-    
-    // 買幣時不需要選擇銀行帳戶，自動使用第一個（唯一的）銀行帳戶
-    // 賣幣時需要選擇收款帳戶
-    let accountToUse: PaymentAccount | null = null;
-    
-    if (isBuy) {
-      // 買幣：自動使用第一個銀行帳戶
-      if (paymentAccounts.length === 0) {
-        Alert.alert('錯誤', '您尚未添加銀行卡，請先到個人設定中添加');
-        return;
-      }
-      accountToUse = paymentAccounts[0];
-      logger.info('CreateOrderScreen - 買幣自動使用銀行卡', {
-        id: accountToUse.id,
-        name: accountToUse.name,
-        bankName: accountToUse.bankName,
-      });
-    } else {
-      // 賣幣：必須選擇收款帳戶
-      if (!selectedAccount) {
-        Alert.alert('錯誤', '請選擇收款帳戶');
-        return;
-      }
-      accountToUse = selectedAccount;
+
+    if (!isBuy && !selectedAccount) {
+      Alert.alert('錯誤', '請選擇收款帳戶');
+      return;
     }
-    
+
     const minAmountNum = parseFloat(minAmount);
     if (!minAmount || isNaN(minAmountNum) || minAmountNum <= 0) {
       Alert.alert('錯誤', '請輸入最小交易量');
       return;
     }
-    
+
     if (minAmountNum > amountNum) {
       Alert.alert('錯誤', '最小交易量不能大於交易數量');
       return;
     }
-    
-    if (!transactionPassword) {
-      Alert.alert('錯誤', '請輸入交易密碼');
-      return;
-    }
 
-    // 再次檢查是否已有該類型的掛單
-    if (isBuy && buy && buy.id) {
-      logger.warn('CreateOrderScreen - handleSubmit 已有買幣掛單', { buyId: buy.id });
-      Alert.alert('提示', '您已有買幣掛單，無法再新增');
-      return;
-    }
-    if (!isBuy && sell && sell.id) {
-      logger.warn('CreateOrderScreen - handleSubmit 已有賣幣掛單', { sellId: sell.id });
-      Alert.alert('提示', '您已有賣幣掛單，無法再新增');
-      return;
-    }
+    const price = 1;
+    const totalAmount = amountNum;
+    const maxOrderFiat = totalAmount * price;
 
-    // 透過 saga 調用 API 建立掛單
-    const bankcardId = parseInt(accountToUse.id);
     logger.info('CreateOrderScreen - 準備建立掛單', {
-      accountId: accountToUse.id,
-      bankcardId: bankcardId,
-      type: isBuy ? 0 : 1,
-      amount: amountNum,
-      minAmount: minAmountNum,
-      isBuy,
+      type: isBuy ? 'buy' : 'sell',
+      totalAmount,
+      price,
+      minOrderFiat: minAmountNum,
+      maxOrderFiat,
     });
 
     Alert.alert('確認', `確定建立${isBuy ? '購買' : '出售'}掛單？`, [
       { text: '取消', style: 'cancel' },
       { text: '確定', onPress: () => {
-        dispatch(createPendingOrderRequest({
+        dispatch(createListingRequest({
           data: {
-            type: isBuy ? 0 : 1, // 0: 買幣, 1: 賣幣
-            amount: amountNum,
-            minAmount: minAmountNum,
-            bankcardId: bankcardId,
-            transactionCode: transactionPassword,
-            transactionMinutes: 60, // 預設 60 分鐘
+            type: isBuy ? 'buy' : 'sell',
+            totalAmount,
+            price,
+            minOrderFiat: minAmountNum,
+            maxOrderFiat,
+            ...((!isBuy && selectedAccount) ? { paymentMethodId: parseInt(selectedAccount.id) } : {}),
           },
           onSuccess: handleCreateSuccess,
           onError: handleCreateError,
@@ -404,21 +351,6 @@ export default function CreateOrderScreen() {
                   value={minAmount}
                   onChangeText={setMinAmount}
                   keyboardType="numeric"
-                />
-              </View>
-            </View>
-
-            {/* 交易密碼 */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>交易密碼</Text>
-              <View style={styles.inputField}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="請輸入交易密碼"
-                  placeholderTextColor="#999"
-                  value={transactionPassword}
-                  onChangeText={setTransactionPassword}
-                  secureTextEntry
                 />
               </View>
             </View>

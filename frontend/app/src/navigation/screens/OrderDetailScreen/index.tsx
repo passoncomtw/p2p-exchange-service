@@ -33,13 +33,12 @@ export default function OrderDetailScreen() {
 
   const { orderId } = route.params;
 
-  // 從訂單列表中找對應的訂單（使用 useMemo 穩定引用）
   const order = React.useMemo(() => {
-    return orderList.find((o) => o.id === orderId);
+    return orderList.find((o) => o.id.toString() === orderId);
   }, [orderList, orderId]);
-  
-  const statusInfo = ORDER_STATUS_MAP[order?.status ?? 0];
-  
+
+  const statusInfo = ORDER_STATUS_MAP[order?.status ?? 'matched'];
+
   if (!order || !user) {
     return <EmptyContent />;
   }
@@ -59,7 +58,7 @@ export default function OrderDetailScreen() {
               styles.orderTypeBadge,styles.orderTypeBuy
             ]}>
               <Text style={styles.orderTypeText}>
-                {order.pendingOrder.type === 0 ? '買幣' : '賣幣'}
+                {order.listingType === 'buy' ? '買幣' : '賣幣'}
             </Text>
           </View>
         </View>

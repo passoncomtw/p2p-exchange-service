@@ -17,7 +17,6 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { fetchBankCardsRequest } from '../../store/actions/bankCardsActions';
 import { createOrderRequest } from '../../store/actions/ordersActions';
 import logger from '@pkg/logger';
 
@@ -46,7 +45,6 @@ export default function ConfirmOrderScreen() {
   const navigation = useNavigation();
   const route = useRoute<ConfirmOrderRouteProp>();
   const dispatch = useAppDispatch();
-  const { cards: bankCards } = useAppSelector((state) => state.bankCards);
   const { creatingOrder } = useAppSelector((state) => state.orders);
   const { user } = useAppSelector((state) => state.auth);
 
@@ -71,7 +69,6 @@ export default function ConfirmOrderScreen() {
   const isOwnOrder = orderCreatorId && user?.id && orderCreatorId === user.id;
 
   const [amount, setAmount] = useState('');
-  const [transactionPassword, setTransactionPassword] = useState('');
 
   // 當頁面聚焦時，取得銀行卡列表
   useFocusEffect(
@@ -83,8 +80,7 @@ export default function ConfirmOrderScreen() {
         isOwnOrder,
         isBuy,
       });
-      dispatch(fetchBankCardsRequest());
-    }, [dispatch, orderId, orderCreatorId, user?.id, isOwnOrder, isBuy])
+    }, [orderId, orderCreatorId, user?.id, isOwnOrder, isBuy])
   );
 
   // 計算交易金額
@@ -129,7 +125,6 @@ export default function ConfirmOrderScreen() {
   const handleSubmit = () => {
     if (creatingOrder) return;
 
-    // 驗證
     const amountNum = parseFloat(amount);
     if (!amount || isNaN(amountNum)) {
       Alert.alert('提示', '請輸入數量');
@@ -144,32 +139,13 @@ export default function ConfirmOrderScreen() {
       return;
     }
 
-    // 檢查是否有銀行卡
-    if (!bankCards || bankCards.length === 0) {
-      Alert.alert('錯誤', '您尚未添加銀行卡，請先到個人設定中添加');
-      return;
-    }
-
-    // 自動使用第一個（唯一的）銀行卡
-    const bankCardToUse = bankCards[0];
-    
-    if (!transactionPassword) {
-      Alert.alert('提示', '請輸入交易密碼');
-      return;
-    }
+    const listingId = Number(orderId);
 
     logger.info('ConfirmOrderScreen - 準備建立訂單', {
       type,
-      pendingOrderId: orderId,
-      amount: amountNum,
-      totalPrice,
-      beneficiaryBankcardId: bankCardToUse.id,
+      listingId,
+      cryptoAmount: amountNum,
       isBuy,
-      bankCardInfo: {
-        id: bankCardToUse.id,
-        bankName: bankCardToUse.bank?.bankName,
-        cardNumber: bankCardToUse.cardNumber,
-      },
     });
 
     Alert.alert(
@@ -182,10 +158,8 @@ export default function ConfirmOrderScreen() {
           onPress: () => {
             dispatch(createOrderRequest({
               data: {
-                orderId, // 掛單 ID
-                amount: amountNum, // 交易金額
-                beneficiaryBankcardId: bankCardToUse.id, // 受益人銀行卡 ID
-                transactionCode: transactionPassword, // 交易密碼
+                listingId,
+                cryptoAmount: amountNum,
               },
               onSuccess: handleCreateOrderSuccess,
               onError: handleCreateOrderError,
@@ -267,40 +241,6 @@ export default function ConfirmOrderScreen() {
           <View style={styles.row}>
             <Text style={styles.rowLabel}>交易金額</Text>
             <Text style={styles.priceText}>CNY ¥{formatNumber(totalPrice)}</Text>
-          </View>
-        </View>
-
-        {/* 收款帳戶 - 僅出售時顯示 */}
-        {!isBuy && bankCards && bankCards.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.label}>收款帳戶</Text>
-            <View style={styles.bankAccountDisplay}>
-              <Text style={styles.selectedAccountIcon}>🏦</Text>
-              <View style={styles.selectedAccountDetails}>
-                <Text style={styles.selectedAccountType}>
-                  {bankCards[0].bank?.bankName}
-                </Text>
-                <Text style={styles.selectedAccountNumber}>
-                  {bankCards[0].cardNumber}
-                </Text>
-              </View>
-            </View>
-            <Text style={styles.hint}>買方將以您提供的收款帳戶進行打款</Text>
-          </View>
-        )}
-
-        {/* 交易密碼 */}
-        <View style={styles.section}>
-          <Text style={styles.label}>交易密碼</Text>
-          <View style={styles.inputField}>
-            <TextInput
-              style={styles.input}
-              placeholder="請輸入交易密碼"
-              placeholderTextColor="#999"
-              value={transactionPassword}
-              onChangeText={setTransactionPassword}
-              secureTextEntry
-            />
           </View>
         </View>
 

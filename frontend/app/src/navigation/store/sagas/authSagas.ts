@@ -3,7 +3,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loginStart, loginSuccess, loginFailure, logout, registerSuccess } from '../slices/authSlices';
 import { fetchBankCardsSuccess, resetBankCards, BankCard } from '../slices/bankCardsSlice';
-import { fetchOrdersSuccess, resetOrders } from '../slices/ordersSlice';
+import { resetOrders } from '../slices/ordersSlice';
 import logger from '@pkg/logger';
 import { handleSagaError } from '@pkg/utils/sagaHelpers';
 import { authApi } from '@/apis';
@@ -51,9 +51,6 @@ function* loginSaga(action: PayloadAction<LoginCredentials>) {
         accessToken: data.access_token,
         expireIn: data.expireIn,
       }));
-
-    // 清除舊的掛單資料
-    yield put(fetchOrdersSuccess({ buy: null, sell: null }));
 
     // 同步銀行卡資料到 bankCards store
     if (data.user.bankCards && data.user.bankCards.length > 0) {

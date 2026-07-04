@@ -6,7 +6,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import authReducer from './slices/authSlices';
 import ordersReducer from './slices/ordersSlice';
 import bankCardsReducer from './slices/bankCardsSlice';
-import marketReducer from './slices/marketSlice';
 import rootSaga from './sagas';
 
 /**
@@ -16,7 +15,6 @@ const rootReducer = combineReducers({
   auth: authReducer,
   orders: ordersReducer,
   bankCards: bankCardsReducer,
-  market: marketReducer,
 });
 
 /**
