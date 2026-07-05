@@ -6,6 +6,7 @@
     "application/json"
   ],
   "schemes": [
+    "http",
     "https"
   ],
   "swagger": "2.0",
@@ -24,6 +25,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "App 使用者登入",
@@ -41,10 +43,12 @@
               ],
               "properties": {
                 "password": {
-                  "type": "string"
+                  "type": "string",
+                  "example": "a12345678"
                 },
                 "username": {
-                  "type": "string"
+                  "type": "string",
+                  "example": "testdemo001"
                 }
               }
             }
@@ -96,6 +100,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "查詢掛單列表",
@@ -238,6 +243,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "建立掛單",
@@ -320,6 +326,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "查詢我的掛單",
@@ -461,6 +468,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "查詢掛單詳情",
@@ -556,6 +564,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "取消掛單",
@@ -590,6 +599,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "查詢訂單列表",
@@ -760,6 +770,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "建立訂單（接單）",
@@ -818,6 +829,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "查詢訂單詳情",
@@ -937,6 +949,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "取消訂單",
@@ -990,6 +1003,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "確認收款",
@@ -1027,6 +1041,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "提出申訴",
@@ -1080,6 +1095,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "標記已付款",
@@ -1114,6 +1130,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "查詢收款帳戶列表",
@@ -1179,6 +1196,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "新增收款帳戶",
@@ -1245,6 +1263,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "刪除收款帳戶",
@@ -1279,6 +1298,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "取得使用者資料",
@@ -1315,6 +1335,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "後台管理員登入",
@@ -1332,10 +1353,12 @@
               ],
               "properties": {
                 "password": {
-                  "type": "string"
+                  "type": "string",
+                  "example": "admin@1234"
                 },
                 "username": {
-                  "type": "string"
+                  "type": "string",
+                  "example": "admin001"
                 }
               }
             }
@@ -1368,6 +1391,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "後台 Dashboard",
@@ -1404,6 +1428,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "後台查詢掛單列表",
@@ -1545,6 +1570,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "後台查詢訂單列表",
@@ -1711,6 +1737,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "後台處理訂單",
@@ -1765,6 +1792,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "[Legacy] 後台查詢掛單",
@@ -1856,6 +1884,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "[Legacy] 後台查詢掛單詳情",
@@ -1928,6 +1957,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "[Legacy] 後台標記完成",
@@ -1960,6 +1990,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "[Legacy] 建立掛單",
@@ -2059,6 +2090,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "[Legacy] 查詢我的掛單",
@@ -2145,6 +2177,7 @@
           "application/json"
         ],
         "schemes": [
+          "http",
           "https"
         ],
         "summary": "[Legacy] 取消掛單",

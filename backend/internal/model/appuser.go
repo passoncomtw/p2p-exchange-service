@@ -28,7 +28,7 @@ func NewAppUserModel(conn sqlx.SqlConn) *AppUserModel {
 func (m *AppUserModel) FindByUsername(ctx context.Context, username string) (*AppUser, error) {
 	var user AppUser
 	err := m.conn.QueryRowCtx(ctx, &user,
-		`SELECT id, username, password_hash FROM app_users WHERE username = $1`,
+		`SELECT id, username, password_hash, email, created_at, updated_at FROM app_users WHERE username = $1`,
 		username,
 	)
 	if err != nil {
