@@ -9,14 +9,16 @@
 | 層級 | 技術選型 |
 |------|---------|
 | 後端框架 | go-zero (REST) |
-| 資料庫 | PostgreSQL (pgx driver) |
+| 資料庫 | PostgreSQL (Neon, pgx driver) |
 | Web 後台 | React 19 + Redux Toolkit + Redux-Saga + MUI + Vite 8 |
-| App 前端 | React Native (Expo SDK 56) + Redux Toolkit + React Navigation |
-| 建置發版 | EAS Build → TestFlight (iOS) / Google Play Internal (Android) |
+| App 前端 | React Native (Expo SDK 56) + Redux Toolkit + Redux-Saga + React Navigation |
+| API 文件 | Swagger UI (OAS 2.0, 內嵌於後端 /swagger) |
 
 ---
 
 ## 二、資料庫結構
+
+所有表定義於 `backend/migrations/001_init.sql`。
 
 ### 2.1 app_users（App 使用者）
 
@@ -24,7 +26,7 @@
 |------|------|------|
 | id | BIGSERIAL PK | 自增主鍵 |
 | username | VARCHAR(50) UNIQUE NOT NULL | 帳號 |
-| password_hash | VARCHAR(255) NOT NULL | 密碼雜湊 |
+| password_hash | VARCHAR(255) NOT NULL | 密碼雜湊（bcrypt） |
 | email | VARCHAR(255) | 電子郵件（可為 NULL） |
 | created_at | TIMESTAMPTZ | 建立時間 |
 | updated_at | TIMESTAMPTZ | 更新時間 |
@@ -35,7 +37,7 @@
 |------|------|------|
 | id | BIGSERIAL PK | 自增主鍵 |
 | username | VARCHAR(50) UNIQUE NOT NULL | 帳號 |
-| password_hash | VARCHAR(255) NOT NULL | 密碼雜湊 |
+| password_hash | VARCHAR(255) NOT NULL | 密碼雜湊（bcrypt） |
 | email | VARCHAR(255) | 電子郵件（可為 NULL） |
 | role | VARCHAR(50) DEFAULT 'admin' | 角色 |
 | created_at | TIMESTAMPTZ | 建立時間 |
@@ -154,24 +156,15 @@ Append-only，記錄每次狀態轉換。
 
 ## 三、後端 API
 
-### 3.1 v1 掛單（免登入，沿用 listings 表）
+基底路徑：`/`，Port：`8888`，統一回傳格式：`{ code, message, data }`。
 
-| Method | Path | 說明 |
-|--------|------|------|
-| POST | /v1/orders | 建立 v1 掛單 |
-| GET | /v1/orders/mine | 我的掛單列表 |
-| POST | /v1/orders/:id/cancel | 取消掛單 |
-| GET | /v1/admin/orders | 管理員查看所有掛單 |
-| GET | /v1/admin/orders/:id | 管理員查看單筆掛單 |
-| POST | /v1/admin/orders/:id/complete | 管理員完成掛單 |
-
-### 3.2 App 端（JWT 驗證）
+### 3.1 App 端
 
 **公開路由：**
 
 | Method | Path | 說明 |
 |--------|------|------|
-| POST | /app/auth/login | App 登入 |
+| POST | /app/auth/login | App 使用者登入（回傳 JWT + 使用者資訊） |
 
 **需登入路由（JWT: App.AccessSecret）：**
 
@@ -190,31 +183,44 @@ Append-only，記錄每次狀態轉換。
 | GET | /app/orders | 列出訂單 |
 | GET | /app/orders/:id | 訂單詳情 |
 | PUT | /app/orders/:id/pay | 標記已付款 |
-| PUT | /app/orders/:id/confirm | 確認收款 |
+| PUT | /app/orders/:id/confirm | 確認收款（賣家放行） |
 | PUT | /app/orders/:id/cancel | 取消訂單 |
 | PUT | /app/orders/:id/dispute | 發起申訴 |
 
-### 3.3 Backend 後台端（JWT 驗證）
+### 3.2 Backend 後台端
 
 **公開路由：**
 
 | Method | Path | 說明 |
 |--------|------|------|
-| POST | /backend/auth/login | 後台登入 |
+| POST | /backend/auth/login | 後台管理員登入（回傳 JWT） |
 
 **需登入路由（JWT: Backend.AccessSecret）：**
 
 | Method | Path | 說明 |
 |--------|------|------|
-| GET | /backend/members | 會員列表（支援 keyword 搜尋、分頁） |
 | GET | /backend/dashboard | 儀表板（回傳管理員資訊） |
+| GET | /backend/members | 會員列表（支援 keyword 搜尋、分頁） |
 | GET | /backend/listings | 掛單列表 |
 | GET | /backend/orders | 訂單列表（支援 keyword/status 搜尋、分頁、total） |
 | PUT | /backend/orders/:id/resolve | 訂單爭議處理（complete / refund） |
 
+### 3.3 v1 掛單（免登入，沿用 listings 表）
+
+| Method | Path | 說明 |
+|--------|------|------|
+| POST | /v1/orders | 建立 v1 掛單（createdBy 固定 demo_user） |
+| GET | /v1/orders/mine | 我的掛單列表 |
+| POST | /v1/orders/:id/cancel | 取消掛單 |
+| GET | /v1/admin/orders | 管理員查看所有掛單 |
+| GET | /v1/admin/orders/:id | 管理員查看單筆掛單 |
+| POST | /v1/admin/orders/:id/complete | 管理員完成掛單 |
+
 ---
 
 ## 四、Web 後台（管理端）
+
+技術棧：React 19 + Redux Toolkit + Redux-Saga + MUI + Vite 8 + react-router + react-i18next。
 
 ### 4.1 頁面結構
 
@@ -224,6 +230,8 @@ Append-only，記錄每次狀態轉換。
 | / | DashboardScreen | 首頁儀表板 |
 | /members | MemberListScreen | 會員列表 |
 | /orders | OrderListScreen | 訂單列表 |
+
+登入後套用 MainLayout（側邊欄 + Header），受 ProtectedRoute 保護。
 
 ### 4.2 側邊欄
 
@@ -252,14 +260,18 @@ Append-only，記錄每次狀態轉換。
 
 ## 五、App 前端（使用者端）
 
+技術棧：React Native (Expo SDK 56) + Redux Toolkit + Redux-Saga + React Navigation + redux-persist。
+
+State 管理：auth / orders / bankCards 三個 slice，auth 持久化至 AsyncStorage。
+
 ### 5.1 導航結構
 
 **公開頁面（未登入）：**
 
 | 畫面 | 說明 |
 |------|------|
-| Login | 登入頁 |
-| Register | 註冊頁 |
+| LoginScreen | 登入頁（帳號 + 密碼） |
+| RegisterScreen | 註冊頁 |
 
 **已登入 — 底部 Tab：**
 
@@ -275,25 +287,101 @@ Append-only，記錄每次狀態轉換。
 
 | 畫面 | 說明 |
 |------|------|
-| CreateOrderBuy / CreateOrderSell | 建立買/賣單 |
-| ConfirmOrder | 確認訂單 |
-| OrderDetail | 訂單詳情 |
+| CreateOrderScreen | 建立買/賣掛單（透過 route name CreateOrderBuy / CreateOrderSell 區分） |
+| ConfirmOrderScreen | 確認接單（傳入 listingId + cryptoAmount，呼叫 POST /app/orders） |
+| OrderDetailScreen | 訂單詳情（顯示完整訂單資訊，依角色顯示操作按鈕） |
 
-### 5.2 API 整合
+### 5.2 API 整合（Saga 流程）
 
-| API 模組 | 對接後端路徑 | 說明 |
-|----------|-------------|------|
-| authApi | /app/auth/login | 登入 |
+App 已完成從 v1 API 遷移至 P2P API，所有訂單/掛單操作透過 Redux-Saga 處理。
+
+| Saga | API 模組 | 後端路徑 | 說明 |
+|------|----------|---------|------|
+| createListingSaga | listingsApi.create | POST /app/listings | 建立掛單 |
+| createOrderSaga | p2pOrdersApi.create | POST /app/orders | 建立訂單（接單） |
+| fetchOrderListSaga | p2pOrdersApi.list | GET /app/orders | 取得訂單列表 |
+| markOrderAsPaidSaga | p2pOrdersApi.markPaid | PUT /app/orders/:id/pay | 標記已付款 |
+| applyOrderSaga | p2pOrdersApi.confirm | PUT /app/orders/:id/confirm | 確認收款放行 |
+
+### 5.3 前端 API 模組
+
+| 模組 | 對接路徑 | 說明 |
+|------|---------|------|
+| authApi | /app/auth/login | 登入、登出 |
 | userApi | /app/profile | 個人資料 |
-| listingsApi | /app/listings, /app/listings/mine | 掛單 CRUD |
-| p2pOrdersApi | /app/orders | 訂單 CRUD 與狀態操作 |
+| listingsApi | /app/listings, /app/listings/mine, /app/listings/:id, /app/listings/:id/cancel | 掛單 CRUD |
+| p2pOrdersApi | /app/orders, /app/orders/:id/pay, /app/orders/:id/confirm, /app/orders/:id/cancel, /app/orders/:id/dispute | 訂單 CRUD 與狀態操作 |
 | paymentMethodsApi | /app/payment-methods | 收款方式 CRUD |
-| bankCardsApi | — | 銀行卡（前端定義，待實作） |
-| ordersApi / v1Orders | /v1/orders | v1 舊版掛單 |
+| bankCardsApi | — | 銀行卡（前端 store 定義，資料來自登入回傳） |
 
-### 5.3 v1 模式
+### 5.4 前端資料型別
 
-App 另有 v1 導航（v1.tsx），包含簡化版的交易流程：
+**Order（訂單）：**
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| id | number | 訂單 ID |
+| orderNo | string | 訂單編號 |
+| listingId | number | 來源掛單 ID |
+| listingType | 'buy' \| 'sell' | 掛單類型 |
+| sellerId | number | 賣家 ID |
+| buyerId | number | 買家 ID |
+| cryptoCurrency | string | 加密貨幣 |
+| fiatCurrency | string | 法幣 |
+| cryptoAmount | number | 交易數量 |
+| price | number | 成交單價 |
+| fiatAmount | number | 法幣金額 |
+| totalFee | number | 手續費合計 |
+| totalAmount | number | 買家實付金額 |
+| status | string | matched / paid / releasing / completed / cancelled / timeout / disputed |
+| paymentDeadline | string | 付款截止時間 |
+
+**ListingItem（掛單）：**
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| id | number | 掛單 ID |
+| userId | number | 掛單者 ID |
+| type | 'buy' \| 'sell' | 類型 |
+| totalAmount | number | 總量 |
+| remainingAmount | number | 剩餘量 |
+| price | number | 單價 |
+| minOrderFiat | number | 最低金額 |
+| maxOrderFiat | number | 最高金額 |
+| status | string | active / paused / completed / cancelled |
+
+**CreateListingParams（建立掛單請求）：**
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| type | 'buy' \| 'sell' | 類型 |
+| totalAmount | number | 總量 |
+| price | number | 單價 |
+| minOrderFiat | number | 最低金額 |
+| maxOrderFiat | number | 最高金額 |
+| paymentTimeLimit | number（可選） | 付款時限 |
+| paymentMethodId | number \| null（可選） | 收款方式（僅 sell） |
+
+**CreateOrderParams（建立訂單請求）：**
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| listingId | number | 掛單 ID |
+| cryptoAmount | number | 交易數量 |
+
+### 5.5 訂單詳情頁邏輯
+
+OrderDetailScreen 的 OrderContent 元件依據當前使用者角色（buyerId / sellerId vs user.id）顯示不同操作按鈕：
+
+| 訂單狀態 | 買家操作 | 賣家操作 |
+|---------|---------|---------|
+| matched | 標記已付款 | — |
+| paid | — | 確認收款放行 |
+| 其他狀態 | 僅檢視 | 僅檢視 |
+
+### 5.6 v1 模式（保留但非主流程）
+
+App 保留 v1 導航（v1.tsx），包含簡化版交易流程，對接 /v1/* API：
 
 | 畫面 | 說明 |
 |------|------|
@@ -317,7 +405,8 @@ App 另有 v1 導航（v1.tsx），包含簡化版的交易流程：
 | App | testdemo002 | a12345678 | 使用者 |
 | App | testdemo003 | a12345678 | 使用者 |
 
-建立方式：`go run backend/cmd/seed/main.go -f backend/etc/config.yaml`
+種子資料定義於 `backend/migrations/002_seeds.sql`。
+執行方式：`go run backend/cmd/seed/main.go -f backend/etc/config.yaml`（seed 工具額外建立 demo_user、trader_alice/bob/carol 與樣本掛單）。
 
 ---
 
@@ -333,9 +422,9 @@ total_amount = fiat_amount + total_fee（買家實際應付金額）
 | 項目 | 說明 |
 |------|------|
 | platform_fee_base | 平台固定基礎費（TWD） |
-| platform_fee_amount | 平台比例費金額 = fiat_amount × platform_fee_rate |
+| platform_fee_amount | 平台比例費金額 = fiat_amount x platform_fee_rate |
 | payment_fee_base | 收款管道固定基礎費（TWD） |
-| payment_fee_amount | 收款管道比例費金額 = fiat_amount × payment_fee_rate |
+| payment_fee_amount | 收款管道比例費金額 = fiat_amount x payment_fee_rate |
 
 費率設定在 listing 上，建立訂單時快照計算後寫入 order。
 
@@ -371,3 +460,18 @@ cancelled  disputed → (admin resolve: complete / refund)
 | paused | 暫停 |
 | completed | 額度用盡 |
 | cancelled | 主動撤單 |
+
+---
+
+## 十、部署架構
+
+| 項目 | 說明 |
+|------|------|
+| K8s Cluster | DigitalOcean SGP1 (do-sgp1-k8s-1-35-1-do-5-passontw) |
+| 後端 Image | ghcr.io/passoncomtw/p2p-exchange-service/backend |
+| Namespace | p2p-exchange |
+| Pods | p2p-backend (2 replicas) + p2p-web (1 replica) |
+| 資料庫 | Neon PostgreSQL (ap-southeast-1) |
+| 域名 | p2p-exchange-api.passon.tw（後端 API）|
+| Reverse Proxy | Cloudflare → nginx-ingress |
+| Swagger | https://p2p-exchange-api.passon.tw/swagger（非 pro mode） |
