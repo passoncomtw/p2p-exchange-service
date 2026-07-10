@@ -1,6 +1,6 @@
 # 產品規格書 — P2P Exchange Service
 
-本文件描述截至目前已實作的產品功能，涵蓋資料庫、後端 API、Web 後台、App 前端。
+本文件描述截至目前已實作的產品功能，並包含 v0.2.0 規劃內容，涵蓋資料庫、後端 API、Web 後台、App 前端。
 
 ---
 
@@ -475,3 +475,148 @@ cancelled  disputed → (admin resolve: complete / refund)
 | 域名 | p2p-exchange-api.passon.tw（後端 API）|
 | Reverse Proxy | Cloudflare → nginx-ingress |
 | Swagger | https://p2p-exchange-api.passon.tw/swagger（非 pro mode） |
+
+---
+
+## 十一、v0.2.0 規劃 — 補齊交易閉環
+
+### 11.1 目標
+
+補齊掛單 → 接單 → 付款 → 放行的完整閉環，建立內部帳本（Virtual Balance）支撐餘額流轉，並補上缺失的註冊 API 與付款超時機制。充值/提領留待後續版本處理。
+
+### 11.2 內部帳本架構（Virtual Balance）
+
+採用內部 DB 帳本，不上鏈。支援多國、多幣種、多錢包擴展。
+
+**設計原則：**
+- 每位使用者可擁有多個錢包，每個錢包對應一種幣種
+- 餘額分為 `available`（可用）與 `frozen`（凍結，交易中鎖定）
+- 所有餘額變動透過 `wallet_ledgers` append-only 記錄，不可修改刪除
+- `total = available + frozen`，不另存欄位
+
+**餘額流轉：**
+
+```
+賣家建立 sell listing
+  └→ freeze: 賣家 USDT available → frozen
+
+買家接單（create order）
+  └→ 無餘額變動（等待法幣線下付款）
+
+買家標記已付款（pay）
+  └→ 無鏈上動作
+
+賣家確認收款（confirm → completed）
+  └→ unfreeze + deduct: 賣家 frozen 扣減
+  └→ transfer_in: 買家 available 增加
+
+取消 / 超時（cancel / timeout）
+  └→ unfreeze: 賣家 frozen → available（退還）
+```
+
+### 11.3 新增資料表
+
+**wallets（錢包）**
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| id | BIGSERIAL PK | |
+| user_id | BIGINT FK → app_users | 所屬使用者 |
+| currency | VARCHAR(20) NOT NULL | 幣種（USDT / BTC / TWD / USD ...） |
+| currency_type | VARCHAR(10) NOT NULL | crypto / fiat |
+| available | NUMERIC(20,8) DEFAULT 0 | 可用餘額 |
+| frozen | NUMERIC(20,8) DEFAULT 0 | 凍結餘額 |
+| created_at | TIMESTAMPTZ | 建立時間 |
+| updated_at | TIMESTAMPTZ | 更新時間 |
+| UNIQUE(user_id, currency) | | 一人一幣種一錢包 |
+
+**wallet_ledgers（帳本）**
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| id | BIGSERIAL PK | |
+| wallet_id | BIGINT FK → wallets | 對應錢包 |
+| type | VARCHAR(20) NOT NULL | deposit / withdraw / freeze / unfreeze / transfer_in / transfer_out |
+| amount | NUMERIC(20,8) NOT NULL | 變動金額（正數） |
+| direction | VARCHAR(5) NOT NULL | in / out |
+| balance_after | NUMERIC(20,8) NOT NULL | 變動後可用餘額快照 |
+| ref_type | VARCHAR(30) | order / listing / admin / system |
+| ref_id | BIGINT | 關聯 ID |
+| remark | TEXT | 備註 |
+| created_at | TIMESTAMPTZ | 建立時間（Append-only，無 updated_at） |
+
+### 11.4 後端新增 API
+
+**App 端（公開）：**
+
+| Method | Path | 說明 |
+|--------|------|------|
+| POST | /app/auth/register | 使用者註冊（建立帳號並自動建立 USDT 錢包） |
+
+**App 端（需登入）：**
+
+| Method | Path | 說明 |
+|--------|------|------|
+| GET | /app/wallets | 列出使用者所有錢包與餘額 |
+| GET | /app/wallets/:currency/ledgers | 指定幣種的帳本記錄（分頁） |
+
+**Backend 端（需登入）：**
+
+| Method | Path | 說明 |
+|--------|------|------|
+| POST | /backend/members/:id/deposit | 管理員對指定使用者充值（測試用） |
+
+### 11.5 修改現有流程
+
+| 流程 | 修改點 |
+|------|--------|
+| 建立 sell listing | 驗證賣家 USDT available 足夠，freeze 對應金額 |
+| 接單（create order） | 驗證賣家 frozen 仍足夠 |
+| 確認收款（confirm） | unfreeze 賣家 frozen，transfer_in 買家 available |
+| 取消訂單（cancel） | unfreeze 退還賣家 available |
+| 付款超時（timeout job） | 定時掃描 payment_deadline 過期，自動 cancel 並 unfreeze |
+
+### 11.6 付款超時機制
+
+後端新增定時 Job（go-zero cron 或獨立 goroutine），每分鐘掃描：
+
+```sql
+SELECT id FROM orders
+WHERE status = 'matched'
+  AND payment_deadline < NOW()
+```
+
+對每筆超時訂單執行：
+1. 更新 status → `timeout`
+2. unfreeze 賣家餘額
+3. 寫入 wallet_ledger + order_status_log
+4. 更新 listing.remaining_amount（退還接單扣減的量）
+
+### 11.7 App 新增畫面
+
+| 畫面 | 說明 |
+|------|------|
+| WalletScreen（更新） | 顯示各幣種錢包餘額（available / frozen）、帳本記錄列表 |
+| RegisterScreen（串接） | 呼叫 POST /app/auth/register，成功後自動登入 |
+
+### 11.8 後台新增功能
+
+| 功能 | 說明 |
+|------|------|
+| 管理員充值 | 後台會員詳情頁可對指定使用者 USDT 錢包充值（開發測試用） |
+
+### 11.9 與 escrow_records 的關係
+
+| | escrow_records | wallet_ledgers |
+|--|----------------|----------------|
+| 職責 | 記錄托管事件（lock / release / refund） | 記錄餘額變動明細 |
+| 粒度 | 每筆訂單一筆 | 每次餘額變動一筆 |
+| 關聯 | ref_type=order + ref_id | ref_type=order + ref_id |
+| 未來 | 串接鏈上 tx_ref | 純內部帳務，可退化為快取層 |
+
+### 11.10 v0.2.0 不包含
+
+- 真實充值/提領（鏈上出入金）
+- 手續費計算啟用（目前費率仍為 0）
+- 法幣錢包（TWD 等）
+- KYC / 實名驗證
