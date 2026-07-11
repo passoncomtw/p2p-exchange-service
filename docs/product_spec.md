@@ -59,7 +59,21 @@
 | created_at | TIMESTAMPTZ | 建立時間 |
 | updated_at | TIMESTAMPTZ | 更新時間 |
 
-### 2.4 listings（掛單）
+### 2.4 currencies（幣種）
+
+平台支援的幣種註冊表，`listings`、`orders`、`escrow_records`、`wallets` 的幣種欄位皆 FK 至此表。
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| code | VARCHAR(20) PK | 幣種識別碼（USDT / BTC / ETH / TWD / USD / JPY） |
+| display_name | VARCHAR(100) | 顯示名稱 |
+| type | VARCHAR(10) | crypto / fiat |
+| is_active | BOOLEAN DEFAULT true | 是否開放交易 |
+| created_at | TIMESTAMPTZ | 建立時間 |
+
+初始資料：USDT、BTC、ETH（crypto）；TWD、USD、JPY（fiat）。
+
+### 2.5 listings（掛單）
 
 使用者發布的買/賣掛單。
 
@@ -68,17 +82,17 @@
 | id | BIGSERIAL PK | 自增主鍵 |
 | user_id | BIGINT FK → app_users | 掛單者 |
 | type | VARCHAR(10) | buy / sell |
-| crypto_currency | VARCHAR(20) DEFAULT 'USDT' | 加密貨幣幣種 |
-| fiat_currency | VARCHAR(10) DEFAULT 'TWD' | 法幣幣種 |
-| total_amount | NUMERIC(20,8) | 掛單總量（USDT） |
-| remaining_amount | NUMERIC(20,8) | 剩餘可交易量 |
-| price | NUMERIC(20,4) | 單價（TWD/USDT） |
-| min_order_fiat | NUMERIC(20,4) | 最低交易金額（TWD） |
-| max_order_fiat | NUMERIC(20,4) | 最高交易金額（TWD） |
+| crypto_currency | VARCHAR(20) DEFAULT 'USDT' FK → currencies | 加密貨幣幣種 |
+| fiat_currency | VARCHAR(20) DEFAULT 'TWD' FK → currencies | 法幣幣種 |
+| total_amount | NUMERIC(38,18) | 掛單總量 |
+| remaining_amount | NUMERIC(38,18) | 剩餘可交易量 |
+| price | NUMERIC(20,8) | 單價（法幣/加密貨幣） |
+| min_order_fiat | NUMERIC(20,4) | 最低交易金額（法幣） |
+| max_order_fiat | NUMERIC(20,4) | 最高交易金額（法幣） |
 | platform_fee_base | NUMERIC(20,4) DEFAULT 0 | 平台固定基礎費 |
-| platform_fee_rate | NUMERIC(8,6) DEFAULT 0 | 平台比例費率 |
+| platform_fee_rate | NUMERIC(10,8) DEFAULT 0 | 平台比例費率 |
 | payment_fee_base | NUMERIC(20,4) DEFAULT 0 | 管道固定基礎費 |
-| payment_fee_rate | NUMERIC(8,6) DEFAULT 0 | 管道比例費率 |
+| payment_fee_rate | NUMERIC(10,8) DEFAULT 0 | 管道比例費率 |
 | payment_time_limit | INT DEFAULT 30 | 付款時限（分鐘） |
 | payment_method_id | BIGINT FK → payment_methods | 掛賣單的收款方式（buy 時為 NULL） |
 | payment_method_label | VARCHAR(50) | v1 付款方式字串（bank_transfer / convenience_store） |
@@ -86,7 +100,7 @@
 | created_at | TIMESTAMPTZ | 建立時間 |
 | updated_at | TIMESTAMPTZ | 更新時間 |
 
-### 2.5 orders（訂單）
+### 2.6 orders（訂單）
 
 接單後由系統產生，一筆 listing 可對應多筆 order（部分成交）。
 
@@ -98,10 +112,10 @@
 | listing_type | VARCHAR(10) | buy / sell |
 | seller_id | BIGINT FK → app_users | 賣家 |
 | buyer_id | BIGINT FK → app_users | 買家 |
-| crypto_currency | VARCHAR(20) DEFAULT 'USDT' | 加密貨幣 |
-| fiat_currency | VARCHAR(10) DEFAULT 'TWD' | 法幣 |
-| crypto_amount | NUMERIC(20,8) | 交易 USDT 數量 |
-| price | NUMERIC(20,4) | 成交單價 |
+| crypto_currency | VARCHAR(20) DEFAULT 'USDT' FK → currencies | 加密貨幣 |
+| fiat_currency | VARCHAR(20) DEFAULT 'TWD' FK → currencies | 法幣 |
+| crypto_amount | NUMERIC(38,18) | 交易加密貨幣數量 |
+| price | NUMERIC(20,8) | 成交單價 |
 | fiat_amount | NUMERIC(20,4) | 純交易法幣金額 |
 | platform_fee_base | NUMERIC(20,4) DEFAULT 0 | 平台固定基礎費 |
 | platform_fee_amount | NUMERIC(20,4) DEFAULT 0 | 平台比例費金額 |
@@ -120,7 +134,7 @@
 | created_at | TIMESTAMPTZ | 建立時間 |
 | updated_at | TIMESTAMPTZ | 更新時間 |
 
-### 2.6 escrow_records（托管記錄）
+### 2.7 escrow_records（托管記錄）
 
 記錄每次鎖幣 / 放行 / 退還。
 
@@ -128,8 +142,8 @@
 |------|------|------|
 | id | BIGSERIAL PK | 自增主鍵 |
 | order_id | BIGINT FK → orders | 關聯訂單 |
-| crypto_currency | VARCHAR(20) DEFAULT 'USDT' | 幣種 |
-| amount | NUMERIC(20,8) | 數量 |
+| crypto_currency | VARCHAR(20) DEFAULT 'USDT' FK → currencies | 幣種 |
+| amount | NUMERIC(38,18) | 數量 |
 | action | VARCHAR(20) | lock / release / refund |
 | status | VARCHAR(20) DEFAULT 'pending' | pending / completed / failed |
 | tx_ref | VARCHAR(100) | 預留區塊鏈 tx hash（目前為 NULL） |
@@ -137,7 +151,36 @@
 | created_at | TIMESTAMPTZ | 建立時間 |
 | updated_at | TIMESTAMPTZ | 更新時間 |
 
-### 2.7 order_status_logs（訂單狀態日誌）
+### 2.9 wallets（錢包）
+
+v0.2.0 新增。一人一幣種一錢包。
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| id | BIGSERIAL PK | |
+| user_id | BIGINT FK → app_users | 所屬使用者 |
+| currency | VARCHAR(20) FK → currencies | 幣種 |
+| available_balance | NUMERIC(38,18) DEFAULT 0 | 可用餘額 |
+| frozen_balance | NUMERIC(38,18) DEFAULT 0 | 凍結餘額 |
+| created_at | TIMESTAMPTZ | 建立時間 |
+| updated_at | TIMESTAMPTZ | 更新時間 |
+| UNIQUE(user_id, currency) | | 一人一幣種一錢包 |
+
+### 2.10 wallet_ledgers（帳本流水）
+
+v0.2.0 新增。Append-only，不可修改刪除。
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| id | BIGSERIAL PK | |
+| wallet_id | BIGINT FK → wallets | 對應錢包 |
+| type | VARCHAR(20) NOT NULL | freeze / unfreeze / transfer_in / transfer_out / fee_deduct |
+| amount | NUMERIC(38,18) NOT NULL | 變動金額（正數增加，負數減少） |
+| balance_after | NUMERIC(38,18) NOT NULL | 異動後 available_balance 快照 |
+| ref_order_no | VARCHAR(30) | 關聯訂單編號 |
+| created_at | TIMESTAMPTZ | 建立時間（無 updated_at） |
+
+### 2.11 order_status_logs（訂單狀態日誌）
 
 Append-only，記錄每次狀態轉換。
 
@@ -522,10 +565,9 @@ cancelled  disputed → (admin resolve: complete / refund)
 |------|------|------|
 | id | BIGSERIAL PK | |
 | user_id | BIGINT FK → app_users | 所屬使用者 |
-| currency | VARCHAR(20) NOT NULL | 幣種（USDT / BTC / TWD / USD ...） |
-| currency_type | VARCHAR(10) NOT NULL | crypto / fiat |
-| available | NUMERIC(20,8) DEFAULT 0 | 可用餘額 |
-| frozen | NUMERIC(20,8) DEFAULT 0 | 凍結餘額 |
+| currency | VARCHAR(20) FK → currencies | 幣種（USDT / BTC / ETH / TWD ...） |
+| available_balance | NUMERIC(38,18) DEFAULT 0 | 可用餘額 |
+| frozen_balance | NUMERIC(38,18) DEFAULT 0 | 凍結餘額 |
 | created_at | TIMESTAMPTZ | 建立時間 |
 | updated_at | TIMESTAMPTZ | 更新時間 |
 | UNIQUE(user_id, currency) | | 一人一幣種一錢包 |
@@ -536,13 +578,10 @@ cancelled  disputed → (admin resolve: complete / refund)
 |------|------|------|
 | id | BIGSERIAL PK | |
 | wallet_id | BIGINT FK → wallets | 對應錢包 |
-| type | VARCHAR(20) NOT NULL | deposit / withdraw / freeze / unfreeze / transfer_in / transfer_out |
-| amount | NUMERIC(20,8) NOT NULL | 變動金額（正數） |
-| direction | VARCHAR(5) NOT NULL | in / out |
-| balance_after | NUMERIC(20,8) NOT NULL | 變動後可用餘額快照 |
-| ref_type | VARCHAR(30) | order / listing / admin / system |
-| ref_id | BIGINT | 關聯 ID |
-| remark | TEXT | 備註 |
+| type | VARCHAR(20) NOT NULL | freeze / unfreeze / transfer_in / transfer_out / fee_deduct |
+| amount | NUMERIC(38,18) NOT NULL | 變動金額（正數為增加，負數為減少） |
+| balance_after | NUMERIC(38,18) NOT NULL | 異動後 available_balance 快照（稽核用） |
+| ref_order_no | VARCHAR(30) | 關聯訂單編號 |
 | created_at | TIMESTAMPTZ | 建立時間（Append-only，無 updated_at） |
 
 ### 11.4 後端新增 API
