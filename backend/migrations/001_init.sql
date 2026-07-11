@@ -215,6 +215,11 @@ CREATE TABLE IF NOT EXISTS wallets (
     available_balance NUMERIC(38, 18) NOT NULL DEFAULT 0,
     frozen_balance    NUMERIC(38, 18) NOT NULL DEFAULT 0,
 
+    -- 預留充提欄位（v0.3.0）
+    -- 熱錢包/MPC：NULL（共用地址，用 memo 識別）
+    -- AA 合約錢包：使用者專屬的鏈上合約地址
+    on_chain_address  VARCHAR(100),
+
     created_at        TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
     updated_at        TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
 
@@ -251,6 +256,11 @@ CREATE TABLE IF NOT EXISTS wallet_ledgers (
     balance_after NUMERIC(38, 18) NOT NULL,
 
     ref_order_no  VARCHAR(30),
+
+    -- 預留充提欄位（v0.3.0）
+    -- 內部轉帳：NULL
+    -- 充值/提領：鏈上 transaction hash
+    tx_hash       VARCHAR(100),
 
     created_at    TIMESTAMPTZ    NOT NULL DEFAULT NOW()
 );

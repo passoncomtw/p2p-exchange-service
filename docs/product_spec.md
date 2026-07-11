@@ -162,6 +162,7 @@ v0.2.0 新增。一人一幣種一錢包。
 | currency | VARCHAR(20) FK → currencies | 幣種 |
 | available_balance | NUMERIC(38,18) DEFAULT 0 | 可用餘額 |
 | frozen_balance | NUMERIC(38,18) DEFAULT 0 | 凍結餘額 |
+| on_chain_address | VARCHAR(100) | 預留（v0.3.0）；熱錢包/MPC 為 NULL，AA 為合約地址 |
 | created_at | TIMESTAMPTZ | 建立時間 |
 | updated_at | TIMESTAMPTZ | 更新時間 |
 | UNIQUE(user_id, currency) | | 一人一幣種一錢包 |
@@ -178,6 +179,7 @@ v0.2.0 新增。Append-only，不可修改刪除。
 | amount | NUMERIC(38,18) NOT NULL | 變動金額（正數增加，負數減少） |
 | balance_after | NUMERIC(38,18) NOT NULL | 異動後 available_balance 快照 |
 | ref_order_no | VARCHAR(30) | 關聯訂單編號 |
+| tx_hash | VARCHAR(100) | 預留（v0.3.0）；內部轉帳為 NULL，充值/提領為鏈上 tx hash |
 | created_at | TIMESTAMPTZ | 建立時間（無 updated_at） |
 
 ### 2.11 order_status_logs（訂單狀態日誌）
@@ -568,6 +570,7 @@ cancelled  disputed → (admin resolve: complete / refund)
 | currency | VARCHAR(20) FK → currencies | 幣種（USDT / BTC / ETH / TWD ...） |
 | available_balance | NUMERIC(38,18) DEFAULT 0 | 可用餘額 |
 | frozen_balance | NUMERIC(38,18) DEFAULT 0 | 凍結餘額 |
+| on_chain_address | VARCHAR(100) | 預留（v0.3.0 充提用）；熱錢包/MPC 為 NULL，AA 為使用者合約地址 |
 | created_at | TIMESTAMPTZ | 建立時間 |
 | updated_at | TIMESTAMPTZ | 更新時間 |
 | UNIQUE(user_id, currency) | | 一人一幣種一錢包 |
@@ -582,6 +585,7 @@ cancelled  disputed → (admin resolve: complete / refund)
 | amount | NUMERIC(38,18) NOT NULL | 變動金額（正數為增加，負數為減少） |
 | balance_after | NUMERIC(38,18) NOT NULL | 異動後 available_balance 快照（稽核用） |
 | ref_order_no | VARCHAR(30) | 關聯訂單編號 |
+| tx_hash | VARCHAR(100) | 預留（v0.3.0 充提用）；內部轉帳為 NULL，充值/提領填鏈上 tx hash |
 | created_at | TIMESTAMPTZ | 建立時間（Append-only，無 updated_at） |
 
 ### 11.4 後端新增 API
@@ -659,3 +663,62 @@ WHERE status = 'matched'
 - 手續費計算啟用（目前費率仍為 0）
 - 法幣錢包（TWD 等）
 - KYC / 實名驗證
+
+---
+
+## 十二、v0.3.0 規劃 — 充值 / 提領（上鏈）
+
+### 12.1 技術方案選型
+
+| 方案 | 私鑰管理 | 使用者地址 | 支援 TRC20 | 實作難度 | 適合規模 |
+|------|---------|-----------|-----------|---------|---------|
+| 熱錢包 | 平台持有（建議用 KMS） | 共用 + memo | 是 | 低 | 小型 / MVP |
+| MPC | 多方分片，無單點 | 共用 + memo | 是 | 中（用服務商） | 中大型 |
+| AA 合約錢包 | 無私鑰概念 | 每人獨立地址 | 否（僅 EVM） | 高 | 中型 EVM 生態 |
+
+### 12.2 建議方案：熱錢包 + Tron 節點
+
+以目前平台定位（亞洲市場 P2P、USDT-TRC20 為主幣種）：
+
+**選用熱錢包，私鑰存放 AWS KMS / GCP Cloud HSM。**
+
+理由：
+- USDT-TRC20 是亞洲 P2P 最主流幣種，手續費極低（< $0.01）
+- 實作成本最低，可快速驗證商業模式
+- 私鑰交由 KMS 管理，降低單點風險，不需要自建 MPC
+- 等交易量成長後再評估遷移至 MPC（Fireblocks 等）
+
+### 12.3 充值流程
+
+```
+1. 使用者請求充值地址
+   → 後端回傳平台熱錢包地址 + 專屬 memo（使用者 ID 或 hash）
+
+2. 使用者轉帳至平台地址，備注填 memo
+
+3. 後端掃鏈（polling Tron full node 或 TronGrid webhook）
+   → 比對 memo 識別使用者
+   → 確認 N 個區塊確認數後入帳
+
+4. 寫入 wallet_ledgers（type=deposit，tx_hash 填鏈上 hash）
+5. 更新 wallets.available_balance
+```
+
+### 12.4 提領流程
+
+```
+1. 使用者送出提領請求（目標地址 + 金額）
+2. 後端驗證 available_balance 足夠
+3. 凍結對應金額（available → frozen）
+4. 後端用 KMS 簽名，廣播至 Tron 網路
+5. 監聽交易確認
+   → 成功：扣減 frozen，寫入 ledger（type=withdraw，tx_hash）
+   → 失敗：解凍，通知使用者
+```
+
+### 12.5 v0.2.0 預留欄位說明
+
+| 欄位 | 所在表 | v0.3.0 用途 |
+|------|--------|------------|
+| on_chain_address | wallets | 熱錢包方案不使用（NULL）；AA 方案填使用者合約地址 |
+| tx_hash | wallet_ledgers | 充值/提領的鏈上 transaction hash；內部轉帳為 NULL |
