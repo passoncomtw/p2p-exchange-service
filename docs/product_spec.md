@@ -722,3 +722,76 @@ WHERE status = 'matched'
 |------|--------|------------|
 | on_chain_address | wallets | 熱錢包方案不使用（NULL）；AA 方案填使用者合約地址 |
 | tx_hash | wallet_ledgers | 充值/提領的鏈上 transaction hash；內部轉帳為 NULL |
+
+---
+
+## 十三、v0.4.0 規劃 — 即時通知（PEP-8）
+
+### 13.1 目標
+
+訂單狀態變更時，買賣雙方即時收到通知，無需手動重整頁面。
+
+### 13.2 範疇
+
+**後端**
+- WebSocket handler（go-zero websocket）：維持連線、廣播訂單狀態事件
+- WebSocket 連線中斷自動重連機制
+
+**Web 後台**
+- 訂單列表訂閱 WebSocket，狀態變更時自動更新，無需手動重整
+
+**Mobile App**
+- Expo Notifications 整合（Push Notification）
+- 前景與背景均可接收通知
+
+**通知觸發事件**
+
+| 事件 | 說明 |
+|------|------|
+| 訂單狀態變更 | matched / paid / completed / cancelled |
+| 收款確認請求 | 買家標記已付款，通知賣家確認 |
+| 申訴建立 | 通知對方與管理員（與 v0.5.0 協作） |
+
+### 13.3 完成條件
+
+- Web 後台訂單列表在狀態變更時自動更新
+- Mobile App 前景與背景均可接收 Push Notification
+- WebSocket 連線中斷時有自動重連機制
+
+---
+
+## 十四、v0.5.0 規劃 — 申訴管理流程（PEP-9）
+
+### 14.1 目標
+
+實作申訴（dispute）完整閉環：App 用戶發起、後台管理員審核裁決、雙方收到通知。
+
+### 14.2 背景
+
+- Backend `PUT /app/orders/:id/dispute` endpoint 已存在
+- 申訴資料結構（disputed 狀態）已在 order_status_logs 中記錄
+- 缺少：App 申訴發起 UI、後台審核頁面、裁決 API、通知推送
+
+### 14.3 範疇
+
+**Mobile App**
+- 申訴發起 UI：填寫說明、上傳截圖
+
+**Web 後台**
+- 申訴列表頁：篩選 disputed 狀態訂單
+- 申訴詳情頁：查看雙方說明與截圖
+- 裁決操作：串接 resolve endpoint（判給買方或賣方）
+
+**後端**
+- `PUT /backend/orders/:id/resolve`：管理員裁決，更新訂單狀態、觸發帳本轉移
+- 申訴處理紀錄留存與查詢
+
+**通知**
+- 申訴狀態變更後雙方均收到通知（依賴 v0.4.0 通知機制）
+
+### 14.4 完成條件
+
+- 用戶可在 App 內對爭議訂單發起申訴
+- 管理員可在後台查看並裁決所有申訴案件
+- 申訴狀態變更後雙方均收到通知
+- 裁決後帳本正確轉移（crypto 轉給裁決獲勝方）
