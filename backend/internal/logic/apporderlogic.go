@@ -9,6 +9,7 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	apierrors "p2p-exchange/internal/errors"
+	"p2p-exchange/internal/fee"
 	"p2p-exchange/internal/model"
 	"p2p-exchange/internal/svc"
 	"p2p-exchange/internal/types"
@@ -103,11 +104,11 @@ func (l *AppCreateOrderLogic) Create(uid int64, req *types.CreateOrderRequest) (
 	}
 
 	// 4. Calculate fees (first phase: rates and bases all 0)
-	// platform_fee_amount is the rate-portion; total_fee sums all four components
-	platformFeeAmount := fiatAmount * listing.PlatformFeeRate
-	paymentFeeAmount := fiatAmount * listing.PaymentFeeRate
-	totalFee := listing.PlatformFeeBase + platformFeeAmount + listing.PaymentFeeBase + paymentFeeAmount
-	totalAmount := fiatAmount + totalFee
+	b := fee.Calculate(
+		req.CryptoAmount, listing.Price, listing.FiatCurrency,
+		listing.PlatformFeeBase, listing.PlatformFeeRate,
+		listing.PaymentFeeBase, listing.PaymentFeeRate,
+	)
 
 	// 5. Determine buyer/seller
 	var buyerID, sellerID int64
@@ -149,13 +150,13 @@ func (l *AppCreateOrderLogic) Create(uid int64, req *types.CreateOrderRequest) (
 		FiatCurrency:      listing.FiatCurrency,
 		CryptoAmount:      req.CryptoAmount,
 		Price:             listing.Price,
-		FiatAmount:        fiatAmount,
-		PlatformFeeBase:   listing.PlatformFeeBase,
-		PlatformFeeAmount: platformFeeAmount,
-		PaymentFeeBase:    listing.PaymentFeeBase,
-		PaymentFeeAmount:  paymentFeeAmount,
-		TotalFee:          totalFee,
-		TotalAmount:       totalAmount,
+		FiatAmount:        b.FiatAmount,
+		PlatformFeeBase:   b.PlatformFeeBase,
+		PlatformFeeAmount: b.PlatformFeeAmount,
+		PaymentFeeBase:    b.PaymentFeeBase,
+		PaymentFeeAmount:  b.PaymentFeeAmount,
+		TotalFee:          b.TotalFee,
+		TotalAmount:       b.TotalAmount,
 		PaymentMethodID:   paymentMethodID,
 		Status:            "matched",
 		PaymentDeadline:   paymentDeadline,
@@ -166,6 +167,7 @@ func (l *AppCreateOrderLogic) Create(uid int64, req *types.CreateOrderRequest) (
 		l.Errorf("create order failed: %v", err)
 		return nil, apierrors.ErrInternal
 	}
+	fee.LogCreateOrder(orderNo, b)
 
 	// 10. Create escrow record (lock)
 	escrow := &model.EscrowRecord{
@@ -374,6 +376,20 @@ func (l *AppConfirmOrderLogic) Confirm(uid int64, id int64) error {
 		return apierrors.ErrInternal
 	}
 
+	confirmBreakdown := fee.Breakdown{
+		FiatAmount:        order.FiatAmount,
+		CryptoAmount:      order.CryptoAmount,
+		Price:             order.Price,
+		Currency:          order.FiatCurrency,
+		PlatformFeeBase:   order.PlatformFeeBase,
+		PlatformFeeAmount: order.PlatformFeeAmount,
+		PaymentFeeBase:    order.PaymentFeeBase,
+		PaymentFeeAmount:  order.PaymentFeeAmount,
+		TotalFee:          order.TotalFee,
+		TotalAmount:       order.TotalAmount,
+	}
+	fee.LogConfirmOrder(order.OrderNo, confirmBreakdown)
+
 	fromStatus := "paid"
 	operatorID := uid
 	log := &model.OrderStatusLog{
@@ -442,6 +458,20 @@ func (l *AppCancelOrderLogic) Cancel(uid int64, req *types.CancelOrderRequest) e
 		l.Errorf("create escrow refund record failed: %v", err)
 		return apierrors.ErrInternal
 	}
+
+	cancelBreakdown := fee.Breakdown{
+		FiatAmount:        order.FiatAmount,
+		CryptoAmount:      order.CryptoAmount,
+		Price:             order.Price,
+		Currency:          order.FiatCurrency,
+		PlatformFeeBase:   order.PlatformFeeBase,
+		PlatformFeeAmount: order.PlatformFeeAmount,
+		PaymentFeeBase:    order.PaymentFeeBase,
+		PaymentFeeAmount:  order.PaymentFeeAmount,
+		TotalFee:          order.TotalFee,
+		TotalAmount:       order.TotalAmount,
+	}
+	fee.LogCancelOrder(order.OrderNo, reason, cancelBreakdown)
 
 	cancelOperatorType := "buyer"
 	if uid == order.SellerID {
