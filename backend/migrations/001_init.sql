@@ -201,7 +201,66 @@ CREATE TABLE IF NOT EXISTS escrow_records (
 CREATE INDEX IF NOT EXISTS idx_escrow_order_id ON escrow_records(order_id);
 
 -- ============================================================
--- 7. 訂單狀態日誌（order_status_logs）
+-- 7. 錢包（wallets）
+-- ============================================================
+-- 一位使用者 × 一種幣種 = 一個錢包
+-- available_balance：可用餘額（可交易、可提領）
+-- frozen_balance：凍結中（訂單鎖倉期間不可動用）
+
+CREATE TABLE IF NOT EXISTS wallets (
+    id                BIGSERIAL      PRIMARY KEY,
+    user_id           BIGINT         NOT NULL REFERENCES app_users(id),
+    currency          VARCHAR(20)    NOT NULL REFERENCES currencies(code),
+
+    available_balance NUMERIC(38, 18) NOT NULL DEFAULT 0,
+    frozen_balance    NUMERIC(38, 18) NOT NULL DEFAULT 0,
+
+    created_at        TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
+
+    UNIQUE (user_id, currency)
+);
+
+CREATE INDEX IF NOT EXISTS idx_wallets_user_id ON wallets(user_id);
+
+-- ============================================================
+-- 8. 帳本流水（wallet_ledgers）
+-- ============================================================
+-- append-only：只新增，不修改不刪除
+-- amount：正數為增加，負數為減少
+-- balance_after：異動後的 available_balance 快照（稽核用）
+-- type：
+--   freeze          接單時凍結賣方加密貨幣
+--   unfreeze        取消訂單時解凍退還
+--   transfer_in     買方收到加密貨幣（訂單完成）
+--   transfer_out    賣方放行加密貨幣（訂單完成）
+--   fee_deduct      平台手續費扣除（預留，v0.2.0 費率為 0）
+
+CREATE TABLE IF NOT EXISTS wallet_ledgers (
+    id            BIGSERIAL      PRIMARY KEY,
+    wallet_id     BIGINT         NOT NULL REFERENCES wallets(id),
+
+    type          VARCHAR(20)    NOT NULL
+                  CHECK (type IN (
+                      'freeze', 'unfreeze',
+                      'transfer_in', 'transfer_out',
+                      'fee_deduct'
+                  )),
+
+    amount        NUMERIC(38, 18) NOT NULL,
+    balance_after NUMERIC(38, 18) NOT NULL,
+
+    ref_order_no  VARCHAR(30),
+
+    created_at    TIMESTAMPTZ    NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_wallet_ledgers_wallet_id     ON wallet_ledgers(wallet_id);
+CREATE INDEX IF NOT EXISTS idx_wallet_ledgers_ref_order_no  ON wallet_ledgers(ref_order_no);
+CREATE INDEX IF NOT EXISTS idx_wallet_ledgers_created_at    ON wallet_ledgers(created_at DESC);
+
+-- ============================================================
+-- 9. 訂單狀態日誌（order_status_logs）
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS order_status_logs (
