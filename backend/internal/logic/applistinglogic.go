@@ -28,6 +28,12 @@ func (l *AppCreateListingLogic) Create(uid int64, req *types.CreateListingReques
 		return nil, apierrors.New(400, "sell listing requires a payment method")
 	}
 
+	if req.Type == "sell" {
+		if err := l.svcCtx.Wallet.Freeze(l.ctx, uid, req.CryptoCurrency, req.TotalAmount); err != nil {
+			return nil, err
+		}
+	}
+
 	listing := &model.Listing{
 		UserID:           uid,
 		Type:             req.Type,

@@ -9,6 +9,7 @@ import (
 
 type ServiceContext struct {
 	Config         config.Config
+	DB             sqlx.SqlConn
 	AppUser        *model.AppUserModel
 	BackendUser    *model.BackendUserModel
 	PaymentMethod  *model.PaymentMethodModel
@@ -26,6 +27,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	conn := sqlx.NewSqlConn("pgx", c.Database.DSN)
 	return &ServiceContext{
 		Config:         c,
+		DB:             conn,
 		AppUser:        model.NewAppUserModel(conn),
 		BackendUser:    model.NewBackendUserModel(conn),
 		PaymentMethod:  model.NewPaymentMethodModel(conn),

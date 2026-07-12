@@ -342,36 +342,22 @@ func (l *AppConfirmOrderLogic) Confirm(uid int64, id int64) error {
 
 	now := time.Now()
 
-	// UpdateStatus to releasing with confirmed_at
-	releasingExtras := map[string]interface{}{
-		"confirmed_at": now,
-	}
-	if err := l.svcCtx.Order.UpdateStatus(l.ctx, id, "releasing", releasingExtras); err != nil {
-		l.Errorf("update order status to releasing failed: %v", err)
-		return apierrors.ErrInternal
-	}
-
-	// Create escrow release record
-	escrow := &model.EscrowRecord{
-		OrderID:        id,
-		CryptoCurrency: order.CryptoCurrency,
-		Amount:         order.CryptoAmount,
-		Action:         "release",
-		Status:         "completed",
-	}
-	if _, err := l.svcCtx.EscrowRecord.Create(l.ctx, escrow); err != nil {
-		l.Errorf("create escrow release record failed: %v", err)
-		return apierrors.ErrInternal
-	}
-
-	// UpdateStatus to completed with completed_at
-	completedNow := time.Now()
-	completedExtras := map[string]interface{}{
-		"completed_at": completedNow,
-	}
-	if err := l.svcCtx.Order.UpdateStatus(l.ctx, id, "completed", completedExtras); err != nil {
-		l.Errorf("update order status to completed failed: %v", err)
-		return apierrors.ErrInternal
+	// 原子操作：完成訂單 + 雙錢包轉帳
+	if err := l.svcCtx.DB.TransactCtx(l.ctx, func(ctx context.Context, session sqlx.Session) error {
+		result, err := session.ExecCtx(ctx,
+			`UPDATE orders SET status = 'completed', confirmed_at = $1, completed_at = $2, updated_at = NOW() WHERE id = $3 AND status = 'paid'`,
+			now, now, id,
+		)
+		if err != nil {
+			return err
+		}
+		if n, _ := result.RowsAffected(); n == 0 {
+			return apierrors.New(400, "order cannot be completed")
+		}
+		return l.svcCtx.Wallet.TransferInTx(ctx, session, order.SellerID, order.BuyerID, order.CryptoCurrency, order.CryptoAmount, order.OrderNo)
+	}); err != nil {
+		l.Errorf("confirm order %d failed: %v", id, err)
+		return err
 	}
 
 	fromStatus := "paid"
@@ -421,26 +407,23 @@ func (l *AppCancelOrderLogic) Cancel(uid int64, req *types.CancelOrderRequest) e
 
 	now := time.Now()
 	reason := req.Reason
-	extras := map[string]interface{}{
-		"cancelled_at":  now,
-		"cancel_reason": reason,
-	}
-	if err := l.svcCtx.Order.UpdateStatus(l.ctx, req.ID, "cancelled", extras); err != nil {
-		l.Errorf("update order status to cancelled failed: %v", err)
-		return apierrors.ErrInternal
-	}
 
-	// Refund escrow
-	refund := &model.EscrowRecord{
-		OrderID:        req.ID,
-		CryptoCurrency: order.CryptoCurrency,
-		Amount:         order.CryptoAmount,
-		Action:         "refund",
-		Status:         "completed",
-	}
-	if _, err := l.svcCtx.EscrowRecord.Create(l.ctx, refund); err != nil {
-		l.Errorf("create escrow refund record failed: %v", err)
-		return apierrors.ErrInternal
+	// 原子操作：取消訂單 + 解凍賣家 USDT
+	if err := l.svcCtx.DB.TransactCtx(l.ctx, func(ctx context.Context, session sqlx.Session) error {
+		result, err := session.ExecCtx(ctx,
+			`UPDATE orders SET status = 'cancelled', cancelled_at = $1, cancel_reason = $2, updated_at = NOW() WHERE id = $3 AND status = 'matched'`,
+			now, reason, req.ID,
+		)
+		if err != nil {
+			return err
+		}
+		if n, _ := result.RowsAffected(); n == 0 {
+			return apierrors.New(400, "order cannot be cancelled")
+		}
+		return l.svcCtx.Wallet.UnfreezeInTx(ctx, session, order.SellerID, order.CryptoCurrency, order.CryptoAmount, order.OrderNo)
+	}); err != nil {
+		l.Errorf("cancel order %d failed: %v", req.ID, err)
+		return err
 	}
 
 	cancelOperatorType := "buyer"
