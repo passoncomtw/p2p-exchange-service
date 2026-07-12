@@ -1,0 +1,23 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --save "" --loglevel warning
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  nats:
+    image: nats:2.10-alpine
+    ports:
+      - "4222:4222"
+      - "8222:8222"  # monitoring / HTTP API
+    command: ["-js", "-m", "8222"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8222/healthz || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5

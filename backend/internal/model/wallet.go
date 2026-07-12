@@ -6,8 +6,10 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	apperrors "p2p-exchange/internal/errors"
+	"p2p-exchange/internal/lock"
 )
 
 type Wallet struct {
@@ -22,10 +24,11 @@ type Wallet struct {
 
 type WalletModel struct {
 	conn sqlx.SqlConn
+	rdb  redis.UniversalClient
 }
 
-func NewWalletModel(conn sqlx.SqlConn) *WalletModel {
-	return &WalletModel{conn: conn}
+func NewWalletModel(conn sqlx.SqlConn, rdb redis.UniversalClient) *WalletModel {
+	return &WalletModel{conn: conn, rdb: rdb}
 }
 
 func (m *WalletModel) FindOne(ctx context.Context, userID int64, currency string) (*Wallet, error) {
@@ -44,6 +47,13 @@ func (m *WalletModel) FindOne(ctx context.Context, userID int64, currency string
 // Freeze atomically deducts amount from available_balance and adds to frozen_balance.
 // Returns 400 if wallet not found or balance insufficient.
 func (m *WalletModel) Freeze(ctx context.Context, userID int64, currency string, amount float64) error {
+	if m.rdb != nil {
+		unlock, err := lock.AcquireWalletLock(ctx, m.rdb, userID, currency)
+		if err != nil {
+			return err
+		}
+		defer unlock()
+	}
 	amountStr := fmt.Sprintf("%.18f", amount)
 	return m.conn.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
 		var wallet Wallet
@@ -161,6 +171,13 @@ func (m *WalletModel) TransferInTx(ctx context.Context, session sqlx.Session, se
 }
 
 func (m *WalletModel) Deposit(ctx context.Context, userID int64, currency, amount string) (*Wallet, error) {
+	if m.rdb != nil {
+		unlock, err := lock.AcquireWalletLock(ctx, m.rdb, userID, currency)
+		if err != nil {
+			return nil, err
+		}
+		defer unlock()
+	}
 	var wallet Wallet
 	err := m.conn.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
 		err := session.QueryRowCtx(ctx, &wallet,

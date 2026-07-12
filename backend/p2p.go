@@ -9,6 +9,7 @@ import (
 	apierrors "p2p-exchange/internal/errors"
 	"p2p-exchange/internal/config"
 	"p2p-exchange/internal/handler"
+	"p2p-exchange/internal/job"
 	"p2p-exchange/internal/response"
 	"p2p-exchange/internal/swagger"
 	"p2p-exchange/internal/svc"
@@ -48,6 +49,10 @@ func main() {
 
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)
+
+	rootCtx := context.Background()
+	job.StartScheduler(rootCtx, ctx.Js)
+	job.StartExpiredOrderConsumer(ctx.Js, c.Nats.ConsumerName)
 
 	if c.Mode != "pro" {
 		swagger.RegisterRoutes(server)
