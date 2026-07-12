@@ -145,3 +145,12 @@ func (m *ListingModel) DeductAmount(ctx context.Context, id int64, amount float6
 	)
 	return err
 }
+
+// RestoreAmountInTx 在 transaction 內將 amount 歸還到 listing.remaining_amount（訂單取消/超時用）。
+func (m *ListingModel) RestoreAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount float64) error {
+	_, err := session.ExecCtx(ctx,
+		`UPDATE listings SET remaining_amount = remaining_amount + $1, updated_at = NOW() WHERE id = $2`,
+		amount, id,
+	)
+	return err
+}

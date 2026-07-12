@@ -52,7 +52,14 @@ func main() {
 
 	rootCtx := context.Background()
 	job.StartScheduler(rootCtx, ctx.MQ)
-	job.StartExpiredOrderConsumer(ctx.MQ)
+	job.StartExpiredOrderConsumer(ctx.MQ, job.ExpiredOrderDeps{
+		RDB:       ctx.RDB,
+		Order:     ctx.Order,
+		Wallet:    ctx.Wallet,
+		Listing:   ctx.Listing,
+		StatusLog: ctx.OrderStatusLog,
+		DB:        ctx.DB,
+	})
 
 	if c.Mode != "pro" {
 		swagger.RegisterRoutes(server)

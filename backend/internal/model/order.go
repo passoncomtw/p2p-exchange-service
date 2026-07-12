@@ -223,3 +223,20 @@ func (m *OrderModel) UpdateStatus(ctx context.Context, id int64, status string, 
 	_, err := m.conn.ExecCtx(ctx, query, args...)
 	return err
 }
+
+func (m *OrderModel) FindExpired(ctx context.Context) ([]*Order, error) {
+	var rows []*Order
+	err := m.conn.QueryRowsCtx(ctx, &rows,
+		`SELECT id, order_no, listing_id, listing_type, seller_id, buyer_id, crypto_currency, fiat_currency,
+		  crypto_amount, price, fiat_amount, platform_fee_base, platform_fee_amount, payment_fee_base, payment_fee_amount,
+		  total_fee, total_amount, payment_method_id, status, payment_deadline, paid_at, confirmed_at, completed_at,
+		  cancelled_at, cancel_reason, created_at, updated_at
+		 FROM orders
+		 WHERE status = 'matched' AND payment_deadline < NOW()
+		 ORDER BY payment_deadline ASC`,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
+}

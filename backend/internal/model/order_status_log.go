@@ -34,3 +34,12 @@ func (m *OrderStatusLogModel) Append(ctx context.Context, log *OrderStatusLog) e
 	)
 	return err
 }
+
+func (m *OrderStatusLogModel) AppendInTx(ctx context.Context, session sqlx.Session, log *OrderStatusLog) error {
+	_, err := session.ExecCtx(ctx,
+		`INSERT INTO order_status_logs (order_id, from_status, to_status, operator_type, operator_id, remark, created_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+		log.OrderID, log.FromStatus, log.ToStatus, log.OperatorType, log.OperatorID, log.Remark,
+	)
+	return err
+}
