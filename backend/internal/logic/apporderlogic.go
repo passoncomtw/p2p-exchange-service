@@ -9,7 +9,6 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	apierrors "p2p-exchange/internal/errors"
-	"p2p-exchange/internal/lock"
 	"p2p-exchange/internal/model"
 	"p2p-exchange/internal/svc"
 	"p2p-exchange/internal/types"
@@ -344,8 +343,12 @@ func (l *AppConfirmOrderLogic) Confirm(uid int64, id int64) error {
 	now := time.Now()
 
 	// 先取得雙錢包分散式鎖，再開 DB transaction（防止 lock ordering deadlock）
-	if l.svcCtx.Redis != nil {
-		unlock, err := lock.AcquireWalletLocks(l.ctx, l.svcCtx.Redis, order.SellerID, order.BuyerID, order.CryptoCurrency)
+	if l.svcCtx.RDB != nil {
+		keys := []string{
+			model.WalletLockKey(order.SellerID, order.CryptoCurrency),
+			model.WalletLockKey(order.BuyerID, order.CryptoCurrency),
+		}
+		unlock, err := l.svcCtx.RDB.AcquireLocks(l.ctx, keys, 5*time.Second)
 		if err != nil {
 			return err
 		}
@@ -419,8 +422,8 @@ func (l *AppCancelOrderLogic) Cancel(uid int64, req *types.CancelOrderRequest) e
 	reason := req.Reason
 
 	// 先取得賣家錢包分散式鎖，再開 DB transaction
-	if l.svcCtx.Redis != nil {
-		unlock, err := lock.AcquireWalletLock(l.ctx, l.svcCtx.Redis, order.SellerID, order.CryptoCurrency)
+	if l.svcCtx.RDB != nil {
+		unlock, err := l.svcCtx.RDB.AcquireLock(l.ctx, model.WalletLockKey(order.SellerID, order.CryptoCurrency), 5*time.Second)
 		if err != nil {
 			return err
 		}

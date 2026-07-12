@@ -51,8 +51,8 @@ func main() {
 	handler.RegisterHandlers(server, ctx)
 
 	rootCtx := context.Background()
-	job.StartScheduler(rootCtx, ctx.Js)
-	job.StartExpiredOrderConsumer(ctx.Js, c.Nats.ConsumerName)
+	job.StartScheduler(rootCtx, ctx.MQ)
+	job.StartExpiredOrderConsumer(ctx.MQ)
 
 	if c.Mode != "pro" {
 		swagger.RegisterRoutes(server)

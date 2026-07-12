@@ -6,11 +6,16 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/redis/go-redis/v9"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	apperrors "p2p-exchange/internal/errors"
-	"p2p-exchange/internal/lock"
+	"p2p-exchange/internal/infra/rdb"
 )
+
+const walletLockTTL = 5 * time.Second
+
+func WalletLockKey(userID int64, currency string) string {
+	return fmt.Sprintf("lock:wallet:%d:%s", userID, currency)
+}
 
 type Wallet struct {
 	ID               int64     `db:"id"`
@@ -24,10 +29,10 @@ type Wallet struct {
 
 type WalletModel struct {
 	conn sqlx.SqlConn
-	rdb  redis.UniversalClient
+	rdb  *rdb.Client
 }
 
-func NewWalletModel(conn sqlx.SqlConn, rdb redis.UniversalClient) *WalletModel {
+func NewWalletModel(conn sqlx.SqlConn, rdb *rdb.Client) *WalletModel {
 	return &WalletModel{conn: conn, rdb: rdb}
 }
 
@@ -48,7 +53,7 @@ func (m *WalletModel) FindOne(ctx context.Context, userID int64, currency string
 // Returns 400 if wallet not found or balance insufficient.
 func (m *WalletModel) Freeze(ctx context.Context, userID int64, currency string, amount float64) error {
 	if m.rdb != nil {
-		unlock, err := lock.AcquireWalletLock(ctx, m.rdb, userID, currency)
+		unlock, err := m.rdb.AcquireLock(ctx, WalletLockKey(userID, currency), walletLockTTL)
 		if err != nil {
 			return err
 		}
@@ -124,7 +129,6 @@ func (m *WalletModel) TransferInTx(ctx context.Context, session sqlx.Session, se
 	amountStr := fmt.Sprintf("%.18f", amount)
 	negAmountStr := fmt.Sprintf("-%.18f", amount)
 
-	// Seller: deduct from frozen
 	var sellerWallet Wallet
 	if err := session.QueryRowCtx(ctx, &sellerWallet,
 		`SELECT id, user_id, currency, available_balance::text, frozen_balance::text, created_at, updated_at
@@ -150,7 +154,6 @@ func (m *WalletModel) TransferInTx(ctx context.Context, session sqlx.Session, se
 		return err
 	}
 
-	// Buyer: add to available (upsert wallet if not exists)
 	var buyerWallet Wallet
 	if err := session.QueryRowCtx(ctx, &buyerWallet,
 		`INSERT INTO wallets (user_id, currency, available_balance, frozen_balance)
@@ -172,7 +175,7 @@ func (m *WalletModel) TransferInTx(ctx context.Context, session sqlx.Session, se
 
 func (m *WalletModel) Deposit(ctx context.Context, userID int64, currency, amount string) (*Wallet, error) {
 	if m.rdb != nil {
-		unlock, err := lock.AcquireWalletLock(ctx, m.rdb, userID, currency)
+		unlock, err := m.rdb.AcquireLock(ctx, WalletLockKey(userID, currency), walletLockTTL)
 		if err != nil {
 			return nil, err
 		}
