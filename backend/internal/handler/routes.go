@@ -172,6 +172,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Handler: BackendListMembersHandler(serverCtx),
 			},
 			{
+				Method:  http.MethodPost,
+				Path:    "/backend/members/:id/deposit",
+				Handler: BackendDepositHandler(serverCtx),
+			},
+			{
 				Method:  http.MethodGet,
 				Path:    "/backend/dashboard",
 				Handler: BackendDashboardHandler(serverCtx),

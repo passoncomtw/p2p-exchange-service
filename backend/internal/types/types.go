@@ -211,6 +211,18 @@ type DisputeOrderRequest struct {
 
 // ── backend members ──────────────────────────────────────────────────────────
 
+type BackendDepositRequest struct {
+	ID       int64  `path:"id"`
+	Currency string `json:"currency"`
+	Amount   string `json:"amount"`
+}
+
+type BackendDepositResponse struct {
+	Currency         string `json:"currency"`
+	AvailableBalance string `json:"available_balance"`
+	FrozenBalance    string `json:"frozen_balance"`
+}
+
 type BackendListMembersRequest struct {
 	Keyword string `form:"keyword,optional"`
 	Limit   int64  `form:"limit,optional,default=10"`

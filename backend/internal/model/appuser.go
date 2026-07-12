@@ -25,6 +25,18 @@ func NewAppUserModel(conn sqlx.SqlConn) *AppUserModel {
 	return &AppUserModel{conn: conn}
 }
 
+func (m *AppUserModel) FindByID(ctx context.Context, id int64) (*AppUser, error) {
+	var user AppUser
+	err := m.conn.QueryRowCtx(ctx, &user,
+		`SELECT id, username, password_hash, email, created_at, updated_at FROM app_users WHERE id = $1`,
+		id,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (m *AppUserModel) Create(ctx context.Context, username, passwordHash string) (*AppUser, error) {
 	var user AppUser
 	err := m.conn.QueryRowCtx(ctx, &user,

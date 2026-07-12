@@ -19,6 +19,7 @@ type ServiceContext struct {
 	V1Order        *model.V1OrderModel
 	Wallet         *model.WalletModel
 	WalletLedger   *model.WalletLedgerModel
+	Currency       *model.CurrencyModel
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -35,5 +36,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		V1Order:        model.NewV1OrderModel(conn),
 		Wallet:         model.NewWalletModel(conn),
 		WalletLedger:   model.NewWalletLedgerModel(conn),
+		Currency:       model.NewCurrencyModel(conn),
 	}
 }
