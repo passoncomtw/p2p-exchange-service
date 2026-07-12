@@ -247,6 +247,7 @@ CREATE TABLE IF NOT EXISTS wallet_ledgers (
 
     type          VARCHAR(20)    NOT NULL
                   CHECK (type IN (
+                      'deposit', 'withdraw',
                       'freeze', 'unfreeze',
                       'transfer_in', 'transfer_out',
                       'fee_deduct'
