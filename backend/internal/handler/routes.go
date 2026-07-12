@@ -135,6 +135,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/app/orders/:id/dispute",
 				Handler: AppDisputeOrderHandler(serverCtx),
 			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/wallets",
+				Handler: AppListWalletsHandler(serverCtx),
+			},
 		},
 		rest.WithJwt(serverCtx.Config.App.AccessSecret),
 	)

@@ -252,6 +252,18 @@ type ResolveOrderRequest struct {
 	Reason string `json:"reason"`
 }
 
+// ── wallets ───────────────────────────────────────────────────────────────────
+
+type WalletItem struct {
+	Currency         string `json:"currency"`
+	AvailableBalance string `json:"availableBalance"`
+	FrozenBalance    string `json:"frozenBalance"`
+}
+
+type ListWalletsResponse struct {
+	List []WalletItem `json:"list"`
+}
+
 // ── v1 掛單（免登入，沿用 listings；createdBy 固定 demo_user） ──────────────────
 
 type V1CreateOrderRequest struct {

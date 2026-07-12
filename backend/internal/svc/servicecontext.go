@@ -8,15 +8,16 @@ import (
 )
 
 type ServiceContext struct {
-	Config          config.Config
-	AppUser         *model.AppUserModel
-	BackendUser     *model.BackendUserModel
-	PaymentMethod   *model.PaymentMethodModel
-	Listing         *model.ListingModel
-	Order           *model.OrderModel
-	EscrowRecord    *model.EscrowRecordModel
-	OrderStatusLog  *model.OrderStatusLogModel
-	V1Order         *model.V1OrderModel
+	Config         config.Config
+	AppUser        *model.AppUserModel
+	BackendUser    *model.BackendUserModel
+	PaymentMethod  *model.PaymentMethodModel
+	Listing        *model.ListingModel
+	Order          *model.OrderModel
+	EscrowRecord   *model.EscrowRecordModel
+	OrderStatusLog *model.OrderStatusLogModel
+	V1Order        *model.V1OrderModel
+	Wallet         *model.WalletModel
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -31,5 +32,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		EscrowRecord:   model.NewEscrowRecordModel(conn),
 		OrderStatusLog: model.NewOrderStatusLogModel(conn),
 		V1Order:        model.NewV1OrderModel(conn),
+		Wallet:         model.NewWalletModel(conn),
 	}
 }
