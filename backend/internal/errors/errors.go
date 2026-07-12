@@ -21,4 +21,5 @@ var (
 	ErrForbidden          = New(http.StatusForbidden, "forbidden")
 	ErrNotFound           = New(http.StatusNotFound, "not found")
 	ErrInternal           = New(http.StatusInternalServerError, "internal server error")
+	ErrUserAlreadyExists  = New(http.StatusConflict, "username already exists")
 )

@@ -50,6 +50,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			Path:    "/app/auth/login",
 			Handler: AppLoginHandler(serverCtx),
 		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/app/auth/register",
+			Handler: AppRegisterHandler(serverCtx),
+		},
 	})
 
 	// ── app private (JWT: App.AccessSecret) ─────────────────────────────────

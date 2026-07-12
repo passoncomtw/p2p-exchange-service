@@ -25,6 +25,20 @@ func NewAppUserModel(conn sqlx.SqlConn) *AppUserModel {
 	return &AppUserModel{conn: conn}
 }
 
+func (m *AppUserModel) Create(ctx context.Context, username, passwordHash string) (*AppUser, error) {
+	var user AppUser
+	err := m.conn.QueryRowCtx(ctx, &user,
+		`INSERT INTO app_users (username, password_hash)
+		 VALUES ($1, $2)
+		 RETURNING id, username, password_hash, email, created_at, updated_at`,
+		username, passwordHash,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (m *AppUserModel) FindByUsername(ctx context.Context, username string) (*AppUser, error) {
 	var user AppUser
 	err := m.conn.QueryRowCtx(ctx, &user,

@@ -38,6 +38,15 @@ func (m *WalletModel) FindOne(ctx context.Context, userID int64, currency string
 	return &w, nil
 }
 
+func (m *WalletModel) Create(ctx context.Context, userID int64, currency string) error {
+	_, err := m.conn.ExecCtx(ctx,
+		`INSERT INTO wallets (user_id, currency, available_balance, frozen_balance)
+		 VALUES ($1, $2, 0, 0)`,
+		userID, currency,
+	)
+	return err
+}
+
 func (m *WalletModel) FindByUserID(ctx context.Context, userID int64) ([]*Wallet, error) {
 	var rows []*Wallet
 	err := m.conn.QueryRowsCtx(ctx, &rows,

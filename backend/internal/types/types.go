@@ -35,6 +35,11 @@ type AppLoginResponse struct {
 	User        AppLoginUserInfo `json:"user"`
 }
 
+type RegisterRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 // ── app profile ───────────────────────────────────────────────────────────────
 
 type ProfileRequest struct{}
