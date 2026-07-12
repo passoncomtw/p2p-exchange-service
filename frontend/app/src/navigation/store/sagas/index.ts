@@ -3,6 +3,7 @@ import { watchAuthSagas } from './authSagas';
 import { watchOrdersSagas } from './ordersSaga';
 import { watchBankCardsSagas } from './bankCardsSaga';
 import { watchErrorSaga } from './errorSaga';
+import { watchWalletSagas } from './walletSaga';
 
 export default function* rootSaga() {
   yield all([
@@ -10,5 +11,6 @@ export default function* rootSaga() {
     fork(watchOrdersSagas),
     fork(watchBankCardsSagas),
     fork(watchErrorSaga),
+    fork(watchWalletSagas),
   ]);
 }
