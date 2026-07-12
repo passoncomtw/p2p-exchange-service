@@ -25,6 +25,19 @@ func NewWalletModel(conn sqlx.SqlConn) *WalletModel {
 	return &WalletModel{conn: conn}
 }
 
+func (m *WalletModel) FindOne(ctx context.Context, userID int64, currency string) (*Wallet, error) {
+	var w Wallet
+	err := m.conn.QueryRowCtx(ctx, &w,
+		`SELECT id, user_id, currency, available_balance::text, frozen_balance::text, created_at, updated_at
+		 FROM wallets WHERE user_id = $1 AND currency = $2`,
+		userID, currency,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &w, nil
+}
+
 func (m *WalletModel) FindByUserID(ctx context.Context, userID int64) ([]*Wallet, error) {
 	var rows []*Wallet
 	err := m.conn.QueryRowsCtx(ctx, &rows,

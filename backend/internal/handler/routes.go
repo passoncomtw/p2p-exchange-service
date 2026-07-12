@@ -140,6 +140,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/app/wallets",
 				Handler: AppListWalletsHandler(serverCtx),
 			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/wallets/:currency/ledgers",
+				Handler: AppListWalletLedgersHandler(serverCtx),
+			},
 		},
 		rest.WithJwt(serverCtx.Config.App.AccessSecret),
 	)

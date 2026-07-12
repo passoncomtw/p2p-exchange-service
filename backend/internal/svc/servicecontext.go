@@ -18,6 +18,7 @@ type ServiceContext struct {
 	OrderStatusLog *model.OrderStatusLogModel
 	V1Order        *model.V1OrderModel
 	Wallet         *model.WalletModel
+	WalletLedger   *model.WalletLedgerModel
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -33,5 +34,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		OrderStatusLog: model.NewOrderStatusLogModel(conn),
 		V1Order:        model.NewV1OrderModel(conn),
 		Wallet:         model.NewWalletModel(conn),
+		WalletLedger:   model.NewWalletLedgerModel(conn),
 	}
 }

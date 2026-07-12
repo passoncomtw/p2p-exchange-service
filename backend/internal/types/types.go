@@ -264,6 +264,25 @@ type ListWalletsResponse struct {
 	List []WalletItem `json:"list"`
 }
 
+type ListWalletLedgersRequest struct {
+	Currency string `path:"currency"`
+	Limit    int64  `form:"limit,optional,default=20"`
+	Offset   int64  `form:"offset,optional,default=0"`
+}
+
+type WalletLedgerItem struct {
+	Type         string  `json:"type"`
+	Amount       string  `json:"amount"`
+	BalanceAfter string  `json:"balanceAfter"`
+	RefOrderNo   *string `json:"refOrderNo"`
+	CreatedAt    string  `json:"createdAt"`
+}
+
+type ListWalletLedgersResponse struct {
+	List  []WalletLedgerItem `json:"list"`
+	Total int64              `json:"total"`
+}
+
 // ── v1 掛單（免登入，沿用 listings；createdBy 固定 demo_user） ──────────────────
 
 type V1CreateOrderRequest struct {
