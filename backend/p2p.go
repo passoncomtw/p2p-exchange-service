@@ -60,6 +60,9 @@ func main() {
 		StatusLog: ctx.OrderStatusLog,
 		DB:        ctx.DB,
 	})
+	job.StartPushNotificationConsumer(ctx.MQ, job.PushNotificationDeps{
+		AppUser: ctx.AppUser,
+	})
 
 	if c.Mode != "pro" {
 		swagger.RegisterRoutes(server)

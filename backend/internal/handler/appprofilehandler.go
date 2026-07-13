@@ -26,3 +26,21 @@ func AppProfileHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		}
 	}
 }
+
+func AppRegisterPushTokenHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req types.RegisterPushTokenRequest
+		if err := httpx.Parse(r, &req); err != nil {
+			httpx.ErrorCtx(r.Context(), w, err)
+			return
+		}
+
+		uid := ctxUID(r)
+		l := logic.NewRegisterPushTokenLogic(r.Context(), svcCtx)
+		if err := l.Register(uid, &req); err != nil {
+			httpx.ErrorCtx(r.Context(), w, err)
+		} else {
+			httpx.OkJsonCtx(r.Context(), w, nil)
+		}
+	}
+}

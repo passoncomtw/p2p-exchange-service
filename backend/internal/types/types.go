@@ -48,6 +48,10 @@ type ProfileResponse struct {
 	Username string `json:"username"`
 }
 
+type RegisterPushTokenRequest struct {
+	Token string `json:"token"`
+}
+
 // ── backend dashboard ─────────────────────────────────────────────────────────
 
 type DashboardResponse struct {

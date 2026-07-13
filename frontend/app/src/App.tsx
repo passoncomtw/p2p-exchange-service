@@ -13,11 +13,27 @@ import { V1Navigation } from './navigation/v1';
 import { store, persistor } from './navigation/store/configureStore';
 import { resetTransient } from './navigation/store/slices/authSlices';
 import { setStoreRef } from './apis';
+import { useAppSelector } from './navigation/store/hooks';
+import { usePushNotifications } from './hooks/usePushNotifications';
 
 SplashScreen.preventAutoHideAsync();
 
 // 設定 Redux store 引用，讓 httpClient 可以從 store 讀取 token
 setStoreRef(store);
+
+function AppInner({ theme }: { theme: typeof DefaultTheme }) {
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  usePushNotifications(isAuthenticated);
+
+  return (
+    <V1Navigation
+      theme={theme}
+      onReady={() => {
+        SplashScreen.hideAsync();
+      }}
+    />
+  );
+}
 
 export function App() {
   const colorScheme = useColorScheme();
@@ -52,12 +68,7 @@ export function App() {
         persistor={persistor}
         onBeforeLift={() => store.dispatch(resetTransient())}
       >
-      <V1Navigation
-        theme={theme}
-        onReady={() => {
-            SplashScreen.hideAsync();
-          }}
-        />
+        <AppInner theme={theme} />
       </PersistGate>
     </Provider>
   );

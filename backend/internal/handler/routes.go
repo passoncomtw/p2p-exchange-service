@@ -66,6 +66,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Handler: AppProfileHandler(serverCtx),
 			},
 			{
+				Method:  http.MethodPut,
+				Path:    "/app/profile/push-token",
+				Handler: AppRegisterPushTokenHandler(serverCtx),
+			},
+			{
 				Method:  http.MethodPost,
 				Path:    "/app/payment-methods",
 				Handler: AppCreatePaymentMethodHandler(serverCtx),

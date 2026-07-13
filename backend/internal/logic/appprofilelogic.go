@@ -30,3 +30,20 @@ func (l *AppProfileLogic) Profile(_ *types.ProfileRequest) (*types.ProfileRespon
 		Username: username,
 	}, nil
 }
+
+type RegisterPushTokenLogic struct {
+	logx.Logger
+	ctx    context.Context
+	svcCtx *svc.ServiceContext
+}
+
+func NewRegisterPushTokenLogic(ctx context.Context, svcCtx *svc.ServiceContext) *RegisterPushTokenLogic {
+	return &RegisterPushTokenLogic{Logger: logx.WithContext(ctx), ctx: ctx, svcCtx: svcCtx}
+}
+
+func (l *RegisterPushTokenLogic) Register(uid int64, req *types.RegisterPushTokenRequest) error {
+	if req.Token == "" {
+		return nil
+	}
+	return l.svcCtx.AppUser.UpdatePushToken(l.ctx, uid, req.Token)
+}

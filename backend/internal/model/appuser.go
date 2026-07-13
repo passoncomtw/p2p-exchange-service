@@ -9,12 +9,13 @@ import (
 )
 
 type AppUser struct {
-	ID           int64     `db:"id"`
-	Username     string    `db:"username"`
-	PasswordHash string    `db:"password_hash"`
-	Email        *string   `db:"email"`
-	CreatedAt    time.Time `db:"created_at"`
-	UpdatedAt    time.Time `db:"updated_at"`
+	ID             int64     `db:"id"`
+	Username       string    `db:"username"`
+	PasswordHash   string    `db:"password_hash"`
+	Email          *string   `db:"email"`
+	ExpoPushToken  *string   `db:"expo_push_token"`
+	CreatedAt      time.Time `db:"created_at"`
+	UpdatedAt      time.Time `db:"updated_at"`
 }
 
 type AppUserModel struct {
@@ -28,7 +29,7 @@ func NewAppUserModel(conn sqlx.SqlConn) *AppUserModel {
 func (m *AppUserModel) FindByID(ctx context.Context, id int64) (*AppUser, error) {
 	var user AppUser
 	err := m.conn.QueryRowCtx(ctx, &user,
-		`SELECT id, username, password_hash, email, created_at, updated_at FROM app_users WHERE id = $1`,
+		`SELECT id, username, password_hash, email, expo_push_token, created_at, updated_at FROM app_users WHERE id = $1`,
 		id,
 	)
 	if err != nil {
@@ -42,7 +43,7 @@ func (m *AppUserModel) Create(ctx context.Context, username, passwordHash string
 	err := m.conn.QueryRowCtx(ctx, &user,
 		`INSERT INTO app_users (username, password_hash)
 		 VALUES ($1, $2)
-		 RETURNING id, username, password_hash, email, created_at, updated_at`,
+		 RETURNING id, username, password_hash, email, expo_push_token, created_at, updated_at`,
 		username, passwordHash,
 	)
 	if err != nil {
@@ -54,7 +55,7 @@ func (m *AppUserModel) Create(ctx context.Context, username, passwordHash string
 func (m *AppUserModel) FindByUsername(ctx context.Context, username string) (*AppUser, error) {
 	var user AppUser
 	err := m.conn.QueryRowCtx(ctx, &user,
-		`SELECT id, username, password_hash, email, created_at, updated_at FROM app_users WHERE username = $1`,
+		`SELECT id, username, password_hash, email, expo_push_token, created_at, updated_at FROM app_users WHERE username = $1`,
 		username,
 	)
 	if err != nil {
@@ -64,7 +65,7 @@ func (m *AppUserModel) FindByUsername(ctx context.Context, username string) (*Ap
 }
 
 func (m *AppUserModel) List(ctx context.Context, keyword string, limit, offset int64) ([]AppUser, error) {
-	query := `SELECT id, username, password_hash, email, created_at, updated_at FROM app_users`
+	query := `SELECT id, username, password_hash, email, expo_push_token, created_at, updated_at FROM app_users`
 	args := []any{}
 	argIdx := 1
 
@@ -85,6 +86,26 @@ func (m *AppUserModel) List(ctx context.Context, keyword string, limit, offset i
 		return nil, err
 	}
 	return users, nil
+}
+
+func (m *AppUserModel) UpdatePushToken(ctx context.Context, id int64, token string) error {
+	_, err := m.conn.ExecCtx(ctx,
+		`UPDATE app_users SET expo_push_token = $1, updated_at = NOW() WHERE id = $2`,
+		token, id,
+	)
+	return err
+}
+
+func (m *AppUserModel) GetPushToken(ctx context.Context, id int64) (string, error) {
+	var token *string
+	err := m.conn.QueryRowCtx(ctx, &token,
+		`SELECT expo_push_token FROM app_users WHERE id = $1`,
+		id,
+	)
+	if err != nil || token == nil {
+		return "", err
+	}
+	return *token, nil
 }
 
 func (m *AppUserModel) Count(ctx context.Context, keyword string) (int64, error) {
