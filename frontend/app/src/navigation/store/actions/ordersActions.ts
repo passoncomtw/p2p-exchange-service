@@ -9,6 +9,7 @@ export const ORDERS_ACTIONS = {
   MARK_ORDER_AS_PAID_REQUEST: 'orders/markOrderAsPaidRequest',
   APPLY_ORDER_REQUEST: 'orders/applyOrderRequest',
   CANCEL_ORDER_REQUEST: 'orders/cancelOrderRequest',
+  DISPUTE_ORDER_REQUEST: 'orders/disputeOrderRequest',
 } as const;
 
 export interface CreateListingPayload {
@@ -40,6 +41,13 @@ export interface ApplyOrderPayload {
 }
 
 export interface CancelOrderPayload {
+  orderId: string;
+  reason: string;
+  onSuccess?: () => void;
+  onError?: (error: string) => void;
+}
+
+export interface DisputeOrderPayload {
   orderId: string;
   reason: string;
   onSuccess?: () => void;
@@ -78,5 +86,10 @@ export const applyOrderRequest = (payload: ApplyOrderPayload) => ({
 
 export const cancelOrderRequest = (payload: CancelOrderPayload) => ({
   type: ORDERS_ACTIONS.CANCEL_ORDER_REQUEST,
+  payload,
+});
+
+export const disputeOrderRequest = (payload: DisputeOrderPayload) => ({
+  type: ORDERS_ACTIONS.DISPUTE_ORDER_REQUEST,
   payload,
 });

@@ -6,7 +6,7 @@ import { ORDER_STATUS_MAP } from '@/constants/orders';
 import { User } from '@/interfaces/store';
 import { Order } from '@/interfaces/order';
 import { useAppDispatch } from '@/navigation/store/hooks';
-import { markOrderAsPaidRequest, applyOrderRequest, fetchOrderDetailRequest, cancelOrderRequest } from '@/navigation/store/actions/ordersActions';
+import { markOrderAsPaidRequest, applyOrderRequest, fetchOrderDetailRequest, cancelOrderRequest, disputeOrderRequest } from '@/navigation/store/actions/ordersActions';
 
 function useCountdown(deadline: string | null): string | null {
   const [remaining, setRemaining] = useState<string | null>(null);
@@ -58,6 +58,56 @@ const Footer = (props: { order: Order; user: User }) => {
   const onCancelSuccess = () => {
     Alert.alert('成功', '訂單已取消，賣家資產已解凍');
     refetch();
+  };
+  const onDisputeSuccess = () => {
+    Alert.alert('申訴已提交', '客服人員將介入處理，請耐心等候');
+    refetch();
+  };
+
+  const confirmDispute = () => {
+    if (Platform.OS === 'ios') {
+      Alert.prompt(
+        '提交申訴',
+        '請說明申訴原因（例如：已付款但賣家未放行）',
+        [
+          { text: '返回', style: 'cancel' },
+          {
+            text: '確認申訴',
+            style: 'destructive',
+            onPress: (reason?: string) => {
+              const trimmed = reason?.trim() || '買家已付款，賣家未放行';
+              dispatch(
+                disputeOrderRequest({
+                  orderId,
+                  reason: trimmed,
+                  onSuccess: onDisputeSuccess,
+                  onError: (e) => Alert.alert('錯誤', e || '申訴提交失敗'),
+                })
+              );
+            },
+          },
+        ],
+        'plain-text',
+        '',
+      );
+    } else {
+      Alert.alert('提交申訴', '確定要對此訂單提交申訴嗎？客服人員將介入處理。', [
+        { text: '返回', style: 'cancel' },
+        {
+          text: '確認申訴',
+          style: 'destructive',
+          onPress: () =>
+            dispatch(
+              disputeOrderRequest({
+                orderId,
+                reason: '買家已付款，賣家未放行',
+                onSuccess: onDisputeSuccess,
+                onError: (e) => Alert.alert('錯誤', e || '申訴提交失敗'),
+              })
+            ),
+        },
+      ]);
+    }
   };
 
   const confirmCancel = () => {
@@ -193,8 +243,16 @@ const Footer = (props: { order: Order; user: User }) => {
 
   if (order.status === 'paid' && isBuyer) {
     return (
-      <View style={styles.section}>
-        <Text style={styles.infoLabel}>等待賣方確認放行</Text>
+      <View>
+        <View style={styles.section}>
+          <Text style={styles.infoLabel}>等待賣方確認放行</Text>
+          <Text style={styles.hintText}>若賣方長時間未放行，可提交申訴由客服介入</Text>
+        </View>
+        <View style={styles.buttonContainer}>
+          <Pressable style={styles.buttonDanger} onPress={confirmDispute}>
+            <Text style={styles.buttonDangerText}>提交申訴</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }

@@ -4,7 +4,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import logger from '@pkg/logger';
 import { handleSagaError } from '@pkg/utils/sagaHelpers';
 import { listingsApi, p2pOrdersApi } from '@/apis';
-import { ORDERS_ACTIONS, CreateListingPayload, CreateOrderPayload, FetchOrderDetailPayload, MarkOrderAsPaidPayload, ApplyOrderPayload, CancelOrderPayload } from '../actions/ordersActions';
+import { ORDERS_ACTIONS, CreateListingPayload, CreateOrderPayload, FetchOrderDetailPayload, MarkOrderAsPaidPayload, ApplyOrderPayload, CancelOrderPayload, DisputeOrderPayload } from '../actions/ordersActions';
 import {
   createOrderStart,
   createOrderSuccess,
@@ -27,6 +27,9 @@ import {
   cancelOrderStart,
   cancelOrderSuccess,
   cancelOrderFailure,
+  disputeOrderStart,
+  disputeOrderSuccess,
+  disputeOrderFailure,
 } from '../slices/ordersSlice';
 
 function* createListingSaga(action: PayloadAction<CreateListingPayload>): SagaIterator {
@@ -171,4 +174,25 @@ export function* watchOrdersSagas(): SagaIterator {
   yield takeLatest(ORDERS_ACTIONS.MARK_ORDER_AS_PAID_REQUEST, markOrderAsPaidSaga);
   yield takeLatest(ORDERS_ACTIONS.APPLY_ORDER_REQUEST, applyOrderSaga);
   yield takeLatest(ORDERS_ACTIONS.CANCEL_ORDER_REQUEST, cancelOrderSaga);
+  yield takeLatest(ORDERS_ACTIONS.DISPUTE_ORDER_REQUEST, disputeOrderSaga);
+}
+
+function* disputeOrderSaga(action: PayloadAction<DisputeOrderPayload>): SagaIterator {
+  const { orderId, reason, onSuccess, onError } = action.payload;
+
+  yield put(disputeOrderStart());
+
+  try {
+    yield call(p2pOrdersApi.dispute, Number(orderId), reason);
+
+    logger.info('申訴訂單成功', { orderId });
+
+    yield put(disputeOrderSuccess(orderId));
+
+    if (onSuccess) onSuccess();
+  } catch (error: any) {
+    const errorResult = handleSagaError(error, '申訴訂單失敗', { orderId });
+    yield put(disputeOrderFailure(errorResult));
+    if (onError) onError(errorResult.message);
+  }
 }
