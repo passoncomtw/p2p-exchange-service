@@ -1,12 +1,15 @@
 package mq
 
 import (
+	"fmt"
+
 	nats "github.com/nats-io/nats.go"
 	"github.com/zeromicro/go-zero/core/logx"
 	"p2p-exchange/internal/config"
 )
 
 type Client struct {
+	nc           *nats.Conn
 	js           nats.JetStreamContext
 	consumerName string
 }
@@ -18,6 +21,9 @@ func New(c config.NatsConf) *Client {
 	var opts []nats.Option
 	if c.CredsPath != "" {
 		opts = append(opts, nats.UserCredentials(c.CredsPath))
+	}
+	if c.User != "" && c.Password != "" {
+		opts = append(opts, nats.UserInfo(c.User, c.Password))
 	}
 	nc, err := nats.Connect(c.URL, opts...)
 	if err != nil {
@@ -33,7 +39,18 @@ func New(c config.NatsConf) *Client {
 		logx.Errorf("nats ensure stream error: %v", err)
 	}
 	logx.Infof("nats jetstream connected: %s stream=%s", c.URL, c.StreamName)
-	return &Client{js: js, consumerName: c.ConsumerName}
+	return &Client{nc: nc, js: js, consumerName: c.ConsumerName}
+}
+
+func (c *Client) Ping() error {
+	if !c.nc.IsConnected() {
+		return fmt.Errorf("nats not connected")
+	}
+	return nil
+}
+
+func (c *Client) Close() {
+	c.nc.Drain()
 }
 
 func ensureStream(js nats.JetStreamContext, c config.NatsConf) error {

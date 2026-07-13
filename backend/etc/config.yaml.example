@@ -12,3 +12,16 @@ Backend:
 
 Database:
   DSN: "postgresql://user:password@host/dbname?sslmode=require"
+
+Redis:
+  Addr: "localhost:6379"
+  Password: ""
+  PoolSize: 10
+
+Nats:
+  URL: "nats://localhost:4222"
+  User: ""
+  Password: ""
+  CredsPath: ""
+  StreamName: "p2p-exchange"
+  ConsumerName: "p2p-exchange-consumer"

@@ -15,12 +15,14 @@ Database:
   DSN: "postgresql://neondb_owner:npg_Px4TXhuDp0dA@ep-calm-star-aon6vub8-pooler.c-2.ap-southeast-1.aws.neon.tech/p2p_exchange?sslmode=require&channel_binding=require"
 
 Redis:
-  Addr: "localhost:6379"
-  Password: ""
+  Addr: "localhost:30379"
+  Password: "redis@local123"
   PoolSize: 10
 
 Nats:
-  URL: "nats://localhost:4222"
+  URL: "nats://localhost:30422"
+  User: "nats"
+  Password: "nats@local123"
   CredsPath: ""
   StreamName: "p2p-exchange"
   ConsumerName: "p2p-exchange-consumer"

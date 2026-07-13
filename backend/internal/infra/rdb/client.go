@@ -1,6 +1,7 @@
 package rdb
 
 import (
+	"context"
 	"strings"
 
 	"github.com/redis/go-redis/v9"
@@ -56,6 +57,14 @@ func New(c config.RedisConf) *Client {
 	}
 
 	return &Client{rdb: rdb}
+}
+
+func (c *Client) Ping(ctx context.Context) error {
+	return c.rdb.Ping(ctx).Err()
+}
+
+func (c *Client) Close() error {
+	return c.rdb.Close()
 }
 
 func splitTrimmed(s string) []string {

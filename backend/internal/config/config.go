@@ -17,15 +17,17 @@ type DatabaseConf struct {
 type RedisConf struct {
 	// Mode: single | sentinel | cluster (default: single)
 	Mode       string `json:",default=single"`
-	Addr       string // single/cluster: comma-separated; sentinel: comma-separated sentinel addrs
-	Password   string `json:",optional"`
+	Addr       string `json:",env=REDIS_ADDR"`
+	Password   string `json:",optional,env=REDIS_PASSWORD"`
 	MasterName string `json:",optional"` // sentinel mode only
 	PoolSize   int    `json:",default=10"`
 }
 
 type NatsConf struct {
-	URL          string
-	CredsPath    string // optional: path to .creds file (Synadia Cloud prod)
+	URL          string `json:",env=NATS_URL"`
+	CredsPath    string `json:",optional"`
+	User         string `json:",optional,env=NATS_USER"`
+	Password     string `json:",optional,env=NATS_PASSWORD"`
 	StreamName   string
 	ConsumerName string
 }

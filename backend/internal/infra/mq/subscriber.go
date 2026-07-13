@@ -3,6 +3,7 @@ package mq
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	nats "github.com/nats-io/nats.go"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -14,6 +15,8 @@ type MsgHandler func(ctx context.Context, data []byte) error
 // handler 回 nil → Ack；回 error → Nak（JetStream 自動重試）。
 // 內建 panic recover，防止 handler panic 打死 consumer。
 func (c *Client) Subscribe(subject string, handler MsgHandler) error {
+	// 每個 subject 使用獨立的 consumer name，避免 subject 不符的衝突
+	consumerName := c.consumerName + "-" + strings.ReplaceAll(subject, ".", "-")
 	_, err := c.js.Subscribe(subject, func(msg *nats.Msg) {
 		defer func() {
 			if r := recover(); r != nil {
@@ -27,7 +30,7 @@ func (c *Client) Subscribe(subject string, handler MsgHandler) error {
 			return
 		}
 		_ = msg.Ack()
-	}, nats.Durable(c.consumerName), nats.ManualAck())
+	}, nats.Durable(consumerName), nats.ManualAck())
 	if err != nil {
 		return fmt.Errorf("subscribe %s: %w", subject, err)
 	}
