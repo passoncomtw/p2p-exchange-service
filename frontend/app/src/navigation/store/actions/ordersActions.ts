@@ -8,6 +8,7 @@ export const ORDERS_ACTIONS = {
   FETCH_ORDER_DETAIL_REQUEST: 'orders/fetchOrderDetailRequest',
   MARK_ORDER_AS_PAID_REQUEST: 'orders/markOrderAsPaidRequest',
   APPLY_ORDER_REQUEST: 'orders/applyOrderRequest',
+  CANCEL_ORDER_REQUEST: 'orders/cancelOrderRequest',
 } as const;
 
 export interface CreateListingPayload {
@@ -34,6 +35,13 @@ export interface FetchOrderDetailPayload {
 
 export interface ApplyOrderPayload {
   orderId: string;
+  onSuccess?: () => void;
+  onError?: (error: string) => void;
+}
+
+export interface CancelOrderPayload {
+  orderId: string;
+  reason: string;
   onSuccess?: () => void;
   onError?: (error: string) => void;
 }
@@ -65,5 +73,10 @@ export const markOrderAsPaidRequest = (payload: MarkOrderAsPaidPayload) => ({
 
 export const applyOrderRequest = (payload: ApplyOrderPayload) => ({
   type: ORDERS_ACTIONS.APPLY_ORDER_REQUEST,
+  payload,
+});
+
+export const cancelOrderRequest = (payload: CancelOrderPayload) => ({
+  type: ORDERS_ACTIONS.CANCEL_ORDER_REQUEST,
   payload,
 });

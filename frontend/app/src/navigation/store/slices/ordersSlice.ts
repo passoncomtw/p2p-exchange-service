@@ -98,6 +98,15 @@ const ordersSlice = createSlice({
       }
     },
     applyOrderFailure(state, action: PayloadAction<SagaErrorResult>) {},
+    cancelOrderStart(state) {},
+    cancelOrderSuccess(state, action: PayloadAction<string>) {
+      const orderId = action.payload;
+      const order = state.orderList.find((o) => o.id.toString() === orderId);
+      if (order) {
+        order.status = 'cancelled';
+      }
+    },
+    cancelOrderFailure(state, action: PayloadAction<SagaErrorResult>) {},
     resetOrders() {
       return initialState;
     },
@@ -123,6 +132,9 @@ export const {
   applyOrderStart,
   applyOrderSuccess,
   applyOrderFailure,
+  cancelOrderStart,
+  cancelOrderSuccess,
+  cancelOrderFailure,
   resetOrders,
 } = ordersSlice.actions;
 

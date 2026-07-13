@@ -6,7 +6,7 @@ import { ORDER_STATUS_MAP } from '@/constants/orders';
 import { User } from '@/interfaces/store';
 import { Order } from '@/interfaces/order';
 import { useAppDispatch } from '@/navigation/store/hooks';
-import { markOrderAsPaidRequest, applyOrderRequest, fetchOrderDetailRequest } from '@/navigation/store/actions/ordersActions';
+import { markOrderAsPaidRequest, applyOrderRequest, fetchOrderDetailRequest, cancelOrderRequest } from '@/navigation/store/actions/ordersActions';
 
 function useCountdown(deadline: string | null): string | null {
   const [remaining, setRemaining] = useState<string | null>(null);
@@ -55,6 +55,56 @@ const Footer = (props: { order: Order; user: User }) => {
     Alert.alert('成功', '訂單已放行');
     refetch();
   };
+  const onCancelSuccess = () => {
+    Alert.alert('成功', '訂單已取消，賣家資產已解凍');
+    refetch();
+  };
+
+  const confirmCancel = () => {
+    if (Platform.OS === 'ios') {
+      Alert.prompt(
+        '取消訂單',
+        '請輸入取消原因',
+        [
+          { text: '返回', style: 'cancel' },
+          {
+            text: '確認取消',
+            style: 'destructive',
+            onPress: (reason?: string) => {
+              const trimmed = reason?.trim() || '主動取消';
+              dispatch(
+                cancelOrderRequest({
+                  orderId,
+                  reason: trimmed,
+                  onSuccess: onCancelSuccess,
+                  onError: (e) => Alert.alert('錯誤', e || '取消失敗'),
+                })
+              );
+            },
+          },
+        ],
+        'plain-text',
+        '',
+      );
+    } else {
+      Alert.alert('確認取消', '確定要取消此訂單嗎？', [
+        { text: '返回', style: 'cancel' },
+        {
+          text: '確認取消',
+          style: 'destructive',
+          onPress: () =>
+            dispatch(
+              cancelOrderRequest({
+                orderId,
+                reason: '主動取消',
+                onSuccess: onCancelSuccess,
+                onError: (e) => Alert.alert('錯誤', e || '取消失敗'),
+              })
+            ),
+        },
+      ]);
+    }
+  };
 
   if (order.status === 'matched' && isBuyer) {
     return (
@@ -88,6 +138,9 @@ const Footer = (props: { order: Order; user: User }) => {
             }
           >
             <Text style={styles.buttonPrimaryText}>匯款已完成</Text>
+          </Pressable>
+          <Pressable style={styles.buttonDanger} onPress={confirmCancel}>
+            <Text style={styles.buttonDangerText}>取消訂單</Text>
           </Pressable>
         </View>
       </View>
@@ -124,9 +177,16 @@ const Footer = (props: { order: Order; user: User }) => {
 
   if (order.status === 'matched' && isSeller) {
     return (
-      <View style={styles.section}>
-        <Text style={styles.infoLabel}>等待買方付款</Text>
-        {countdown && <Text style={styles.hintText}>買方付款截止：{countdown}</Text>}
+      <View>
+        <View style={styles.section}>
+          <Text style={styles.infoLabel}>等待買方付款</Text>
+          {countdown && <Text style={styles.hintText}>買方付款截止：{countdown}</Text>}
+        </View>
+        <View style={styles.buttonContainer}>
+          <Pressable style={styles.buttonDanger} onPress={confirmCancel}>
+            <Text style={styles.buttonDangerText}>取消訂單</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
@@ -284,6 +344,19 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.sm,
     color: theme.text.tertiary,
     marginTop: theme.spacing.sm,
+  },
+  buttonDanger: {
+    borderWidth: 1,
+    borderColor: theme.status.error,
+    borderRadius: 8,
+    paddingVertical: theme.spacing.md,
+    alignItems: 'center',
+    marginTop: theme.spacing.sm,
+  },
+  buttonDangerText: {
+    fontSize: theme.fontSize.md,
+    fontWeight: '600',
+    color: theme.status.error,
   },
 });
 
