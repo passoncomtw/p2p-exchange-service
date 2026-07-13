@@ -16,11 +16,11 @@ type DatabaseConf struct {
 
 type RedisConf struct {
 	// Mode: single | sentinel | cluster (default: single)
-	Mode       string
+	Mode       string `json:",default=single"`
 	Addr       string // single/cluster: comma-separated; sentinel: comma-separated sentinel addrs
-	Password   string
-	MasterName string // sentinel mode only
-	PoolSize   int
+	Password   string `json:",optional"`
+	MasterName string `json:",optional"` // sentinel mode only
+	PoolSize   int    `json:",default=10"`
 }
 
 type NatsConf struct {
