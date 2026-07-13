@@ -1,0 +1,102 @@
+name: db-migrate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/migrations/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute short SHA
+        id: vars
+        run: echo "sha=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push migrate image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile.migrate
+          push: true
+          tags: |
+            ghcr.io/passoncomtw/p2p-exchange-service/migrate:${{ steps.vars.outputs.sha }}
+            ghcr.io/passoncomtw/p2p-exchange-service/migrate:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Run migration job
+        run: |
+          IMAGE="ghcr.io/passoncomtw/p2p-exchange-service/migrate:${{ steps.vars.outputs.sha }}"
+          JOB_NAME="db-migrate-${{ steps.vars.outputs.sha }}"
+          NAMESPACE="${{ vars.K8S_NAMESPACE }}"
+          NAMESPACE="${NAMESPACE:-default}"
+
+          # 清除同 label 的舊 Job（idempotent）
+          kubectl delete job -n "${NAMESPACE}" -l app=db-migrate --ignore-not-found=true
+
+          kubectl apply -f - <<EOF
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: ${JOB_NAME}
+            namespace: ${NAMESPACE}
+            labels:
+              app: db-migrate
+          spec:
+            ttlSecondsAfterFinished: 3600
+            backoffLimit: 0
+            template:
+              spec:
+                restartPolicy: Never
+                imagePullSecrets:
+                  - name: ghcr-secret
+                containers:
+                  - name: migrate
+                    image: ${IMAGE}
+                    env:
+                      - name: DATABASE_URL
+                        valueFrom:
+                          secretKeyRef:
+                            name: p2p-exchange-db
+                            key: DATABASE_URL
+          EOF
+
+          # 等待完成（最多 2 分鐘）
+          kubectl wait --for=condition=complete \
+            job/${JOB_NAME} -n "${NAMESPACE}" --timeout=120s
+
+          # 印出 log
+          kubectl logs -l job-name=${JOB_NAME} -n "${NAMESPACE}"
+
+      - name: Summary
+        run: |
+          echo "### DB Migration 完成" >> "$GITHUB_STEP_SUMMARY"
+          echo "Image: \`ghcr.io/passoncomtw/p2p-exchange-service/migrate:${{ steps.vars.outputs.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
