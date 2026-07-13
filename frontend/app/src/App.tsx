@@ -66,7 +66,7 @@ export function App() {
           </View>
         }
         persistor={persistor}
-        onBeforeLift={() => store.dispatch(resetTransient())}
+        onBeforeLift={() => { store.dispatch(resetTransient()); }}
       >
         <AppInner theme={theme} />
       </PersistGate>
