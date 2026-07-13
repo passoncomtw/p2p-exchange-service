@@ -7,6 +7,9 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +36,7 @@ export default function V1ListingDetailScreen() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(false);
   const [taking, setTaking] = React.useState(false);
+  const [tradeAmount, setTradeAmount] = React.useState('');
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -43,6 +47,7 @@ export default function V1ListingDetailScreen() {
         p2pOrdersApi.list(),
       ]);
       setListing(data);
+      setTradeAmount(String(data.remainingAmount));
       setRelatedOrders(orders.filter((o) => o.listingId === listingId));
     } catch {
       setError(true);
@@ -55,6 +60,12 @@ export default function V1ListingDetailScreen() {
 
   const handleTakeOrder = async () => {
     if (!listing) return;
+
+    const amount = parseFloat(tradeAmount);
+    if (isNaN(amount) || amount <= 0 || amount > listing.remainingAmount) {
+      Alert.alert('', t('order.message.invalidAmount'));
+      return;
+    }
 
     if (listing.type === 'buy') {
       try {
@@ -79,7 +90,7 @@ export default function V1ListingDetailScreen() {
     try {
       const result = await p2pOrdersApi.create({
         listingId: listing.id,
-        cryptoAmount: listing.remainingAmount,
+        cryptoAmount: amount,
       });
       Alert.alert('', t('order.message.takeOrderSuccess'));
       navigation.replace('OrderDetail', { id: result.id });
@@ -117,12 +128,14 @@ export default function V1ListingDetailScreen() {
   }
 
   const isActive = listing.status === 'active' && listing.remainingAmount > 0;
-  const fiatTotal = listing.price * listing.remainingAmount;
+  const parsedAmount = parseFloat(tradeAmount) || 0;
+  const fiatEstimate = listing.price * parsedAmount;
   const tColor = tokens.typeColor(listing.type);
   const actionLabel = listing.type === 'sell' ? t('order.action.takeBuy') : t('order.action.takeSell');
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
       <View style={styles.headerRow}>
         <View style={[styles.typeTag, { backgroundColor: tColor }]}>
           <Text style={styles.typeTagText}>{t(`order.type.${listing.type}`)}</Text>
@@ -134,20 +147,44 @@ export default function V1ListingDetailScreen() {
         <Row label={t('order.field.price')} value={`${listing.price.toLocaleString()} ${listing.fiatCurrency}`} />
         <Row label={t('order.field.quantity')} value={`${listing.totalAmount} ${listing.cryptoCurrency}`} />
         <Row label={t('order.field.remainingAmount')} value={`${listing.remainingAmount} ${listing.cryptoCurrency}`} />
-        <Row label={t('order.field.fiatTotal')} value={`${fiatTotal.toLocaleString()} ${listing.fiatCurrency}`} amber />
         <Row label={t('order.field.createdAt')} value={formatDateTime(listing.createdAt)} muted />
       </View>
 
       {isActive ? (
-        <TouchableOpacity
-          style={[styles.actionBtn, { backgroundColor: tColor }, taking && styles.actionBtnDisabled]}
-          onPress={handleTakeOrder}
-          disabled={taking}
-          accessibilityRole="button"
-        >
-          {taking ? <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} /> : null}
-          <Text style={styles.actionBtnText}>{actionLabel}</Text>
-        </TouchableOpacity>
+        <>
+          <View style={styles.amountSection}>
+            <Text style={styles.amountLabel}>{t('order.field.tradeAmount')} ({listing.cryptoCurrency})</Text>
+            <View style={styles.amountInputRow}>
+              <TextInput
+                style={styles.amountInput}
+                value={tradeAmount}
+                onChangeText={setTradeAmount}
+                keyboardType="decimal-pad"
+                placeholder="0"
+                placeholderTextColor={colors.textTertiary}
+              />
+              <TouchableOpacity
+                style={styles.maxBtn}
+                onPress={() => setTradeAmount(String(listing.remainingAmount))}
+                accessibilityRole="button"
+              >
+                <Text style={styles.maxBtnText}>{t('order.action.max')}</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.fiatEstimate}>
+              {t('order.field.fiatEstimate')}: {fiatEstimate.toLocaleString()} {listing.fiatCurrency}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: tColor }, taking && styles.actionBtnDisabled]}
+            onPress={handleTakeOrder}
+            disabled={taking}
+            accessibilityRole="button"
+          >
+            {taking ? <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} /> : null}
+            <Text style={styles.actionBtnText}>{actionLabel}</Text>
+          </TouchableOpacity>
+        </>
       ) : relatedOrders.length > 0 ? (
         <View style={styles.ordersSection}>
           <Text style={styles.ordersSectionTitle}>{t('order.nav.orders')} ({relatedOrders.length})</Text>
@@ -186,6 +223,7 @@ export default function V1ListingDetailScreen() {
         </View>
       )}
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -226,12 +264,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   unavailableText: { fontSize: 14, color: colors.textTertiary },
+  amountSection: {
+    backgroundColor: colors.bgCard,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.borderCard,
+    padding: 14,
+    marginBottom: 16,
+  },
+  amountLabel: { fontSize: 13, color: colors.textSecondary, marginBottom: 8 },
+  amountInputRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+  amountInput: {
+    flex: 1,
+    height: 44,
+    borderWidth: 1,
+    borderColor: colors.borderInput,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    color: colors.textPrimary,
+    backgroundColor: colors.bgContent,
+  },
+  maxBtn: {
+    height: 44,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: colors.borderInput,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.bgCard,
+  },
+  maxBtnText: { fontSize: 12, fontWeight: '600', color: colors.textSecondary },
+  fiatEstimate: { fontSize: 12, color: colors.textTertiary },
   actionBtn: {
     height: 48,
     borderRadius: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 8,
   },
   actionBtnDisabled: { opacity: 0.6 },
   actionBtnText: { fontSize: 16, fontWeight: '600', color: '#fff' },

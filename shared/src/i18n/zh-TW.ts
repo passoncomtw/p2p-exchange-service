@@ -87,6 +87,8 @@ export const zhTW = {
       orderId: '訂單編號',
       remainingAmount: '可交易數量',
       fiatTotal: '法幣總額',
+      tradeAmount: '交易數量',
+      fiatEstimate: '預估法幣金額',
       orderNo: '訂單編號',
       role: '角色',
       counterparty: '對手方',
@@ -136,6 +138,7 @@ export const zhTW = {
       cancelOrder: '取消訂單',
       dispute: '申訴',
       addPayment: '新增收款帳戶',
+      max: '全部',
     },
 
     // 角色
@@ -179,6 +182,7 @@ export const zhTW = {
       hintCompleted: '交易已完成',
       hintCancelled: '訂單已取消',
       hintDisputed: '申訴處理中，請等待客服介入',
+      invalidAmount: '請輸入有效的交易數量（須大於 0 且不超過可交易數量）',
     },
 
     // 驗證錯誤（對應 validation/order.ts 的 messageKey）

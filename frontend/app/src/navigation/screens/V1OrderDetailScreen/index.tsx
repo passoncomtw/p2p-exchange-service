@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -26,21 +27,37 @@ export default function V1OrderDetailScreen() {
 
   const [order, setOrder] = React.useState<Order | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState(false);
   const [acting, setActing] = React.useState(false);
 
+  const fetchOrder = React.useCallback(async () => {
+    const data = await p2pOrdersApi.getById(orderId);
+    setOrder(data);
+    setError(false);
+  }, [orderId]);
+
   const load = React.useCallback(async () => {
     setLoading(true);
-    setError(false);
     try {
-      const data = await p2pOrdersApi.getById(orderId);
-      setOrder(data);
+      await fetchOrder();
     } catch {
       setError(true);
     } finally {
       setLoading(false);
     }
-  }, [orderId]);
+  }, [fetchOrder]);
+
+  const refresh = React.useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchOrder();
+    } catch {
+      setError(true);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchOrder]);
 
   React.useEffect(() => { load(); }, [load]);
 
@@ -50,7 +67,7 @@ export default function V1OrderDetailScreen() {
       try {
         await action();
         Alert.alert('', t(successMsg));
-        await load();
+        await refresh();
       } catch {
         Alert.alert('', t('order.message.submitFailed'));
       } finally {
@@ -109,7 +126,11 @@ export default function V1OrderDetailScreen() {
   })();
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.container}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
+    >
       {/* Status header */}
       <View style={styles.statusHeader}>
         <View style={[styles.statusBadge, { backgroundColor: sColor }]}>
