@@ -15,9 +15,12 @@ type DatabaseConf struct {
 }
 
 type RedisConf struct {
-	Addr     string // comma-separated cluster node addresses, or single addr for standalone
-	Password string
-	PoolSize int
+	// Mode: single | sentinel | cluster (default: single)
+	Mode       string
+	Addr       string // single/cluster: comma-separated; sentinel: comma-separated sentinel addrs
+	Password   string
+	MasterName string // sentinel mode only
+	PoolSize   int
 }
 
 type NatsConf struct {
