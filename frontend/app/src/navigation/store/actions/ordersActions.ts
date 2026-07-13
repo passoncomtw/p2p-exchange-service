@@ -5,6 +5,7 @@ export const ORDERS_ACTIONS = {
   CREATE_LISTING_REQUEST: 'orders/createListingRequest',
   CREATE_ORDER_REQUEST: 'orders/createOrderRequest',
   FETCH_ORDER_LIST_REQUEST: 'orders/fetchOrderListRequest',
+  FETCH_ORDER_DETAIL_REQUEST: 'orders/fetchOrderDetailRequest',
   MARK_ORDER_AS_PAID_REQUEST: 'orders/markOrderAsPaidRequest',
   APPLY_ORDER_REQUEST: 'orders/applyOrderRequest',
 } as const;
@@ -27,6 +28,10 @@ export interface MarkOrderAsPaidPayload {
   onError?: (error: string) => void;
 }
 
+export interface FetchOrderDetailPayload {
+  orderId: string;
+}
+
 export interface ApplyOrderPayload {
   orderId: string;
   onSuccess?: () => void;
@@ -46,6 +51,11 @@ export const createOrderRequest = (payload: CreateOrderPayload) => ({
 export const fetchOrderListRequest = (params?: ListOrdersParams) => ({
   type: ORDERS_ACTIONS.FETCH_ORDER_LIST_REQUEST,
   payload: params,
+});
+
+export const fetchOrderDetailRequest = (payload: FetchOrderDetailPayload) => ({
+  type: ORDERS_ACTIONS.FETCH_ORDER_DETAIL_REQUEST,
+  payload,
 });
 
 export const markOrderAsPaidRequest = (payload: MarkOrderAsPaidPayload) => ({

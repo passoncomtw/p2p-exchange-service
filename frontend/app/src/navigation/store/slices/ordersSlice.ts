@@ -10,6 +10,7 @@ interface OrdersState {
   orderList: Order[];
   orderListLoading: boolean;
   orderListError: string | null;
+  orderDetailLoading: boolean;
 }
 
 const initialState: OrdersState = {
@@ -20,6 +21,7 @@ const initialState: OrdersState = {
   orderList: [],
   orderListLoading: false,
   orderListError: null,
+  orderDetailLoading: false,
 };
 
 const ordersSlice = createSlice({
@@ -63,6 +65,21 @@ const ordersSlice = createSlice({
       state.orderListLoading = false;
       state.orderListError = action.payload.message;
     },
+    fetchOrderDetailStart(state) {
+      state.orderDetailLoading = true;
+    },
+    fetchOrderDetailSuccess(state, action: PayloadAction<Order>) {
+      state.orderDetailLoading = false;
+      const idx = state.orderList.findIndex((o) => o.id === action.payload.id);
+      if (idx >= 0) {
+        state.orderList[idx] = action.payload;
+      } else {
+        state.orderList.push(action.payload);
+      }
+    },
+    fetchOrderDetailFailure(state) {
+      state.orderDetailLoading = false;
+    },
     markOrderAsPaidStart(state) {},
     markOrderAsPaidSuccess(state, action: PayloadAction<string>) {
       const orderId = action.payload;
@@ -88,6 +105,9 @@ const ordersSlice = createSlice({
 });
 
 export const {
+  fetchOrderDetailStart,
+  fetchOrderDetailSuccess,
+  fetchOrderDetailFailure,
   createOrderStart,
   createOrderSuccess,
   createOrderFailure,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,13 @@ import {
   Pressable,
   StatusBar,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import EmptyContent from './components/EmptyContent';
 import OrderContent from './components/OrderContent';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { useAppSelector } from '../../store/hooks';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { fetchOrderDetailRequest } from '../../store/actions/ordersActions';
 import { theme, commonStyles } from '@/theme';
 import { ORDER_STATUS_MAP } from '@/constants/orders';
 
@@ -27,17 +29,30 @@ type OrderDetailRouteProp = RouteProp<
 export default function OrderDetailScreen() {
   const navigation = useNavigation();
   const route = useRoute<OrderDetailRouteProp>();
+  const dispatch = useAppDispatch();
   const orderList = useAppSelector((state) => state.orders.orderList);
-  const orderListLoading = useAppSelector((state) => state.orders.orderListLoading);
+  const orderDetailLoading = useAppSelector((state) => state.orders.orderDetailLoading);
   const user = useAppSelector((state) => state.auth.user);
 
   const { orderId } = route.params;
+
+  useEffect(() => {
+    dispatch(fetchOrderDetailRequest({ orderId }));
+  }, [orderId, dispatch]);
 
   const order = React.useMemo(() => {
     return orderList.find((o) => o.id.toString() === orderId);
   }, [orderList, orderId]);
 
   const statusInfo = ORDER_STATUS_MAP[order?.status ?? 'matched'];
+
+  if (orderDetailLoading && !order) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.secondary} />
+      </View>
+    );
+  }
 
   if (!order || !user) {
     return <EmptyContent />;

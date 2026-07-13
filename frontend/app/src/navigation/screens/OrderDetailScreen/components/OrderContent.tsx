@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Platform, Alert } from 'react-native';
 import { theme, commonStyles } from '@/theme';
 import { formatDateTime } from '@/utils/formatUtils';
@@ -6,61 +6,90 @@ import { ORDER_STATUS_MAP } from '@/constants/orders';
 import { User } from '@/interfaces/store';
 import { Order } from '@/interfaces/order';
 import { useAppDispatch } from '@/navigation/store/hooks';
-import type { AppDispatch } from '@/navigation/store/configureStore';
-import { markOrderAsPaidRequest, applyOrderRequest } from '@/navigation/store/actions/ordersActions';
+import { markOrderAsPaidRequest, applyOrderRequest, fetchOrderDetailRequest } from '@/navigation/store/actions/ordersActions';
 
-const handleMarkAsPaid = (orderId: string, dispatch: AppDispatch) => () => {
-  Alert.alert(
-    '確認付款',
-    '確認已完成匯款？',
-    [
-      { text: '取消', style: 'cancel' },
-      {
-        text: '確認',
-        onPress: () => {
-          dispatch(markOrderAsPaidRequest({
-            orderId,
-            onSuccess: () => Alert.alert('成功', '已標記為已付款'),
-            onError: (error) => Alert.alert('錯誤', error || '標記付款失敗'),
-          }));
-        },
-      },
-    ]
-  );
-};
+function useCountdown(deadline: string | null): string | null {
+  const [remaining, setRemaining] = useState<string | null>(null);
 
-const handleApplyOrder = (orderId: string, dispatch: AppDispatch) => () => {
-  Alert.alert(
-    '確認放行',
-    '確認已收到款項並放行訂單？',
-    [
-      { text: '取消', style: 'cancel' },
-      {
-        text: '確認',
-        onPress: () => {
-          dispatch(applyOrderRequest({
-            orderId,
-            onSuccess: () => Alert.alert('成功', '訂單已放行'),
-            onError: (error) => Alert.alert('錯誤', error || '放行訂單失敗'),
-          }));
-        },
-      },
-    ]
-  );
-};
+  useEffect(() => {
+    if (!deadline) return;
 
-const Footer = (props: { order: Order; user: User; dispatch: AppDispatch }) => {
-  const { order, user, dispatch } = props;
+    const calc = () => {
+      const diff = new Date(deadline).getTime() - Date.now();
+      if (diff <= 0) {
+        setRemaining('已逾時');
+        return false;
+      }
+      const m = Math.floor(diff / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setRemaining(`${m}:${s.toString().padStart(2, '0')}`);
+      return true;
+    };
+
+    if (!calc()) return;
+    const id = setInterval(() => {
+      if (!calc()) clearInterval(id);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [deadline]);
+
+  return remaining;
+}
+
+
+const Footer = (props: { order: Order; user: User }) => {
+  const { order, user } = props;
+  const dispatch = useAppDispatch();
   const orderId = order.id.toString();
   const isBuyer = user.id === order.buyerId;
   const isSeller = user.id === order.sellerId;
+  const countdown = useCountdown(order.status === 'matched' ? order.paymentDeadline : null);
+
+  const refetch = () => dispatch(fetchOrderDetailRequest({ orderId }));
+
+  const onPaidSuccess = () => {
+    Alert.alert('成功', '已標記為已付款');
+    refetch();
+  };
+  const onApplySuccess = () => {
+    Alert.alert('成功', '訂單已放行');
+    refetch();
+  };
 
   if (order.status === 'matched' && isBuyer) {
     return (
-      <View style={styles.buttonContainer}>
-        <Pressable style={styles.buttonPrimary} onPress={handleMarkAsPaid(orderId, dispatch)}>
-          <Text style={styles.buttonPrimaryText}>匯款已完成</Text>
-        </Pressable>
+      <View>
+        {countdown && (
+          <View style={styles.countdownRow}>
+            <Text style={styles.countdownLabel}>付款截止倒數</Text>
+            <Text style={[styles.countdownValue, countdown === '已逾時' && styles.countdownExpired]}>
+              {countdown}
+            </Text>
+          </View>
+        )}
+        <View style={styles.buttonContainer}>
+          <Pressable
+            style={styles.buttonPrimary}
+            onPress={() =>
+              Alert.alert('確認付款', '確認已完成匯款？', [
+                { text: '取消', style: 'cancel' },
+                {
+                  text: '確認',
+                  onPress: () =>
+                    dispatch(
+                      markOrderAsPaidRequest({
+                        orderId,
+                        onSuccess: onPaidSuccess,
+                        onError: (e) => Alert.alert('錯誤', e || '標記付款失敗'),
+                      })
+                    ),
+                },
+              ])
+            }
+          >
+            <Text style={styles.buttonPrimaryText}>匯款已完成</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
@@ -68,7 +97,25 @@ const Footer = (props: { order: Order; user: User; dispatch: AppDispatch }) => {
   if (order.status === 'paid' && isSeller) {
     return (
       <View style={styles.buttonContainer}>
-        <Pressable style={styles.buttonPrimary} onPress={handleApplyOrder(orderId, dispatch)}>
+        <Pressable
+          style={styles.buttonPrimary}
+          onPress={() =>
+            Alert.alert('確認放行', '確認已收到款項並放行訂單？', [
+              { text: '取消', style: 'cancel' },
+              {
+                text: '確認',
+                onPress: () =>
+                  dispatch(
+                    applyOrderRequest({
+                      orderId,
+                      onSuccess: onApplySuccess,
+                      onError: (e) => Alert.alert('錯誤', e || '放行訂單失敗'),
+                    })
+                  ),
+              },
+            ])
+          }
+        >
           <Text style={styles.buttonPrimaryText}>確認放行</Text>
         </Pressable>
       </View>
@@ -78,9 +125,8 @@ const Footer = (props: { order: Order; user: User; dispatch: AppDispatch }) => {
   if (order.status === 'matched' && isSeller) {
     return (
       <View style={styles.section}>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>等待買方付款</Text>
-        </View>
+        <Text style={styles.infoLabel}>等待買方付款</Text>
+        {countdown && <Text style={styles.hintText}>買方付款截止：{countdown}</Text>}
       </View>
     );
   }
@@ -88,9 +134,7 @@ const Footer = (props: { order: Order; user: User; dispatch: AppDispatch }) => {
   if (order.status === 'paid' && isBuyer) {
     return (
       <View style={styles.section}>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>等待賣方確認放行</Text>
-        </View>
+        <Text style={styles.infoLabel}>等待賣方確認放行</Text>
       </View>
     );
   }
@@ -100,7 +144,6 @@ const Footer = (props: { order: Order; user: User; dispatch: AppDispatch }) => {
 
 const OrderContent = (props: { order: Order; user: User }) => {
   const { order, user } = props;
-  const dispatch = useAppDispatch();
 
   return (
     <View>
@@ -163,7 +206,7 @@ const OrderContent = (props: { order: Order; user: User }) => {
         )}
       </View>
 
-      <Footer order={order} user={user} dispatch={dispatch} />
+      <Footer order={order} user={user} />
     </View>
   );
 };
@@ -216,6 +259,31 @@ const styles = StyleSheet.create({
   },
   buttonPrimaryText: {
     ...commonStyles.buttonPrimaryText,
+  },
+  countdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    backgroundColor: '#FFF8E1',
+  },
+  countdownLabel: {
+    fontSize: theme.fontSize.md,
+    color: theme.text.secondary,
+  },
+  countdownValue: {
+    fontSize: theme.fontSize.xl,
+    fontWeight: '700',
+    color: '#F57C00',
+  },
+  countdownExpired: {
+    color: theme.status.error,
+  },
+  hintText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.text.tertiary,
+    marginTop: theme.spacing.sm,
   },
 });
 

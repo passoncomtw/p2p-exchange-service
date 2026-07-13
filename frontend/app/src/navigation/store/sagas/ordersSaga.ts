@@ -4,7 +4,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import logger from '@pkg/logger';
 import { handleSagaError } from '@pkg/utils/sagaHelpers';
 import { listingsApi, p2pOrdersApi } from '@/apis';
-import { ORDERS_ACTIONS, CreateListingPayload, CreateOrderPayload, MarkOrderAsPaidPayload, ApplyOrderPayload } from '../actions/ordersActions';
+import { ORDERS_ACTIONS, CreateListingPayload, CreateOrderPayload, FetchOrderDetailPayload, MarkOrderAsPaidPayload, ApplyOrderPayload } from '../actions/ordersActions';
 import {
   createOrderStart,
   createOrderSuccess,
@@ -15,6 +15,9 @@ import {
   fetchOrderListStart,
   fetchOrderListSuccess,
   fetchOrderListFailure,
+  fetchOrderDetailStart,
+  fetchOrderDetailSuccess,
+  fetchOrderDetailFailure,
   markOrderAsPaidStart,
   markOrderAsPaidSuccess,
   markOrderAsPaidFailure,
@@ -79,6 +82,24 @@ function* fetchOrderListSaga(action: PayloadAction<any>): SagaIterator {
   }
 }
 
+function* fetchOrderDetailSaga(action: PayloadAction<FetchOrderDetailPayload>): SagaIterator {
+  const { orderId } = action.payload;
+
+  yield put(fetchOrderDetailStart());
+
+  try {
+    const order = yield call(p2pOrdersApi.getById, Number(orderId));
+
+    logger.info('取得訂單詳情成功', { orderId });
+
+    yield put(fetchOrderDetailSuccess(order));
+  } catch (error: any) {
+    const errorResult = handleSagaError(error, '取得訂單詳情失敗', { orderId });
+    yield put(fetchOrderDetailFailure());
+    logger.error('fetchOrderDetailSaga 失敗', errorResult);
+  }
+}
+
 function* markOrderAsPaidSaga(action: PayloadAction<MarkOrderAsPaidPayload>): SagaIterator {
   const { orderId, onSuccess, onError } = action.payload;
 
@@ -123,6 +144,7 @@ export function* watchOrdersSagas(): SagaIterator {
   yield takeLatest(ORDERS_ACTIONS.CREATE_LISTING_REQUEST, createListingSaga);
   yield takeLatest(ORDERS_ACTIONS.CREATE_ORDER_REQUEST, createOrderSaga);
   yield takeLatest(ORDERS_ACTIONS.FETCH_ORDER_LIST_REQUEST, fetchOrderListSaga);
+  yield takeLatest(ORDERS_ACTIONS.FETCH_ORDER_DETAIL_REQUEST, fetchOrderDetailSaga);
   yield takeLatest(ORDERS_ACTIONS.MARK_ORDER_AS_PAID_REQUEST, markOrderAsPaidSaga);
   yield takeLatest(ORDERS_ACTIONS.APPLY_ORDER_REQUEST, applyOrderSaga);
 }
