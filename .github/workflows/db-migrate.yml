@@ -43,21 +43,22 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Set up doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save kubeconfig
+        run: doctl kubernetes cluster kubeconfig save f2d73c31-2c39-47e4-8568-d1ccdf7435df
+
       - name: Set up kubectl
         uses: azure/setup-kubectl@v4
-
-      - name: Configure kubeconfig
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
-          chmod 600 ~/.kube/config
 
       - name: Run migration job
         run: |
           IMAGE="ghcr.io/passoncomtw/p2p-exchange-service/migrate:${{ steps.vars.outputs.sha }}"
           JOB_NAME="db-migrate-${{ steps.vars.outputs.sha }}"
-          NAMESPACE="${{ vars.K8S_NAMESPACE }}"
-          NAMESPACE="${NAMESPACE:-default}"
+          NAMESPACE="p2p-exchange"
 
           # 清除同 label 的舊 Job（idempotent）
           kubectl delete job -n "${NAMESPACE}" -l app=db-migrate --ignore-not-found=true
@@ -77,7 +78,7 @@ jobs:
               spec:
                 restartPolicy: Never
                 imagePullSecrets:
-                  - name: ghcr-secret
+                  - name: ghcr-pull-secret
                 containers:
                   - name: migrate
                     image: ${IMAGE}
