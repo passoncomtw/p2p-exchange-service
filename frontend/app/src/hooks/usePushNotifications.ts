@@ -17,9 +17,34 @@ Notifications.setNotificationHandler({
   }),
 });
 
+const NOTIFICATION_CHANNELS = [
+  {
+    id: 'orders',
+    name: '訂單通知',
+    importance: Notifications.AndroidImportance.HIGH,
+    vibrationPattern: [0, 250, 250, 250],
+  },
+  {
+    id: 'system',
+    name: '系統公告',
+    importance: Notifications.AndroidImportance.DEFAULT,
+  },
+];
+
+async function setupAndroidChannels() {
+  if (Platform.OS !== 'android') return;
+  for (const ch of NOTIFICATION_CHANNELS) {
+    await Notifications.setNotificationChannelAsync(ch.id, {
+      name: ch.name,
+      importance: ch.importance,
+      vibrationPattern: ch.vibrationPattern,
+    });
+  }
+}
+
 async function registerForPushNotifications(): Promise<string | null> {
   if (!Device.isDevice) {
-    return null; // 模擬器不支援 push
+    return null;
   }
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -35,13 +60,7 @@ async function registerForPushNotifications(): Promise<string | null> {
     return null;
   }
 
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'P2P 訂單通知',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-    });
-  }
+  await setupAndroidChannels();
 
   const projectId = Constants.expoConfig?.extra?.eas?.projectId;
   if (!projectId) {
@@ -51,6 +70,12 @@ async function registerForPushNotifications(): Promise<string | null> {
 
   const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
   return tokenData.data;
+}
+
+function navigateToOrder(orderId: unknown) {
+  if (orderId && navigationRef.isReady()) {
+    navigationRef.navigate('OrderDetail', { id: Number(orderId) });
+  }
 }
 
 export function usePushNotifications(isAuthenticated: boolean): void {
@@ -72,6 +97,13 @@ export function usePushNotifications(isAuthenticated: boolean): void {
       })
       .catch((err) => logger.warn('取得 push token 失敗', err));
 
+    // cold start：App 從關閉狀態被通知喚起
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) {
+        navigateToOrder(response.notification.request.content.data?.orderId);
+      }
+    });
+
     notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
       logger.info('收到推送通知', {
         title: notification.request.content.title,
@@ -80,10 +112,7 @@ export function usePushNotifications(isAuthenticated: boolean): void {
     });
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-      const orderId = response.notification.request.content.data?.orderId;
-      if (orderId && navigationRef.isReady()) {
-        navigationRef.navigate('OrderDetail', { id: Number(orderId) });
-      }
+      navigateToOrder(response.notification.request.content.data?.orderId);
     });
 
     return () => {

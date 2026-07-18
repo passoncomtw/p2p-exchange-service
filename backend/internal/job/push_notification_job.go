@@ -20,13 +20,17 @@ type PushNotificationMessage struct {
 	Title       string `json:"title"`
 	Body        string `json:"body"`
 	OrderID     int64  `json:"order_id"`
+	Channel     string `json:"channel,omitempty"`  // "orders" | "system"
+	Priority    string `json:"priority,omitempty"` // "default" | "normal" | "high"
 }
 
 type expoPushPayload struct {
-	To    string                 `json:"to"`
-	Title string                 `json:"title"`
-	Body  string                 `json:"body"`
-	Data  map[string]interface{} `json:"data,omitempty"`
+	To        string                 `json:"to"`
+	Title     string                 `json:"title"`
+	Body      string                 `json:"body"`
+	Data      map[string]interface{} `json:"data,omitempty"`
+	ChannelID string                 `json:"channelId,omitempty"`
+	Priority  string                 `json:"priority,omitempty"`
 }
 
 type PushNotificationDeps struct {
@@ -56,11 +60,22 @@ func handlePushNotification(ctx context.Context, data []byte, deps PushNotificat
 		return nil // user has no token, skip silently
 	}
 
+	channel := msg.Channel
+	if channel == "" {
+		channel = "orders"
+	}
+	priority := msg.Priority
+	if priority == "" {
+		priority = "high"
+	}
+
 	payload := []expoPushPayload{{
-		To:    token,
-		Title: msg.Title,
-		Body:  msg.Body,
-		Data:  map[string]interface{}{"orderId": msg.OrderID},
+		To:        token,
+		Title:     msg.Title,
+		Body:      msg.Body,
+		Data:      map[string]interface{}{"orderId": msg.OrderID},
+		ChannelID: channel,
+		Priority:  priority,
 	}}
 
 	b, _ := json.Marshal(payload)
