@@ -1,0 +1,22 @@
+{
+  "name": "@p2p/shared",
+  "version": "1.0.0",
+  "description": "P2P Exchange 共用核心：型別、驗證、狀態機、API client 契約、i18n、設計 token",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./design": "./src/design/tokens.ts",
+    "./i18n": "./src/i18n/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "~5.6.0"
+  }
+}

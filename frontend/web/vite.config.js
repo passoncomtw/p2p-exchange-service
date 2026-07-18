@@ -12,6 +12,7 @@ export default defineConfig({
       src: path.resolve(__dirname, './src'),
       '@pkg': path.resolve(__dirname, './src/pkg'),
       '@frontend-pkg': path.resolve(__dirname, '../pkg'),
+      '@shared': path.resolve(__dirname, '../shared/src/index.ts'),
     },
   },
   server: {
