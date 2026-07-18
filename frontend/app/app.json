@@ -11,14 +11,14 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.passontw.tokenwallet",
       "icon": "./src/assets/images/ios-icon.png",
-      "buildNumber": "11",
+      "buildNumber": "12",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.passontw.tokenwallet",
-      "versionCode": 11,
+      "versionCode": 12,
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/images/adaptive-icon.png",
         "backgroundColor": "#7B68C8"
