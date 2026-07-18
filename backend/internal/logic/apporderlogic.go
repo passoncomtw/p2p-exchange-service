@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"time"
@@ -10,28 +9,23 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	apierrors "p2p-exchange/internal/errors"
-	"p2p-exchange/internal/job"
 	"p2p-exchange/internal/model"
 	"p2p-exchange/internal/svc"
 	"p2p-exchange/internal/types"
+	"p2p-exchange/pkg/notification"
 )
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-func publishPush(svcCtx *svc.ServiceContext, recipientID, orderID int64, title, body, channel, priority string) {
-	if svcCtx.MQ == nil {
-		return
-	}
-	msg := job.PushNotificationMessage{
+func sendNotification(ctx context.Context, svcCtx *svc.ServiceContext, recipientID, orderID int64, title, body, channel, priority string) {
+	svcCtx.Notifier.Send(ctx, notification.Message{
 		RecipientID: recipientID,
 		Title:       title,
 		Body:        body,
 		OrderID:     orderID,
 		Channel:     channel,
 		Priority:    priority,
-	}
-	b, _ := json.Marshal(msg)
-	svcCtx.MQ.PublishAsync("notification.push", b)
+	})
 }
 
 func timePtr(t time.Time) *string {
@@ -326,7 +320,7 @@ func (l *AppPayOrderLogic) Pay(uid int64, id int64) error {
 		l.Errorf("append order status log failed: %v", err)
 	}
 
-	publishPush(l.svcCtx, order.SellerID, id, "買家已付款", "請確認收款並放行訂單", "orders", "high")
+	sendNotification(l.ctx, l.svcCtx, order.SellerID, id, "買家已付款", "請確認收款並放行訂單", "orders", "high")
 
 	return nil
 }
@@ -406,7 +400,7 @@ func (l *AppConfirmOrderLogic) Confirm(uid int64, id int64) error {
 		l.Errorf("append order status log failed: %v", err)
 	}
 
-	publishPush(l.svcCtx, order.BuyerID, id, "訂單已完成", "賣家已放行，資產已轉入您的錢包", "orders", "high")
+	sendNotification(l.ctx, l.svcCtx, order.BuyerID, id, "訂單已完成", "賣家已放行，資產已轉入您的錢包", "orders", "high")
 
 	return nil
 }
@@ -494,7 +488,7 @@ func (l *AppCancelOrderLogic) Cancel(uid int64, req *types.CancelOrderRequest) e
 	if uid == order.SellerID {
 		notifyID = order.BuyerID
 	}
-	publishPush(l.svcCtx, notifyID, req.ID, "訂單已取消", "對方已取消此筆訂單", "orders", "normal")
+	sendNotification(l.ctx, l.svcCtx, notifyID, req.ID, "訂單已取消", "對方已取消此筆訂單", "orders", "normal")
 
 	return nil
 }
@@ -557,7 +551,7 @@ func (l *AppDisputeOrderLogic) Dispute(uid int64, req *types.DisputeOrderRequest
 	if uid == order.SellerID {
 		notifyID = order.BuyerID
 	}
-	publishPush(l.svcCtx, notifyID, req.ID, "訂單申訴", "對方已對此筆訂單提交申訴，客服將介入處理", "orders", "high")
+	sendNotification(l.ctx, l.svcCtx, notifyID, req.ID, "訂單申訴", "對方已對此筆訂單提交申訴，客服將介入處理", "orders", "high")
 
 	return nil
 }

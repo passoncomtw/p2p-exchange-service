@@ -7,6 +7,7 @@ import (
 	"p2p-exchange/internal/infra/mq"
 	"p2p-exchange/internal/infra/rdb"
 	"p2p-exchange/internal/model"
+	"p2p-exchange/pkg/notification"
 )
 
 type ServiceContext struct {
@@ -14,6 +15,7 @@ type ServiceContext struct {
 	DB             sqlx.SqlConn
 	RDB            *rdb.Client
 	MQ             *mq.Client
+	Notifier       *notification.Notifier
 	AppUser        *model.AppUserModel
 	BackendUser    *model.BackendUserModel
 	PaymentMethod  *model.PaymentMethodModel
@@ -36,6 +38,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		DB:             conn,
 		RDB:            redisClient,
 		MQ:             mqClient,
+		Notifier:       notification.New(notification.NewAppPushSender(mqClient)),
 		AppUser:        model.NewAppUserModel(conn),
 		BackendUser:    model.NewBackendUserModel(conn),
 		PaymentMethod:  model.NewPaymentMethodModel(conn),

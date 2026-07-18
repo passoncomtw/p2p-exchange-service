@@ -11,18 +11,10 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 	"p2p-exchange/internal/infra/mq"
 	"p2p-exchange/internal/model"
+	"p2p-exchange/pkg/notification"
 )
 
 const expoAPIURL = "https://exp.host/--/api/v2/push/send"
-
-type PushNotificationMessage struct {
-	RecipientID int64  `json:"recipient_id"`
-	Title       string `json:"title"`
-	Body        string `json:"body"`
-	OrderID     int64  `json:"order_id"`
-	Channel     string `json:"channel,omitempty"`  // "orders" | "system"
-	Priority    string `json:"priority,omitempty"` // "default" | "normal" | "high"
-}
 
 type expoPushPayload struct {
 	To        string                 `json:"to"`
@@ -49,24 +41,24 @@ func StartPushNotificationConsumer(mqClient *mq.Client, deps PushNotificationDep
 }
 
 func handlePushNotification(ctx context.Context, data []byte, deps PushNotificationDeps) error {
-	var msg PushNotificationMessage
+	var msg notification.Message
 	if err := json.Unmarshal(data, &msg); err != nil {
 		logx.Errorf("push notification: unmarshal error: %v", err)
-		return nil // bad message, don't retry
+		return nil
 	}
 
 	token, err := deps.AppUser.GetPushToken(ctx, msg.RecipientID)
 	if err != nil || token == "" {
-		return nil // user has no token, skip silently
+		return nil
 	}
 
 	channel := msg.Channel
 	if channel == "" {
-		channel = "orders"
+		channel = notification.ChannelOrders
 	}
 	priority := msg.Priority
 	if priority == "" {
-		priority = "high"
+		priority = notification.PriorityHigh
 	}
 
 	payload := []expoPushPayload{{
