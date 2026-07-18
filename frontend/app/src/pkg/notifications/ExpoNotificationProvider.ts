@@ -96,8 +96,12 @@ export class ExpoNotificationProvider implements INotificationProvider {
   }
 
   async getInitialNotification(): Promise<NotificationMessage | null> {
-    const response = await Notifications.getLastNotificationResponseAsync()
-    if (!response) return null
-    return toMessage(response.notification.request.content)
+    try {
+      const response = await Notifications.getLastNotificationResponseAsync()
+      if (!response) return null
+      return toMessage(response.notification.request.content)
+    } catch {
+      return null
+    }
   }
 }
