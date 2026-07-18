@@ -15,3 +15,5 @@ backend/etc/config.yaml
 # Expo generated native projects
 frontend/app/android/
 frontend/app/ios/
+*.apk
+*.ipa
