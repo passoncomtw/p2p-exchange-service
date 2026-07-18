@@ -2,16 +2,16 @@
   "expo": {
     "name": "E幣錢包",
     "slug": "token-app-service",
-    "version": "0.2.3",
+    "version": "0.2.4",
     "orientation": "portrait",
     "icon": "./src/assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "scheme": "tokenappservice",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.passon.ecoinwallet",
+      "bundleIdentifier": "com.passontw.tokenwallet",
       "icon": "./src/assets/images/ios-icon.png",
-      "buildNumber": "8",
+      "buildNumber": "9",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
