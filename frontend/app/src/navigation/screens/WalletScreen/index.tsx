@@ -158,7 +158,7 @@ export default function WalletScreen() {
               </Text>
               <Text style={styles.balanceSubLabel}>可用餘額</Text>
             </View>
-            <Pressable style={styles.orderLink} onPress={() => navigation.navigate('OrderList')}>
+            <Pressable style={styles.orderLink} onPress={() => navigation.navigate('Orders')}>
               <Text style={styles.orderLinkText}>查看訂單</Text>
               <Text style={styles.orderLinkArrow}>→</Text>
             </Pressable>

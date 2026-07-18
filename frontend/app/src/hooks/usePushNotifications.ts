@@ -4,6 +4,7 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { profileApi } from '@/apis/profileApi';
+import { navigationRef } from '@/navigation/navigationRef';
 import logger from '@pkg/logger';
 
 Notifications.setNotificationHandler({
@@ -54,6 +55,7 @@ async function registerForPushNotifications(): Promise<string | null> {
 
 export function usePushNotifications(isAuthenticated: boolean): void {
   const notificationListener = useRef<Notifications.EventSubscription | null>(null);
+  const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -77,10 +79,16 @@ export function usePushNotifications(isAuthenticated: boolean): void {
       });
     });
 
-    return () => {
-      if (notificationListener.current) {
-        notificationListener.current.remove();
+    responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
+      const orderId = response.notification.request.content.data?.orderId;
+      if (orderId && navigationRef.isReady()) {
+        navigationRef.navigate('OrderDetail', { id: Number(orderId) });
       }
+    });
+
+    return () => {
+      notificationListener.current?.remove();
+      responseListener.current?.remove();
     };
   }, [isAuthenticated]);
 }

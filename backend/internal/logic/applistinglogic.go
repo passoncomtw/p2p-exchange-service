@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -172,12 +173,32 @@ func (l *AppCancelListingLogic) Cancel(uid int64, id int64) error {
 		return apierrors.New(400, "only active or paused listings can be cancelled")
 	}
 
-	if err := l.svcCtx.Listing.UpdateStatus(l.ctx, id, "cancelled"); err != nil {
-		l.Errorf("cancel listing id=%d failed: %v", id, err)
-		return apierrors.ErrInternal
+	if listing.Type == "sell" && l.svcCtx.RDB != nil {
+		unlock, err := l.svcCtx.RDB.AcquireLock(l.ctx, model.WalletLockKey(uid, listing.CryptoCurrency), 10*time.Second)
+		if err != nil {
+			l.Errorf("cancel listing: acquire wallet lock uid=%d failed: %v", uid, err)
+			return apierrors.ErrInternal
+		}
+		defer unlock()
 	}
 
-	return nil
+	return l.svcCtx.DB.TransactCtx(l.ctx, func(ctx context.Context, session sqlx.Session) error {
+		if _, err := session.ExecCtx(ctx,
+			`UPDATE listings SET status='cancelled', updated_at=NOW() WHERE id=$1`, id,
+		); err != nil {
+			l.Errorf("cancel listing id=%d tx update failed: %v", id, err)
+			return apierrors.ErrInternal
+		}
+
+		if listing.Type == "sell" && listing.RemainingAmount > 0 {
+			if err := l.svcCtx.Wallet.UnfreezeInTx(ctx, session, uid, listing.CryptoCurrency, listing.RemainingAmount, ""); err != nil {
+				l.Errorf("cancel listing id=%d unfreeze failed: %v", id, err)
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────

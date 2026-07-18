@@ -10,6 +10,7 @@ import * as tokens from '@/theme';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useAppDispatch, useAppSelector } from '@/navigation/store/hooks';
 import { logoutRequest } from '@/navigation/store/actions/authActions';
+import { navigationRef } from '@/navigation/navigationRef';
 import V1CreateOrderScreen from './screens/V1CreateOrderScreen';
 import V1MyOrdersScreen from './screens/V1MyOrdersScreen';
 import V1LoginScreen from './screens/V1LoginScreen';
@@ -18,6 +19,7 @@ import V1OrdersScreen from './screens/V1OrdersScreen';
 import V1ListingDetailScreen from './screens/V1ListingDetailScreen';
 import V1OrderDetailScreen from './screens/V1OrderDetailScreen';
 import V1AddPaymentMethodScreen from './screens/V1AddPaymentMethodScreen';
+import WalletScreen from './screens/WalletScreen';
 
 const { colors } = tokens;
 const Tab = createBottomTabNavigator();
@@ -86,6 +88,14 @@ function V1Tabs() {
           tabBarIcon: ({ color }) => <IconSymbol name="receipt-outline" size={24} color={color} />,
         }}
       />
+      <Tab.Screen
+        name="Wallet"
+        component={WalletScreen}
+        options={{
+          title: t('order.nav.wallet'),
+          tabBarIcon: ({ color }) => <IconSymbol name="wallet-outline" size={24} color={color} />,
+        }}
+      />
     </Tab.Navigator>
   );
 }
@@ -146,7 +156,7 @@ function RootNavigator() {
 
 export function V1Navigation(props: any) {
   return (
-    <NavigationContainer {...props}>
+    <NavigationContainer ref={navigationRef} {...props}>
       <RootNavigator />
     </NavigationContainer>
   );

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	apierrors "p2p-exchange/internal/errors"
 	"p2p-exchange/internal/model"
 	"p2p-exchange/internal/svc"
@@ -153,64 +154,100 @@ func (l *BackendResolveOrderLogic) Resolve(req *types.ResolveOrderRequest) (inte
 
 	switch req.Action {
 	case "complete":
-		if err := l.svcCtx.Order.UpdateStatus(l.ctx, req.ID, "completed", map[string]interface{}{
-			"completed_at": now,
-		}); err != nil {
-			return nil, apierrors.ErrInternal
+		if l.svcCtx.RDB != nil {
+			unlockSeller, err := l.svcCtx.RDB.AcquireLock(l.ctx, model.WalletLockKey(order.SellerID, order.CryptoCurrency), 10*time.Second)
+			if err != nil {
+				return nil, apierrors.ErrInternal
+			}
+			defer unlockSeller()
+			unlockBuyer, err := l.svcCtx.RDB.AcquireLock(l.ctx, model.WalletLockKey(order.BuyerID, order.CryptoCurrency), 10*time.Second)
+			if err != nil {
+				return nil, apierrors.ErrInternal
+			}
+			defer unlockBuyer()
 		}
 
-		fromStatus := order.Status
-		escrow := &model.EscrowRecord{
-			OrderID:        req.ID,
-			CryptoCurrency: order.CryptoCurrency,
-			Amount:         order.CryptoAmount,
-			Action:         "release",
-			Status:         "completed",
-		}
-		if _, err := l.svcCtx.EscrowRecord.Create(l.ctx, escrow); err != nil {
-			return nil, apierrors.ErrInternal
-		}
+		if err := l.svcCtx.DB.TransactCtx(l.ctx, func(ctx context.Context, session sqlx.Session) error {
+			if _, err := session.ExecCtx(ctx,
+				`UPDATE orders SET status='completed', completed_at=$1, updated_at=NOW() WHERE id=$2`,
+				now, req.ID,
+			); err != nil {
+				return err
+			}
 
-		toStatus := "completed"
-		if err := l.svcCtx.OrderStatusLog.Append(l.ctx, &model.OrderStatusLog{
-			OrderID:      req.ID,
-			FromStatus:   &fromStatus,
-			ToStatus:     toStatus,
-			OperatorType: operatorType,
+			if _, err := l.svcCtx.EscrowRecord.Create(l.ctx, &model.EscrowRecord{
+				OrderID:        req.ID,
+				CryptoCurrency: order.CryptoCurrency,
+				Amount:         order.CryptoAmount,
+				Action:         "release",
+				Status:         "completed",
+			}); err != nil {
+				return err
+			}
+
+			if err := l.svcCtx.Wallet.TransferInTx(ctx, session, order.SellerID, order.BuyerID, order.CryptoCurrency, order.CryptoAmount, order.OrderNo); err != nil {
+				return err
+			}
+
+			fromStatus := order.Status
+			toStatus := "completed"
+			return l.svcCtx.OrderStatusLog.AppendInTx(ctx, session, &model.OrderStatusLog{
+				OrderID:      req.ID,
+				FromStatus:   &fromStatus,
+				ToStatus:     toStatus,
+				OperatorType: operatorType,
+			})
 		}); err != nil {
-			return nil, apierrors.ErrInternal
+			return nil, err
 		}
 
 	case "refund":
+		if l.svcCtx.RDB != nil {
+			unlock, err := l.svcCtx.RDB.AcquireLock(l.ctx, model.WalletLockKey(order.SellerID, order.CryptoCurrency), 10*time.Second)
+			if err != nil {
+				return nil, apierrors.ErrInternal
+			}
+			defer unlock()
+		}
+
 		reason := req.Reason
-		if err := l.svcCtx.Order.UpdateStatus(l.ctx, req.ID, "cancelled", map[string]interface{}{
-			"cancelled_at":  now,
-			"cancel_reason": reason,
-		}); err != nil {
-			return nil, apierrors.ErrInternal
-		}
+		if err := l.svcCtx.DB.TransactCtx(l.ctx, func(ctx context.Context, session sqlx.Session) error {
+			if _, err := session.ExecCtx(ctx,
+				`UPDATE orders SET status='cancelled', cancelled_at=$1, cancel_reason=$2, updated_at=NOW() WHERE id=$3`,
+				now, reason, req.ID,
+			); err != nil {
+				return err
+			}
 
-		fromStatus := order.Status
-		escrow := &model.EscrowRecord{
-			OrderID:        req.ID,
-			CryptoCurrency: order.CryptoCurrency,
-			Amount:         order.CryptoAmount,
-			Action:         "refund",
-			Status:         "completed",
-		}
-		if _, err := l.svcCtx.EscrowRecord.Create(l.ctx, escrow); err != nil {
-			return nil, apierrors.ErrInternal
-		}
+			if _, err := l.svcCtx.EscrowRecord.Create(l.ctx, &model.EscrowRecord{
+				OrderID:        req.ID,
+				CryptoCurrency: order.CryptoCurrency,
+				Amount:         order.CryptoAmount,
+				Action:         "refund",
+				Status:         "completed",
+			}); err != nil {
+				return err
+			}
 
-		toStatus := "cancelled"
-		if err := l.svcCtx.OrderStatusLog.Append(l.ctx, &model.OrderStatusLog{
-			OrderID:      req.ID,
-			FromStatus:   &fromStatus,
-			ToStatus:     toStatus,
-			OperatorType: operatorType,
-			Remark:       &reason,
+			if err := l.svcCtx.Wallet.UnfreezeInTx(ctx, session, order.SellerID, order.CryptoCurrency, order.CryptoAmount, order.OrderNo); err != nil {
+				return err
+			}
+
+			if err := l.svcCtx.Listing.RestoreAmountInTx(ctx, session, order.ListingID, order.CryptoAmount); err != nil {
+				return err
+			}
+
+			fromStatus := order.Status
+			toStatus := "cancelled"
+			return l.svcCtx.OrderStatusLog.AppendInTx(ctx, session, &model.OrderStatusLog{
+				OrderID:      req.ID,
+				FromStatus:   &fromStatus,
+				ToStatus:     toStatus,
+				OperatorType: operatorType,
+				Remark:       &reason,
+			})
 		}); err != nil {
-			return nil, apierrors.ErrInternal
+			return nil, err
 		}
 
 	default:

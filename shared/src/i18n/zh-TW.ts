@@ -9,6 +9,7 @@ export const zhTW = {
       admin: '訂單管理',
       trade: '交易',
       orders: '訂單',
+      wallet: '錢包',
     },
     pageTitle: {
       create: '建立掛單',
