@@ -30,6 +30,7 @@
       "favicon": "./src/assets/images/favicon.png"
     },
     "plugins": [
+      "expo-dev-client",
       "expo-asset",
       [
         "expo-splash-screen",
@@ -41,7 +42,8 @@
       ],
       "./plugins/withPodfilePostInstall",
       "expo-image",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-font"
     ],
     "extra": {
       "eas": {
