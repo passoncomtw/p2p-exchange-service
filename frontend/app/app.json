@@ -2,7 +2,7 @@
   "expo": {
     "name": "E幣錢包",
     "slug": "token-app-service",
-    "version": "0.2.5",
+    "version": "0.2.6",
     "orientation": "portrait",
     "icon": "./src/assets/images/icon.png",
     "userInterfaceStyle": "automatic",
@@ -11,14 +11,14 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.passontw.tokenwallet",
       "icon": "./src/assets/images/ios-icon.png",
-      "buildNumber": "10",
+      "buildNumber": "11",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.passontw.tokenwallet",
-      "versionCode": 10,
+      "versionCode": 11,
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/images/adaptive-icon.png",
         "backgroundColor": "#7B68C8"
