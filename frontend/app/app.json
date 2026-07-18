@@ -39,6 +39,14 @@
           "imageWidth": 200
         }
       ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./src/assets/images/icon.png",
+          "color": "#7B68C8",
+          "defaultChannel": "orders"
+        }
+      ],
       "./plugins/withPodfilePostInstall",
       "expo-image",
       "expo-web-browser",
