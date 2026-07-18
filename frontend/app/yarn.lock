@@ -1064,6 +1064,10 @@
     chalk "^4.1.0"
     js-yaml "^4.1.0"
 
+"@frontend-pkg/notifications@link:../pkg/notifications":
+  version "0.0.0"
+  uid ""
+
 "@humanfs/core@^0.19.2":
   version "0.19.2"
   resolved "https://registry.npmjs.org/@humanfs/core/-/core-0.19.2.tgz"

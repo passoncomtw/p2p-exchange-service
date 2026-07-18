@@ -16,3 +16,6 @@ ecoinwallet-*.json
 
 # macOS
 .DS_Store
+
+# Local EAS credentials (contains private key paths and passwords)
+credentials.json
