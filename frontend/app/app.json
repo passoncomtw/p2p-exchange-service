@@ -17,7 +17,7 @@
       }
     },
     "android": {
-      "package": "com.passontw.tokenwallet",
+      "package": "com.passon.ecoinwallet",
       "versionCode": 9,
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/images/adaptive-icon.png",
