@@ -14,6 +14,7 @@ const pkgRoot = path.resolve(projectRoot, 'src/pkg');
 
 const aliases = {
   '@pkg/logger': path.resolve(pkgRoot, 'logger'),
+  '@pkg/notifications': path.resolve(pkgRoot, 'notifications'),
   '@pkg/utils/sagaHelpers': path.resolve(pkgRoot, 'utils/sagaHelpers'),
   '@pkg/utils': path.resolve(pkgRoot, 'utils'),
   '@shared': path.resolve(sharedRoot, 'src/index.ts'),

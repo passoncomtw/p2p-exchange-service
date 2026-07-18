@@ -10,6 +10,7 @@ export default defineConfig({
   resolve: {
     alias: {
       src: path.resolve(__dirname, './src'),
+      '@pkg': path.resolve(__dirname, './src/pkg'),
     },
   },
   server: {
