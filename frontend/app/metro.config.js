@@ -6,22 +6,35 @@ const frontendPkgRoot = path.resolve(projectRoot, '../pkg');
 
 const config = getDefaultConfig(projectRoot);
 
-config.watchFolders = [frontendPkgRoot];
+config.watchFolders = [...(config.watchFolders || []), frontendPkgRoot];
 
 const pkgRoot = path.resolve(projectRoot, 'src/pkg');
 
 const aliases = {
-  '@frontend-pkg/notifications': path.resolve(frontendPkgRoot, 'notifications'),
   '@pkg/logger': path.resolve(pkgRoot, 'logger'),
   '@pkg/notifications': path.resolve(pkgRoot, 'notifications'),
   '@pkg/utils/sagaHelpers': path.resolve(pkgRoot, 'utils/sagaHelpers'),
   '@pkg/utils': path.resolve(pkgRoot, 'utils'),
-  '@shared': path.resolve(projectRoot, 'src/shared/index.ts'),
+  '@shared': path.resolve(projectRoot, 'src/shared'),
 };
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  if (aliases[moduleName]) {
-    return context.resolveRequest(context, aliases[moduleName], platform);
+  const resolved = aliases[moduleName];
+  if (resolved) {
+    const fs = require('fs');
+    for (const ext of ['.ts', '.tsx', '.js', '.jsx']) {
+      const indexFile = path.join(resolved, 'index' + ext);
+      if (fs.existsSync(indexFile)) {
+        return { type: 'sourceFile', filePath: indexFile };
+      }
+    }
+    for (const ext of ['.ts', '.tsx', '.js', '.jsx']) {
+      const filePath = resolved + ext;
+      if (fs.existsSync(filePath)) {
+        return { type: 'sourceFile', filePath };
+      }
+    }
+    return context.resolveRequest(context, resolved, platform);
   }
   return context.resolveRequest(context, moduleName, platform);
 };
