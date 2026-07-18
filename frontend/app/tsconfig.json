@@ -14,7 +14,7 @@
         "../pkg/*"
       ],
       "@shared": [
-        "../shared/src/index.ts"
+        "./src/shared/index.ts"
       ]
     }
   },
