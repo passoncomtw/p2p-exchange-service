@@ -2,17 +2,17 @@ const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
 
 const projectRoot = __dirname;
-// 專案根目錄下的 shared 共用核心。
 const sharedRoot = path.resolve(projectRoot, '../../shared');
+const frontendPkgRoot = path.resolve(projectRoot, '../pkg');
 
 const config = getDefaultConfig(projectRoot);
 
-// 讓 Metro 監看 shared 目錄（位於 app 專案根目錄之外）。
-config.watchFolders = [sharedRoot];
+config.watchFolders = [sharedRoot, frontendPkgRoot];
 
 const pkgRoot = path.resolve(projectRoot, 'src/pkg');
 
 const aliases = {
+  '@frontend-pkg/notifications': path.resolve(frontendPkgRoot, 'notifications'),
   '@pkg/logger': path.resolve(pkgRoot, 'logger'),
   '@pkg/notifications': path.resolve(pkgRoot, 'notifications'),
   '@pkg/utils/sagaHelpers': path.resolve(pkgRoot, 'utils/sagaHelpers'),

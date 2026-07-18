@@ -1,23 +1,26 @@
 import { useEffect, useRef } from 'react'
-import * as Notifications from 'expo-notifications'
+import { NotificationManager } from '@frontend-pkg/notifications'
+import { ExpoNotificationProvider } from '@pkg/notifications'
+import { navigationRef } from '@/navigation/navigationRef'
 import { profileApi } from '@/apis/profileApi'
-import {
-  registerPushToken,
-  handleColdStartNotification,
-  navigateToOrder,
-  onNotificationReceived,
-  onNotificationResponse,
-} from '@pkg/notifications'
 import logger from '@pkg/logger'
 
+const manager = new NotificationManager(new ExpoNotificationProvider())
+
+function navigateToOrder(orderId: unknown) {
+  if (orderId && navigationRef.isReady()) {
+    navigationRef.navigate('OrderDetail', { id: Number(orderId) })
+  }
+}
+
 export function usePushNotifications(isAuthenticated: boolean): void {
-  const notificationListener = useRef<Notifications.EventSubscription | null>(null)
-  const responseListener = useRef<Notifications.EventSubscription | null>(null)
+  const unsubscribers = useRef<Array<() => void>>([])
 
   useEffect(() => {
     if (!isAuthenticated) return
 
-    registerPushToken()
+    manager
+      .setup()
       .then(async (token) => {
         if (!token) return
         try {
@@ -29,22 +32,22 @@ export function usePushNotifications(isAuthenticated: boolean): void {
       })
       .catch((err) => logger.warn('取得 push token 失敗', err))
 
-    handleColdStartNotification()
-
-    notificationListener.current = onNotificationReceived((notification) => {
-      logger.info('收到推送通知', {
-        title: notification.request.content.title,
-        body: notification.request.content.body,
-      })
+    manager.getInitialNotification().then((msg) => {
+      if (msg) navigateToOrder(msg.data?.orderId)
     })
 
-    responseListener.current = onNotificationResponse((response) => {
-      navigateToOrder(response.notification.request.content.data?.orderId)
-    })
+    unsubscribers.current = [
+      manager.onMessage((msg) => {
+        logger.info('收到推送通知', { title: msg.title, body: msg.body })
+      }),
+      manager.onNotificationTap((msg) => {
+        navigateToOrder(msg.data?.orderId)
+      }),
+    ]
 
     return () => {
-      notificationListener.current?.remove()
-      responseListener.current?.remove()
+      unsubscribers.current.forEach((unsub) => unsub())
+      unsubscribers.current = []
     }
   }, [isAuthenticated])
 }

@@ -10,6 +10,9 @@
       "@pkg/*": [
         "./src/pkg/*"
       ],
+      "@frontend-pkg/*": [
+        "../pkg/*"
+      ],
       "@shared": [
         "../../shared/src/index.ts"
       ]

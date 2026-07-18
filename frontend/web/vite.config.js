@@ -11,6 +11,7 @@ export default defineConfig({
     alias: {
       src: path.resolve(__dirname, './src'),
       '@pkg': path.resolve(__dirname, './src/pkg'),
+      '@frontend-pkg': path.resolve(__dirname, '../pkg'),
     },
   },
   server: {
