@@ -46,7 +46,10 @@ export class ExpoNotificationProvider implements INotificationProvider {
   }
 
   async setup(): Promise<string | null> {
-    if (!Device.isDevice) return null
+    if (!Device.isDevice) {
+      logger.info('模擬器環境，略過 push notification 初始化')
+      return null
+    }
 
     const { status: existingStatus } = await Notifications.getPermissionsAsync()
     let finalStatus = existingStatus
