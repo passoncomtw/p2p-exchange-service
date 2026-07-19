@@ -10,6 +10,10 @@ export const zhTW = {
       trade: '交易',
       orders: '訂單',
       wallet: '錢包',
+      market: '掛單',
+      myListings: '我的掛單',
+      matchedOrders: '媒合訂單',
+      profile: '我',
     },
     pageTitle: {
       create: '建立掛單',

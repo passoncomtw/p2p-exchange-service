@@ -85,7 +85,7 @@ export default function V1CreateOrderScreen() {
       dispatch(pushNotification({ type: 'success', message: t('order.message.createSuccess') }));
       setPrice('');
       setQuantity('');
-      navigation.navigate('MyOrders');
+      navigation.goBack();
     } catch {
       dispatch(pushNotification({ type: 'error', message: t('order.message.submitFailed') }));
     } finally {

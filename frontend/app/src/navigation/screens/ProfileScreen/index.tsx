@@ -4,11 +4,13 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, StatusBar, Alert, Clipboard } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useAppSelector, useAppDispatch } from '@/navigation/store/hooks';
 import { logoutRequest } from '@/navigation/store/actions/authActions';
 
 export default function ProfileScreen() {
   const dispatch = useAppDispatch();
+  const navigation = useNavigation<any>();
   const { user } = useAppSelector((state) => state.auth);
 
   // 獲取用戶名首字母作為頭像
@@ -57,11 +59,6 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
       
-      {/* 頂部導航 */}
-      <View style={styles.topBar}>
-        <Text style={styles.topBarTitle}>我</Text>
-      </View>
-
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* 用戶頭像和名稱 */}
         <View style={styles.header}>
@@ -97,7 +94,7 @@ export default function ProfileScreen() {
             <Text style={styles.menuArrow}>›</Text>
           </Pressable>
 
-          <Pressable 
+          <Pressable
             style={({ pressed }) => [
               styles.menuItem,
               pressed && styles.menuItemPressed,
@@ -106,6 +103,18 @@ export default function ProfileScreen() {
           >
             <Text style={styles.menuIcon}>💬</Text>
             <Text style={styles.menuTitle}>聯繫客服</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.menuItem,
+              pressed && styles.menuItemPressed,
+            ]}
+            onPress={() => navigation.navigate('AddPaymentMethod')}
+          >
+            <Text style={styles.menuIcon}>💳</Text>
+            <Text style={styles.menuTitle}>收付方式</Text>
             <Text style={styles.menuArrow}>›</Text>
           </Pressable>
 
@@ -149,19 +158,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
-  },
-  topBar: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    paddingTop: 60,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
-  },
-  topBarTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000',
   },
   content: {
     flex: 1,

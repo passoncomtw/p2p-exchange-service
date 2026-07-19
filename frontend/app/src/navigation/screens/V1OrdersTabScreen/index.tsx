@@ -5,9 +5,9 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ScrollView,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -22,13 +22,16 @@ import type { Order } from '@/interfaces/order';
 const { colors, orderStatusColors } = tokens;
 const formatDateTime = (iso: string) => new Date(iso).toLocaleString();
 
-export default function V1MyOrdersScreen() {
+const ORDER_STATUS_TABS = ['all', 'matched', 'paid', 'completed', 'cancelled'] as const;
+
+// ─── 我的掛單 ────────────────────────────────────────────────────────────────
+
+function MyListingsTab() {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const navigation = useNavigation<any>();
   const currentUserId = useAppSelector((s) => s.auth.user?.id);
   const [listings, setListings] = React.useState<ListingItem[]>([]);
-  const [ordersByListing, setOrdersByListing] = React.useState<Record<number, Order[]>>({});
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(false);
 
@@ -54,6 +57,8 @@ export default function V1MyOrdersScreen() {
     }
   }, []);
 
+  const [ordersByListing, setOrdersByListing] = React.useState<Record<number, Order[]>>({});
+
   useFocusEffect(
     React.useCallback(() => {
       load();
@@ -78,12 +83,9 @@ export default function V1MyOrdersScreen() {
     ]);
   };
 
-  const Title = () => <Text style={styles.title}>{t('order.pageTitle.myOrders')}</Text>;
-
   if (loading) {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.pad}>
-        <Title />
         <View style={{ gap: 12 }}>
           {[0.6, 0.4, 0.25].map((o, i) => (
             <View key={i} style={[styles.skeleton, { opacity: o }]} />
@@ -96,7 +98,6 @@ export default function V1MyOrdersScreen() {
   if (error) {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.pad}>
-        <Title />
         <View style={styles.centerBox}>
           <Text style={styles.errorMark}>!</Text>
           <Text style={styles.errorTitle}>{t('order.message.errorTitle')}</Text>
@@ -112,7 +113,6 @@ export default function V1MyOrdersScreen() {
   if (listings.length === 0) {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.pad}>
-        <Title />
         <View style={styles.centerBox}>
           <View style={styles.emptyIcon}><Text style={styles.emptyIconText}>+</Text></View>
           <Text style={styles.emptyText}>{t('order.message.emptyMine')}</Text>
@@ -132,7 +132,6 @@ export default function V1MyOrdersScreen() {
     const tColor = tokens.typeColor(item.type);
     const fiatTotal = item.price * item.totalAmount;
     const relatedOrders = ordersByListing[item.id] ?? [];
-
     const allOrdersCompleted = relatedOrders.length > 0 && relatedOrders.every((o) => o.status === 'completed');
     const displayStatus = allOrdersCompleted ? 'completed' : item.status;
     const sColor = tokens.statusColor(displayStatus);
@@ -169,7 +168,6 @@ export default function V1MyOrdersScreen() {
               const oColor = orderStatusColors[order.status] ?? colors.statusCancelled;
               const isBuyer = order.buyerId === currentUserId;
               const roleKey = isBuyer ? 'asBuyer' : 'asSeller';
-
               return (
                 <TouchableOpacity
                   key={order.id}
@@ -205,13 +203,202 @@ export default function V1MyOrdersScreen() {
       data={listings}
       keyExtractor={(o) => String(o.id)}
       renderItem={renderItem}
-      ListHeaderComponent={<Title />}
       contentContainerStyle={styles.pad}
       ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
       refreshControl={<RefreshControl refreshing={false} onRefresh={load} />}
     />
   );
 }
+
+// ─── 媒合訂單 ────────────────────────────────────────────────────────────────
+
+function MatchedOrdersTab() {
+  const { t } = useTranslation();
+  const navigation = useNavigation<any>();
+  const currentUserId = useAppSelector((s) => s.auth.user?.id);
+  const [orders, setOrders] = React.useState<Order[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(false);
+  const [statusTab, setStatusTab] = React.useState<string>('all');
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const params = statusTab === 'all' ? {} : { status: statusTab };
+      const list = await p2pOrdersApi.list(params);
+      setOrders(list);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [statusTab]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      load();
+    }, [load]),
+  );
+
+  const StatusTabs = () => (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.statusTabsRow} contentContainerStyle={styles.statusTabsContent}>
+      {ORDER_STATUS_TABS.map((s) => {
+        const active = statusTab === s;
+        return (
+          <TouchableOpacity
+            key={s}
+            onPress={() => setStatusTab(s)}
+            style={[styles.statusTab, active && styles.statusTabActive]}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+          >
+            <Text style={[styles.statusTabText, active && styles.statusTabTextActive]}>
+              {t(`order.orderStatus.${s}`)}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </ScrollView>
+  );
+
+  if (loading) {
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.pad}>
+        <StatusTabs />
+        <View style={{ gap: 12 }}>
+          {[0.6, 0.4, 0.25].map((o, i) => (
+            <View key={i} style={[styles.skeleton, { opacity: o }]} />
+          ))}
+        </View>
+      </ScrollView>
+    );
+  }
+
+  if (error) {
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.pad}>
+        <View style={styles.centerBox}>
+          <Text style={styles.errorMark}>!</Text>
+          <Text style={styles.errorTitle}>{t('order.message.errorTitle')}</Text>
+          <TouchableOpacity style={styles.outlineBtn} onPress={load} accessibilityRole="button">
+            <Text style={styles.outlineBtnText}>{t('order.action.retry')}</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    );
+  }
+
+  if (orders.length === 0) {
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.pad}>
+        <StatusTabs />
+        <View style={styles.centerBox}>
+          <View style={styles.emptyIcon}><Text style={styles.emptyIconText}>~</Text></View>
+          <Text style={styles.emptyText}>{t('order.message.emptyOrders')}</Text>
+        </View>
+      </ScrollView>
+    );
+  }
+
+  const renderItem = ({ item }: { item: Order }) => {
+    const sColor = orderStatusColors[item.status] ?? colors.statusCancelled;
+    const isBuyer = item.buyerId === currentUserId;
+    const roleKey = isBuyer ? 'asBuyer' : 'asSeller';
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => navigation.navigate('OrderDetail', { id: item.id })}
+        accessibilityRole="button"
+      >
+        <View style={styles.cardHeader}>
+          <Text style={styles.orderNo}>{item.orderNo}</Text>
+          <View style={[styles.statusTag, { borderColor: sColor }]}>
+            <View style={[styles.dot, { backgroundColor: sColor }]} />
+            <Text style={[styles.statusTagText, { color: sColor }]}>{t(`order.orderStatus.${item.status}`)}</Text>
+          </View>
+        </View>
+        <View style={styles.roleRow}>
+          <Text style={styles.roleText}>{t(`order.role.${roleKey}`)}</Text>
+        </View>
+        <Row label={t('order.field.price')} value={`${item.price.toLocaleString()} ${item.fiatCurrency}`} />
+        <Row label={t('order.field.quantity')} value={`${item.cryptoAmount} ${item.cryptoCurrency}`} />
+        <Row label={t('order.field.totalAmount')} value={`${item.totalAmount.toLocaleString()} ${item.fiatCurrency}`} amber />
+        <Row label={t('order.field.createdAt')} value={formatDateTime(item.createdAt)} muted />
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <FlatList
+      style={styles.screen}
+      data={orders}
+      keyExtractor={(o) => String(o.id)}
+      renderItem={renderItem}
+      ListHeaderComponent={<StatusTabs />}
+      contentContainerStyle={styles.pad}
+      ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+      refreshControl={<RefreshControl refreshing={false} onRefresh={load} />}
+    />
+  );
+}
+
+// ─── 主畫面 ──────────────────────────────────────────────────────────────────
+
+type ActiveTab = 'listings' | 'orders';
+
+export default function V1OrdersTabScreen() {
+  const { t } = useTranslation();
+  const navigation = useNavigation<any>();
+  const [activeTab, setActiveTab] = React.useState<ActiveTab>('listings');
+
+  return (
+    <View style={styles.container}>
+      {/* 頂部標題列 */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>{t('order.nav.orders')}</Text>
+        {activeTab === 'listings' && (
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => navigation.push('CreateOrder')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.addButtonText}>+</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* 頂部子 tab 切換 */}
+      <View style={styles.segmentedControl}>
+        <TouchableOpacity
+          style={[styles.segment, activeTab === 'listings' && styles.segmentActive]}
+          onPress={() => setActiveTab('listings')}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'listings' }}
+        >
+          <Text style={[styles.segmentText, activeTab === 'listings' && styles.segmentTextActive]}>
+            {t('order.nav.myListings')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.segment, activeTab === 'orders' && styles.segmentActive]}
+          onPress={() => setActiveTab('orders')}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'orders' }}
+        >
+          <Text style={[styles.segmentText, activeTab === 'orders' && styles.segmentTextActive]}>
+            {t('order.nav.matchedOrders')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* 內容區 */}
+      {activeTab === 'listings' ? <MyListingsTab /> : <MatchedOrdersTab />}
+    </View>
+  );
+}
+
+// ─── 共用元件 ────────────────────────────────────────────────────────────────
 
 function Row({ label, value, amber, muted }: { label: string; value: string; amber?: boolean; muted?: boolean }) {
   return (
@@ -222,11 +409,54 @@ function Row({ label, value, amber, muted }: { label: string; value: string; amb
   );
 }
 
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bgContent },
+  header: {
+    backgroundColor: colors.bgCard,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderCard,
+  },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+  addButton: { padding: 4 },
+  addButtonText: { fontSize: 28, color: colors.primary, lineHeight: 28 },
+
+  segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: colors.bgCard,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderCard,
+    paddingHorizontal: 16,
+  },
+  segment: {
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    marginRight: 24,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  segmentActive: {
+    borderBottomColor: colors.primary,
+  },
+  segmentText: {
+    fontSize: 14,
+    color: colors.textTertiary,
+    fontWeight: '500',
+  },
+  segmentTextActive: {
+    color: colors.textPrimary,
+    fontWeight: '700',
+  },
+
   screen: { flex: 1, backgroundColor: colors.bgContent },
   pad: { padding: 16 },
-  title: { fontSize: 16, fontWeight: '600', color: colors.textPrimary, marginBottom: 14 },
-
   skeleton: { height: 96, backgroundColor: colors.bgCard, borderRadius: 8, borderWidth: 1, borderColor: colors.borderCard },
 
   centerBox: { alignItems: 'center', paddingVertical: 56, paddingHorizontal: 20 },
@@ -247,8 +477,8 @@ const styles = StyleSheet.create({
   typeTag: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
   typeTagText: { fontSize: 12, fontWeight: '600', color: '#fff' },
   statusTag: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, borderWidth: 1 },
-  dot: { width: 6, height: 6, borderRadius: 3 },
   statusTagText: { fontSize: 12, fontWeight: '500' },
+  dot: { width: 6, height: 6, borderRadius: 3 },
   row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 },
   rowLabel: { fontSize: 12, color: colors.textSecondary },
   rowValue: { fontSize: 12, color: colors.textPrimary, fontWeight: '500' },
@@ -267,4 +497,14 @@ const styles = StyleSheet.create({
   orderMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   orderRole: { fontSize: 11, color: colors.textTertiary },
   orderAmount: { fontSize: 11, color: colors.textSecondary },
+
+  roleRow: { marginBottom: 8 },
+  roleText: { fontSize: 11, color: colors.textTertiary },
+
+  statusTabsRow: { marginBottom: 14 },
+  statusTabsContent: { gap: 8 },
+  statusTab: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.borderCard },
+  statusTabActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  statusTabText: { fontSize: 12, color: colors.textSecondary },
+  statusTabTextActive: { color: '#1F2327', fontWeight: '600' },
 });
