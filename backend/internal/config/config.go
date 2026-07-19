@@ -50,6 +50,21 @@ func (c TronConf) IsEnabled() bool {
 	return c.HotWalletAddress != "" && c.HotWalletPrivateKey != ""
 }
 
+// ECPayConf ECPay 金流設定（HashKey/HashIV 透過環境變數注入，不得 commit）
+type ECPayConf struct {
+	MerchantID    string `json:",optional"`
+	HashKey       string `json:",optional,env=ECPAY_HASH_KEY"`
+	HashIV        string `json:",optional,env=ECPAY_HASH_IV"`
+	BaseURL       string `json:",default=https://payment-stage.ecpay.com.tw"`
+	ReturnURL     string `json:",optional,env=ECPAY_RETURN_URL"`
+	ClientBackURL string `json:",optional,env=ECPAY_CLIENT_BACK_URL"`
+}
+
+// IsEnabled 回傳 ECPay 功能是否已設定（MerchantID、HashKey、HashIV 皆必填）
+func (c ECPayConf) IsEnabled() bool {
+	return c.MerchantID != "" && c.HashKey != "" && c.HashIV != ""
+}
+
 type Config struct {
 	rest.RestConf
 	App      PlatformConfig
@@ -58,4 +73,5 @@ type Config struct {
 	Redis    RedisConf
 	Nats     NatsConf
 	Tron     TronConf
+	ECPay    ECPayConf
 }
