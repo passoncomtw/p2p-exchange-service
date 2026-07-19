@@ -5,6 +5,7 @@ import { Box, Collapse, Typography } from '@mui/material'
 import {
   Person as PersonIcon,
   ViewList as ViewListIcon,
+  AccountBalanceWallet as WalletIcon,
   ExpandLess,
   ExpandMore,
 } from '@mui/icons-material'
@@ -44,6 +45,14 @@ const buildMenuItems = (t) => [
     key: '/orders',
     label: t('sidebar.menu.orders'),
     icon: <ViewListIcon sx={{ fontSize: 18 }} />,
+  },
+  {
+    key: 'finance',
+    label: t('sidebar.menu.finance'),
+    icon: <WalletIcon sx={{ fontSize: 18 }} />,
+    children: [
+      { key: '/fiat-withdrawals', label: t('sidebar.menu.fiatWithdrawals') },
+    ],
   },
 ]
 

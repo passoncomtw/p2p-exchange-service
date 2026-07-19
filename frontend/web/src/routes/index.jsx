@@ -8,6 +8,7 @@ const LoginScreen = Loadable(lazy(() => import('src/screens/LoginScreen')))
 const DashboardScreen = Loadable(lazy(() => import('src/screens/DashboardScreen')))
 const MemberListScreen = Loadable(lazy(() => import('src/screens/MemberListScreen')))
 const OrderListScreen = Loadable(lazy(() => import('src/screens/OrderListScreen')))
+const FiatWithdrawalListScreen = Loadable(lazy(() => import('src/screens/FiatWithdrawalListScreen')))
 
 export default function AppRoutes() {
   return useRoutes([
@@ -29,6 +30,7 @@ export default function AppRoutes() {
         { index: true, element: <DashboardScreen /> },
         { path: 'members', element: <MemberListScreen /> },
         { path: 'orders', element: <OrderListScreen /> },
+        { path: 'fiat-withdrawals', element: <FiatWithdrawalListScreen /> },
       ],
     },
 

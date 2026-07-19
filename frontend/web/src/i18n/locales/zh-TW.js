@@ -19,6 +19,8 @@ export default {
       members: '會員管理',
       memberList: '會員列表',
       orders: '訂單管理',
+      finance: '財務管理',
+      fiatWithdrawals: '法幣提領審核',
     },
   },
 
@@ -32,6 +34,7 @@ export default {
     dashboard: '首頁',
     memberList: '會員列表',
     orders: '訂單管理',
+    fiatWithdrawals: '法幣提領審核',
   },
 
   // 會員列表
@@ -119,6 +122,56 @@ export default {
       reasonRequired: '退款取消時必須填寫原因',
       resolveFailed: '仲裁操作失敗，請稍後再試',
       submit: '確認仲裁',
+    },
+  },
+
+  // 法幣提領審核
+  fiatWithdrawal: {
+    statusLabel: '狀態篩選',
+    statusAll: '全部',
+    reset: '重置',
+    filter: '篩選',
+    empty: '暫無資料',
+    status: {
+      pending: '待審核',
+      approved: '已核准',
+      rejected: '已拒絕',
+    },
+    column: {
+      id: 'ID',
+      userId: '用戶 ID',
+      amount: '金額',
+      bankCode: '銀行代碼',
+      bankAccount: '銀行帳號',
+      accountName: '戶名',
+      status: '狀態',
+      createdAt: '申請時間',
+      action: '操作',
+      rejectReason: '拒絕原因',
+    },
+    review: {
+      title: '審核提領申請',
+      applicantInfo: '申請人資訊',
+      withdrawalInfo: '提領資訊',
+      action: '審核操作',
+      approve: '核准',
+      reject: '拒絕',
+      approveHint: '核准後，系統將安排轉帳至申請人銀行帳戶。',
+      reasonLabel: '拒絕原因',
+      reasonPlaceholder: '請填寫拒絕原因（必填）',
+      reasonRequired: '拒絕時必須填寫原因',
+      failed: '審核操作失敗，請稍後再試',
+      submit: '確認提交',
+      close: '關閉',
+      view: '查看',
+      actionChip: '審核',
+      selectAction: '請選擇審核結果',
+    },
+    pagination: {
+      total: '共 {{total}} 條',
+      page: '第 {{current}}/{{total}} 頁',
+      pageSize: '每頁筆數：',
+      items: '筆',
     },
   },
 
