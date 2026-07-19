@@ -23,6 +23,7 @@ import {
   Divider,
   Alert,
   CircularProgress,
+  Skeleton,
 } from '@mui/material'
 import {
   ChevronLeft as ChevronLeftIcon,
@@ -396,11 +397,15 @@ const OrderListScreen = () => {
           </TableHead>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={8} align="center" sx={{ py: '40px', color: '#999' }}>
-                  {t('order.loading')}
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 8 }).map((__, j) => (
+                    <TableCell key={j} sx={{ py: '10px' }}>
+                      <Skeleton variant="text" sx={{ fontSize: '13px' }} />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : list.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} align="center" sx={{ py: '40px', color: '#999' }}>

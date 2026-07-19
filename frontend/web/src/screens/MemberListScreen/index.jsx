@@ -15,6 +15,7 @@ import {
   Select,
   MenuItem,
   IconButton,
+  Skeleton,
 } from '@mui/material'
 import {
   ChevronLeft as ChevronLeftIcon,
@@ -141,11 +142,15 @@ const MemberListScreen = () => {
           </TableHead>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: '40px', color: '#999' }}>
-                  {t('member.loading')}
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 5 }).map((__, j) => (
+                    <TableCell key={j} sx={{ py: '10px' }}>
+                      <Skeleton variant="text" sx={{ fontSize: '13px' }} />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : list.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} align="center" sx={{ py: '40px', color: '#999' }}>
