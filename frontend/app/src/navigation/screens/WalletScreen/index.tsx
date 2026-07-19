@@ -191,6 +191,26 @@ export default function WalletScreen() {
           </View>
         )}
 
+        {/* TWD 操作按鈕 */}
+        {selectedCurrency === 'TWD' && (
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => navigation.navigate('FiatDeposit')}
+              accessibilityRole="button"
+            >
+              <Text style={styles.actionBtnText}>入金</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.actionBtnSecondary]}
+              onPress={() => navigation.navigate('FiatWithdraw')}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.actionBtnText, styles.actionBtnTextSecondary]}>提領</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* 交易記錄 */}
         <View style={styles.ledgerCard}>
           <Text style={styles.sectionTitle}>交易記錄</Text>

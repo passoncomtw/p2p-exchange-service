@@ -7,6 +7,10 @@ import type {
   CryptoDepositInfo,
   CryptoWithdrawRequest,
   CryptoWithdrawResponse,
+  FiatDepositRequest,
+  FiatDepositResponse,
+  FiatWithdrawRequest,
+  FiatWithdrawResponse,
 } from '@/interfaces/wallet';
 
 export const walletApi = {
@@ -36,6 +40,22 @@ export const walletApi = {
   cryptoWithdraw: async (req: CryptoWithdrawRequest): Promise<CryptoWithdrawResponse> => {
     const response = await httpClientWithAuth.postWithToken<ApiResponse<CryptoWithdrawResponse>>(
       '/app/wallets/crypto/withdraw',
+      req
+    );
+    return response.data.data;
+  },
+
+  fiatDeposit: async (req: FiatDepositRequest): Promise<FiatDepositResponse> => {
+    const response = await httpClientWithAuth.postWithToken<ApiResponse<FiatDepositResponse>>(
+      '/app/wallets/fiat/deposit',
+      req
+    );
+    return response.data.data;
+  },
+
+  fiatWithdraw: async (req: FiatWithdrawRequest): Promise<FiatWithdrawResponse> => {
+    const response = await httpClientWithAuth.postWithToken<ApiResponse<FiatWithdrawResponse>>(
+      '/app/wallets/fiat/withdraw',
       req
     );
     return response.data.data;

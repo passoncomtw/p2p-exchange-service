@@ -26,6 +26,8 @@ import WalletScreen from './screens/WalletScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import CryptoDepositScreen from './screens/CryptoDepositScreen';
 import CryptoWithdrawScreen from './screens/CryptoWithdrawScreen';
+import FiatDepositScreen from './screens/FiatDepositScreen';
+import FiatWithdrawScreen from './screens/FiatWithdrawScreen';
 
 const { colors } = tokens;
 const Tab = createBottomTabNavigator();
@@ -145,6 +147,16 @@ function MainNavigator() {
         name="CryptoWithdraw"
         component={CryptoWithdrawScreen}
         options={{ title: 'USDT 提領' }}
+      />
+      <MainStack.Screen
+        name="FiatDeposit"
+        component={FiatDepositScreen}
+        options={{ title: 'TWD 入金' }}
+      />
+      <MainStack.Screen
+        name="FiatWithdraw"
+        component={FiatWithdrawScreen}
+        options={{ title: 'TWD 提領' }}
       />
     </MainStack.Navigator>
   );

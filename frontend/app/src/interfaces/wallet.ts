@@ -44,3 +44,25 @@ export interface CryptoWithdrawResponse {
   id: number;
   status: string;
 }
+
+export interface FiatDepositRequest {
+  amount: number;
+}
+
+export interface FiatDepositResponse {
+  merchant_trade_no: string;
+  payment_url: string;
+  form_params: Record<string, string>;
+}
+
+export interface FiatWithdrawRequest {
+  amount: string;
+  bank_code: string;
+  bank_account: string;
+  account_name: string;
+}
+
+export interface FiatWithdrawResponse {
+  id: number;
+  status: string;
+}
