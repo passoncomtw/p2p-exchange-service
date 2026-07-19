@@ -15,6 +15,7 @@ import { resetTransient } from './navigation/store/slices/authSlices';
 import { setStoreRef } from './apis';
 import { useAppSelector } from './navigation/store/hooks';
 import { usePushNotifications } from './hooks/usePushNotifications';
+import { NotificationHandler } from './components/NotificationHandler';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,12 +27,15 @@ function AppInner({ theme }: { theme: typeof DefaultTheme }) {
   usePushNotifications(isAuthenticated);
 
   return (
-    <V1Navigation
-      theme={theme}
-      onReady={() => {
-        SplashScreen.hideAsync();
-      }}
-    />
+    <>
+      <NotificationHandler />
+      <V1Navigation
+        theme={theme}
+        onReady={() => {
+          SplashScreen.hideAsync();
+        }}
+      />
+    </>
   );
 }
 

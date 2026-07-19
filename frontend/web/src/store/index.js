@@ -2,6 +2,7 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit'
 import createSagaMiddleware from 'redux-saga'
 import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist'
 import authReducer from 'src/slices/authSlice'
+import notificationReducer from 'src/slices/notificationSlice'
 import rootSaga from 'src/sagas/rootSaga'
 
 // Vite ESM 環境下 redux-persist/lib/storage 的 default export 解析不正確，手動建立 adapter
@@ -21,6 +22,7 @@ const persistConfig = {
 
 const rootReducer = combineReducers({
   auth: authReducer,
+  notification: notificationReducer,
 })
 
 const persistedReducer = persistReducer(persistConfig, rootReducer)

@@ -17,7 +17,8 @@ import * as tokens from '@/theme';
 import { listingsApi } from '@/apis/listingsApi';
 import { p2pOrdersApi } from '@/apis/p2pOrdersApi';
 import { paymentMethodsApi } from '@/apis/paymentMethodsApi';
-import { useAppSelector } from '@/navigation/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/navigation/store/hooks';
+import { pushNotification } from '@/navigation/store/slices/notificationSlice';
 import type { ListingItem } from '@/interfaces/listing';
 import type { Order } from '@/interfaces/order';
 
@@ -26,6 +27,7 @@ const formatDateTime = (iso: string) => new Date(iso).toLocaleString();
 
 export default function V1ListingDetailScreen() {
   const { t } = useTranslation();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const listingId: number = route.params?.id;
@@ -81,7 +83,7 @@ export default function V1ListingDetailScreen() {
           return;
         }
       } catch {
-        Alert.alert('', t('order.message.submitFailed'));
+        dispatch(pushNotification({ type: 'error', message: t('order.message.submitFailed') }));
         return;
       }
     }
@@ -92,10 +94,10 @@ export default function V1ListingDetailScreen() {
         listingId: listing.id,
         cryptoAmount: amount,
       });
-      Alert.alert('', t('order.message.takeOrderSuccess'));
+      dispatch(pushNotification({ type: 'success', message: t('order.message.takeOrderSuccess') }));
       navigation.replace('OrderDetail', { id: result.id });
     } catch {
-      Alert.alert('', t('order.message.takeOrderFailed'));
+      dispatch(pushNotification({ type: 'error', message: t('order.message.takeOrderFailed') }));
     } finally {
       setTaking(false);
     }

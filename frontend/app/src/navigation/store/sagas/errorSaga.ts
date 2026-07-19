@@ -3,6 +3,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import { SagaIterator } from 'redux-saga';
 import logger from '@pkg/logger';
 import { SagaErrorResult } from '@pkg/utils/sagaHelpers';
+import { pushNotification } from '../slices/notificationSlice';
 
 /**
  * Root Error Saga - 統一處理所有錯誤
@@ -24,20 +25,19 @@ function* handleErrorAction(action: PayloadAction<SagaErrorResult>): SagaIterato
   
   // 檢查 payload 是否包含 statusCode
   if (payload && typeof payload === 'object' && 'statusCode' in payload) {
-    const { statusCode } = payload;
-    
+    const { statusCode, message } = payload;
+
+    if (message) {
+      yield put(pushNotification({ type: 'error', message }));
+    }
+
     // 401 Unauthorized - Token 過期或無效
     if (statusCode === 401) {
       logger.warn('檢測到 401 錯誤，自動登出', {
         action: action.type,
       });
-      
-      // 觸發登出流程
       yield put({ type: 'auth/logoutRequest' });
     }
-    
-    // 未來可以在這裡添加其他錯誤處理邏輯
-    // 例如：403 無權限、500 伺服器錯誤重試等
   }
 }
 

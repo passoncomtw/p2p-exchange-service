@@ -6,7 +6,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  FormHelperText,
   IconButton,
   InputAdornment,
   InputBase,
@@ -69,7 +68,7 @@ const FormField = ({ label, value, onChange, type = 'text', placeholder, endAdor
 const LoginScreen = () => {
   const dispatch = useDispatch()
   const { t, i18n } = useTranslation()
-  const { isAuth, error } = useSelector((state) => state.auth)
+  const { isAuth } = useSelector((state) => state.auth)
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -170,12 +169,6 @@ const LoginScreen = () => {
             </InputAdornment>
           }
         />
-
-        {error && (
-          <FormHelperText error sx={{ mb: '8px', fontSize: '12px' }}>
-            {error}
-          </FormHelperText>
-        )}
 
         <Button
           type="submit"

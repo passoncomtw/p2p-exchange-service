@@ -7,6 +7,7 @@ import authReducer from './slices/authSlices';
 import ordersReducer from './slices/ordersSlice';
 import bankCardsReducer from './slices/bankCardsSlice';
 import walletReducer from './slices/walletSlice';
+import notificationReducer from './slices/notificationSlice';
 import rootSaga from './sagas';
 
 /**
@@ -17,6 +18,7 @@ const rootReducer = combineReducers({
   orders: ordersReducer,
   bankCards: bankCardsReducer,
   wallet: walletReducer,
+  notification: notificationReducer,
 });
 
 /**

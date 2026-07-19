@@ -1,7 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, StatusBar, Alert, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useDispatch } from 'react-redux';
 import { listingsApi } from '@/apis';
+import { pushNotification } from '@/navigation/store/slices/notificationSlice';
 import type { ListingItem } from '@/interfaces';
 import EmptyState from './components/EmptyState';
 import OrdersList, { PendingOrder } from './components/OrdersList';
@@ -22,6 +24,7 @@ function mapListingToOrder(listing: ListingItem): PendingOrder {
 
 export default function OrdersScreen() {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const [listings, setListings] = useState<ListingItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +93,7 @@ export default function OrdersScreen() {
             await fetchMyListings();
           } catch (err) {
             logger.error('OrdersScreen - 取消掛單失敗', { err });
-            Alert.alert('錯誤', '取消掛單失敗，請稍後再試');
+            dispatch(pushNotification({ type: 'error', message: '取消掛單失敗，請稍後再試' }));
           } finally {
             setDeleting(false);
           }

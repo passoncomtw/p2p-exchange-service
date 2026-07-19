@@ -15,7 +15,6 @@ import { useTranslation } from 'react-i18next';
 import * as tokens from '@/theme';
 import { useAppDispatch, useAppSelector } from '@/navigation/store/hooks';
 import { loginRequest } from '@/navigation/store/actions/authActions';
-import { clearError } from '@/navigation/store/slices/authSlices';
 
 const { colors } = tokens;
 
@@ -23,7 +22,7 @@ const { colors } = tokens;
 export default function V1LoginScreen() {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const { loading, error } = useAppSelector((s) => s.auth);
+  const { loading } = useAppSelector((s) => s.auth);
 
   const [account, setAccount] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -41,7 +40,6 @@ export default function V1LoginScreen() {
       ok = false;
     }
     if (!ok) return;
-    dispatch(clearError());
     dispatch(loginRequest({ account: account.trim(), password }));
   };
 
@@ -92,12 +90,6 @@ export default function V1LoginScreen() {
           />
           {passwordErr ? <Text style={styles.fieldErr}>{passwordErr}</Text> : null}
 
-          {error ? (
-            <View style={styles.generalErr}>
-              <Text style={styles.generalErrText}>{error}</Text>
-            </View>
-          ) : null}
-
           <TouchableOpacity
             style={[styles.submit, loading && styles.submitDisabled]}
             onPress={handleLogin}
@@ -147,16 +139,6 @@ const styles = StyleSheet.create({
   },
   inputError: { borderColor: colors.danger },
   fieldErr: { fontSize: 11, color: colors.danger, marginTop: 5 },
-  generalErr: {
-    marginTop: 14,
-    backgroundColor: colors.errorBg,
-    borderWidth: 1,
-    borderColor: colors.errorBorder,
-    borderRadius: 4,
-    paddingVertical: 9,
-    paddingHorizontal: 12,
-  },
-  generalErrText: { fontSize: 12, color: colors.errorText },
   submit: {
     marginTop: 22,
     height: 48,

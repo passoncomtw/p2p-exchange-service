@@ -14,7 +14,8 @@ import { useTranslation } from 'react-i18next';
 import * as tokens from '@/theme';
 import { listingsApi } from '@/apis/listingsApi';
 import { p2pOrdersApi } from '@/apis/p2pOrdersApi';
-import { useAppSelector } from '@/navigation/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/navigation/store/hooks';
+import { pushNotification } from '@/navigation/store/slices/notificationSlice';
 import type { ListingItem } from '@/interfaces/listing';
 import type { Order } from '@/interfaces/order';
 
@@ -23,6 +24,7 @@ const formatDateTime = (iso: string) => new Date(iso).toLocaleString();
 
 export default function V1MyOrdersScreen() {
   const { t } = useTranslation();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation<any>();
   const currentUserId = useAppSelector((s) => s.auth.user?.id);
   const [listings, setListings] = React.useState<ListingItem[]>([]);
@@ -69,7 +71,7 @@ export default function V1MyOrdersScreen() {
             await listingsApi.cancel(listing.id);
             await load();
           } catch {
-            Alert.alert('', t('order.message.submitFailed'));
+            dispatch(pushNotification({ type: 'error', message: t('order.message.submitFailed') }));
           }
         },
       },

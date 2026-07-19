@@ -21,11 +21,14 @@ import {
 import * as tokens from '@/theme';
 import { listingsApi } from '@/apis/listingsApi';
 import { paymentMethodsApi, type PaymentMethodItem } from '@/apis/paymentMethodsApi';
+import { useAppDispatch } from '@/navigation/store/hooks';
+import { pushNotification } from '@/navigation/store/slices/notificationSlice';
 
 const { colors } = tokens;
 
 export default function V1CreateOrderScreen() {
   const { t } = useTranslation();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation<any>();
 
   const [type, setType] = React.useState<OrderType>('buy');
@@ -79,12 +82,12 @@ export default function V1CreateOrderScreen() {
         maxOrderFiat: priceNum * quantityNum,
         paymentMethodId: isBuy ? null : selectedPaymentId,
       });
-      Alert.alert('', t('order.message.createSuccess'));
+      dispatch(pushNotification({ type: 'success', message: t('order.message.createSuccess') }));
       setPrice('');
       setQuantity('');
       navigation.navigate('MyOrders');
     } catch {
-      Alert.alert('', t('order.message.submitFailed'));
+      dispatch(pushNotification({ type: 'error', message: t('order.message.submitFailed') }));
     } finally {
       setSubmitting(false);
     }

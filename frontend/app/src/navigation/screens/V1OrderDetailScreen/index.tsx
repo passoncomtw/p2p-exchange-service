@@ -13,7 +13,8 @@ import { useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import * as tokens from '@/theme';
 import { p2pOrdersApi } from '@/apis/p2pOrdersApi';
-import { useAppSelector } from '@/navigation/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/navigation/store/hooks';
+import { pushNotification } from '@/navigation/store/slices/notificationSlice';
 import type { Order } from '@/interfaces/order';
 
 const { colors, orderStatusColors } = tokens;
@@ -21,6 +22,7 @@ const formatDateTime = (iso: string) => new Date(iso).toLocaleString();
 
 export default function V1OrderDetailScreen() {
   const { t } = useTranslation();
+  const dispatch = useAppDispatch();
   const route = useRoute<any>();
   const orderId: number = route.params?.id;
   const currentUserId = useAppSelector((s) => s.auth.user?.id);
@@ -66,10 +68,10 @@ export default function V1OrderDetailScreen() {
       setActing(true);
       try {
         await action();
-        Alert.alert('', t(successMsg));
+        dispatch(pushNotification({ type: 'success', message: t(successMsg) }));
         await refresh();
       } catch {
-        Alert.alert('', t('order.message.submitFailed'));
+        dispatch(pushNotification({ type: 'error', message: t('order.message.submitFailed') }));
       } finally {
         setActing(false);
       }

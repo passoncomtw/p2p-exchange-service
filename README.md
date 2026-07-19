@@ -222,3 +222,40 @@ totalAmount      = fiatAmount + totalFee  （買家實際應付金額）
 | testdemo001 | a12345678 |
 | testdemo002 | a12345678 |
 | testdemo003 | a12345678 |
+
+---
+
+## 通知系統架構
+
+App (React Native) 與 Web (React + Vite) 統一使用 Redux 佇列管理通知，不在 component 層直接呼叫 `Alert.alert` 或內嵌錯誤 UI 顯示 API 回應。
+
+### App (`frontend/app`)
+
+| 元件 | 路徑 | 說明 |
+|------|------|------|
+| `notificationSlice` | `src/navigation/store/slices/notificationSlice.ts` | 佇列狀態，不持久化 |
+| `NotificationHandler` | `src/components/NotificationHandler.tsx` | 根元件，監聽佇列呼叫 `Alert.alert` |
+| `errorSaga` | `src/navigation/store/sagas/errorSaga.ts` | 統一攔截所有 `*Failure` action，dispatch `pushNotification` |
+
+**觸發方式：**
+```ts
+// saga 成功路徑
+yield put(pushNotification({ type: 'success', message: '掛單建立成功' }))
+
+// screen 直接 API call 的 catch
+dispatch(pushNotification({ type: 'error', message: t('order.message.submitFailed') }))
+```
+
+### Web (`frontend/web`)
+
+| 元件 | 路徑 | 說明 |
+|------|------|------|
+| `notificationSlice` | `src/slices/notificationSlice.js` | 佇列狀態，不持久化 |
+| `NotificationHandler` | `src/components/NotificationHandler.jsx` | MUI Snackbar，掛載於 `App.jsx` |
+
+**通知類型：** `success` / `error` / `warning` / `info`
+
+**保留使用 `Alert.alert` 的情境：**
+- 需要使用者確認的操作（取消掛單確認、仲裁確認等）
+- 帶有導航按鈕的提示（尚未新增收款帳戶）
+- 欄位格式驗證（金額格式錯誤）

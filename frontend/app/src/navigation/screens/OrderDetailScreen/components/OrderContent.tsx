@@ -47,22 +47,10 @@ const Footer = (props: { order: Order; user: User }) => {
 
   const refetch = () => dispatch(fetchOrderDetailRequest({ orderId }));
 
-  const onPaidSuccess = () => {
-    Alert.alert('成功', '已標記為已付款');
-    refetch();
-  };
-  const onApplySuccess = () => {
-    Alert.alert('成功', '訂單已放行');
-    refetch();
-  };
-  const onCancelSuccess = () => {
-    Alert.alert('成功', '訂單已取消，賣家資產已解凍');
-    refetch();
-  };
-  const onDisputeSuccess = () => {
-    Alert.alert('申訴已提交', '客服人員將介入處理，請耐心等候');
-    refetch();
-  };
+  const onPaidSuccess = () => { refetch(); };
+  const onApplySuccess = () => { refetch(); };
+  const onCancelSuccess = () => { refetch(); };
+  const onDisputeSuccess = () => { refetch(); };
 
   const confirmDispute = () => {
     if (Platform.OS === 'ios') {
@@ -81,7 +69,7 @@ const Footer = (props: { order: Order; user: User }) => {
                   orderId,
                   reason: trimmed,
                   onSuccess: onDisputeSuccess,
-                  onError: (e) => Alert.alert('錯誤', e || '申訴提交失敗'),
+                  onError: undefined,
                 })
               );
             },
@@ -127,7 +115,7 @@ const Footer = (props: { order: Order; user: User }) => {
                   orderId,
                   reason: trimmed,
                   onSuccess: onCancelSuccess,
-                  onError: (e) => Alert.alert('錯誤', e || '取消失敗'),
+                  onError: undefined,
                 })
               );
             },
@@ -180,7 +168,7 @@ const Footer = (props: { order: Order; user: User }) => {
                       markOrderAsPaidRequest({
                         orderId,
                         onSuccess: onPaidSuccess,
-                        onError: (e) => Alert.alert('錯誤', e || '標記付款失敗'),
+                        onError: undefined,
                       })
                     ),
                 },
@@ -212,7 +200,7 @@ const Footer = (props: { order: Order; user: User }) => {
                     applyOrderRequest({
                       orderId,
                       onSuccess: onApplySuccess,
-                      onError: (e) => Alert.alert('錯誤', e || '放行訂單失敗'),
+                      onError: undefined,
                     })
                   ),
               },

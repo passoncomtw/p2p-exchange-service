@@ -13,11 +13,14 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import * as tokens from '@/theme';
 import { paymentMethodsApi } from '@/apis/paymentMethodsApi';
+import { useAppDispatch } from '@/navigation/store/hooks';
+import { pushNotification } from '@/navigation/store/slices/notificationSlice';
 
 const { colors } = tokens;
 
 export default function V1AddPaymentMethodScreen() {
   const { t } = useTranslation();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation<any>();
 
   const [bankName, setBankName] = React.useState('');
@@ -44,10 +47,10 @@ export default function V1AddPaymentMethodScreen() {
         accountName: accountName.trim(),
         accountNumber: accountNumber.trim(),
       });
-      Alert.alert('', t('order.message.addPaymentSuccess'));
+      dispatch(pushNotification({ type: 'success', message: t('order.message.addPaymentSuccess') }));
       navigation.goBack();
     } catch {
-      Alert.alert('', t('order.message.submitFailed'));
+      dispatch(pushNotification({ type: 'error', message: t('order.message.submitFailed') }));
     } finally {
       setSubmitting(false);
     }

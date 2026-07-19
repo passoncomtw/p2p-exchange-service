@@ -4,6 +4,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import logger from '@pkg/logger';
 import { handleSagaError } from '@pkg/utils/sagaHelpers';
 import { listingsApi, p2pOrdersApi } from '@/apis';
+import { pushNotification } from '../slices/notificationSlice';
 import { ORDERS_ACTIONS, CreateListingPayload, CreateOrderPayload, FetchOrderDetailPayload, MarkOrderAsPaidPayload, ApplyOrderPayload, CancelOrderPayload, DisputeOrderPayload } from '../actions/ordersActions';
 import {
   createOrderStart,
@@ -43,6 +44,7 @@ function* createListingSaga(action: PayloadAction<CreateListingPayload>): SagaIt
     logger.info('建立掛單成功', { id: result.id, type: data.type });
 
     yield put(createOrderSuccess(result));
+    yield put(pushNotification({ type: 'success', message: '掛單建立成功' }));
 
     if (onSuccess) onSuccess();
   } catch (error: any) {
@@ -63,6 +65,7 @@ function* createOrderSaga(action: PayloadAction<CreateOrderPayload>): SagaIterat
     logger.info('建立訂單成功', { orderId: order.id, listingId: data.listingId });
 
     yield put(createTransactionOrderSuccess());
+    yield put(pushNotification({ type: 'success', message: '接單成功' }));
 
     if (onSuccess) onSuccess(String(order.id));
   } catch (error: any) {
@@ -117,6 +120,7 @@ function* markOrderAsPaidSaga(action: PayloadAction<MarkOrderAsPaidPayload>): Sa
     logger.info('標記訂單為已付款成功', { orderId });
 
     yield put(markOrderAsPaidSuccess(orderId));
+    yield put(pushNotification({ type: 'success', message: '已標記付款' }));
 
     if (onSuccess) onSuccess();
   } catch (error: any) {
@@ -137,6 +141,7 @@ function* applyOrderSaga(action: PayloadAction<ApplyOrderPayload>): SagaIterator
     logger.info('確認放行訂單成功', { orderId });
 
     yield put(applyOrderSuccess(orderId));
+    yield put(pushNotification({ type: 'success', message: '已確認收款' }));
 
     if (onSuccess) onSuccess();
   } catch (error: any) {
@@ -157,6 +162,7 @@ function* cancelOrderSaga(action: PayloadAction<CancelOrderPayload>): SagaIterat
     logger.info('取消訂單成功', { orderId });
 
     yield put(cancelOrderSuccess(orderId));
+    yield put(pushNotification({ type: 'success', message: '訂單已取消' }));
 
     if (onSuccess) onSuccess();
   } catch (error: any) {
@@ -188,6 +194,7 @@ function* disputeOrderSaga(action: PayloadAction<DisputeOrderPayload>): SagaIter
     logger.info('申訴訂單成功', { orderId });
 
     yield put(disputeOrderSuccess(orderId));
+    yield put(pushNotification({ type: 'success', message: '已提出申訴' }));
 
     if (onSuccess) onSuccess();
   } catch (error: any) {
