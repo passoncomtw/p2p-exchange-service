@@ -27,3 +27,20 @@ Nats:
   StreamName: "p2p-exchange"
   ConsumerName: "p2p-exchange-consumer"
 
+# Tron 熱錢包設定（v0.3.0）
+# 敏感欄位透過環境變數注入：TRON_GRID_API_KEY / TRON_HOT_WALLET_ADDRESS / TRON_HOT_WALLET_PRIVATE_KEY
+Tron:
+  Network: "nile"
+  TronGridURL: "https://nile.trongrid.io"
+  USDTContractAddress: "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj"
+  ConfirmationBlocks: 6
+  ScanIntervalSeconds: 30
+  WithdrawIntervalSeconds: 10
+
+# ECPay 金流設定（v0.3.0）
+# 敏感欄位透過環境變數注入：ECPAY_HASH_KEY / ECPAY_HASH_IV
+# 測試環境 MerchantID: 2000132（綠界測試用）
+ECPay:
+  MerchantID: "2000132"
+  BaseURL: "https://payment-stage.ecpay.com.tw"
+
