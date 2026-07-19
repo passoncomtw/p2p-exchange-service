@@ -73,6 +73,18 @@ func main() {
 	job.StartPushNotificationConsumer(ctx.MQ, job.PushNotificationDeps{
 		AppUser: ctx.AppUser,
 	})
+	job.StartTronScannerJob(rootCtx, c.Tron, job.TronScannerDeps{
+		DB:            ctx.DB,
+		RDB:           ctx.RDB,
+		CryptoDeposit: ctx.CryptoDeposit,
+		AppUser:       ctx.AppUser,
+		Wallet:        ctx.Wallet,
+	})
+	job.StartTronWithdrawJob(rootCtx, c.Tron, job.TronWithdrawDeps{
+		RDB:            ctx.RDB,
+		CryptoWithdraw: ctx.CryptoWithdraw,
+		Wallet:         ctx.Wallet,
+	})
 
 	if c.Mode != "pro" {
 		swagger.RegisterRoutes(server)

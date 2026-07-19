@@ -155,9 +155,40 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/app/wallets/:currency/ledgers",
 				Handler: AppListWalletLedgersHandler(serverCtx),
 			},
+			// ── v0.3.0 crypto ──────────────────────────────────────────────
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/wallets/crypto/deposit-info",
+				Handler: AppGetCryptoDepositInfoHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/app/wallets/crypto/withdraw",
+				Handler: AppCryptoWithdrawHandler(serverCtx),
+			},
+			// ── v0.3.0 fiat ────────────────────────────────────────────────
+			{
+				Method:  http.MethodPost,
+				Path:    "/app/wallets/fiat/deposit",
+				Handler: AppFiatDepositHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/app/wallets/fiat/withdraw",
+				Handler: AppFiatWithdrawHandler(serverCtx),
+			},
 		},
 		rest.WithJwt(serverCtx.Config.App.AccessSecret),
 	)
+
+	// ── public webhooks ─────────────────────────────────────────────────────
+	server.AddRoutes([]rest.Route{
+		{
+			Method:  http.MethodPost,
+			Path:    "/webhook/ecpay/notify",
+			Handler: WebhookECPayNotifyHandler(serverCtx),
+		},
+	})
 
 	// ── backend public ──────────────────────────────────────────────────────
 	server.AddRoutes([]rest.Route{

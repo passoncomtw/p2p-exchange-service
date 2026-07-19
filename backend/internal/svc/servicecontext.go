@@ -11,22 +11,26 @@ import (
 )
 
 type ServiceContext struct {
-	Config         config.Config
-	DB             sqlx.SqlConn
-	RDB            *rdb.Client
-	MQ             *mq.Client
-	Notifier       *notification.Notifier
-	AppUser        *model.AppUserModel
-	BackendUser    *model.BackendUserModel
-	PaymentMethod  *model.PaymentMethodModel
-	Listing        *model.ListingModel
-	Order          *model.OrderModel
-	EscrowRecord   *model.EscrowRecordModel
-	OrderStatusLog *model.OrderStatusLogModel
-	V1Order        *model.V1OrderModel
-	Wallet         *model.WalletModel
-	WalletLedger   *model.WalletLedgerModel
-	Currency       *model.CurrencyModel
+	Config          config.Config
+	DB              sqlx.SqlConn
+	RDB             *rdb.Client
+	MQ              *mq.Client
+	Notifier        *notification.Notifier
+	AppUser         *model.AppUserModel
+	BackendUser     *model.BackendUserModel
+	PaymentMethod   *model.PaymentMethodModel
+	Listing         *model.ListingModel
+	Order           *model.OrderModel
+	EscrowRecord    *model.EscrowRecordModel
+	OrderStatusLog  *model.OrderStatusLogModel
+	V1Order         *model.V1OrderModel
+	Wallet          *model.WalletModel
+	WalletLedger    *model.WalletLedgerModel
+	Currency        *model.CurrencyModel
+	CryptoDeposit   *model.CryptoDepositModel
+	CryptoWithdraw  *model.CryptoWithdrawalModel
+	FiatDeposit     *model.FiatDepositModel
+	FiatWithdraw    *model.FiatWithdrawalModel
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -50,5 +54,9 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		Wallet:         model.NewWalletModel(conn, redisClient),
 		WalletLedger:   model.NewWalletLedgerModel(conn),
 		Currency:       model.NewCurrencyModel(conn),
+		CryptoDeposit:  model.NewCryptoDepositModel(conn),
+		CryptoWithdraw: model.NewCryptoWithdrawalModel(conn),
+		FiatDeposit:    model.NewFiatDepositModel(conn),
+		FiatWithdraw:   model.NewFiatWithdrawalModel(conn),
 	}
 }
