@@ -19,6 +19,7 @@ import { p2pOrdersApi } from '@/apis/p2pOrdersApi';
 import { paymentMethodsApi } from '@/apis/paymentMethodsApi';
 import { useAppDispatch, useAppSelector } from '@/navigation/store/hooks';
 import { pushNotification } from '@/navigation/store/slices/notificationSlice';
+import SkeletonList from '@/components/SkeletonList';
 import type { ListingItem } from '@/interfaces/listing';
 import type { Order } from '@/interfaces/order';
 
@@ -106,11 +107,7 @@ export default function V1ListingDetailScreen() {
   if (loading) {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
-        <View style={{ gap: 12 }}>
-          {[0.6, 0.4, 0.25].map((o, i) => (
-            <View key={i} style={[styles.skeleton, { opacity: o }]} />
-          ))}
-        </View>
+        <SkeletonList height={48} />
       </ScrollView>
     );
   }
@@ -241,7 +238,6 @@ function Row({ label, value, amber, muted }: { label: string; value: string; amb
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bgContent },
   container: { padding: 16, paddingBottom: 28 },
-  skeleton: { height: 48, backgroundColor: colors.bgCard, borderRadius: 8, borderWidth: 1, borderColor: colors.borderCard },
   centerBox: { alignItems: 'center', paddingVertical: 56, paddingHorizontal: 20 },
   errorMark: { fontSize: 32, color: colors.danger, marginBottom: 8, fontWeight: '700' },
   errorTitle: { fontSize: 14, color: colors.textPrimary, fontWeight: '500', marginBottom: 12 },

@@ -16,6 +16,7 @@ import { listingsApi } from '@/apis/listingsApi';
 import { p2pOrdersApi } from '@/apis/p2pOrdersApi';
 import { useAppDispatch, useAppSelector } from '@/navigation/store/hooks';
 import { pushNotification } from '@/navigation/store/slices/notificationSlice';
+import SkeletonList from '@/components/SkeletonList';
 import type { ListingItem } from '@/interfaces/listing';
 import type { Order } from '@/interfaces/order';
 
@@ -33,10 +34,12 @@ function MyListingsTab() {
   const currentUserId = useAppSelector((s) => s.auth.user?.id);
   const [listings, setListings] = React.useState<ListingItem[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState(false);
 
-  const load = React.useCallback(async () => {
-    setLoading(true);
+  const load = React.useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
     setError(false);
     try {
       const [listingList, orderList] = await Promise.all([
@@ -54,6 +57,7 @@ function MyListingsTab() {
       setError(true);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -86,11 +90,7 @@ function MyListingsTab() {
   if (loading) {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.pad}>
-        <View style={{ gap: 12 }}>
-          {[0.6, 0.4, 0.25].map((o, i) => (
-            <View key={i} style={[styles.skeleton, { opacity: o }]} />
-          ))}
-        </View>
+        <SkeletonList />
       </ScrollView>
     );
   }
@@ -102,7 +102,7 @@ function MyListingsTab() {
           <Text style={styles.errorMark}>!</Text>
           <Text style={styles.errorTitle}>{t('order.message.errorTitle')}</Text>
           <Text style={styles.errorBody}>{t('order.message.errorBody')}</Text>
-          <TouchableOpacity style={styles.outlineBtn} onPress={load} accessibilityRole="button">
+          <TouchableOpacity style={styles.outlineBtn} onPress={() => load()} accessibilityRole="button">
             <Text style={styles.outlineBtnText}>{t('order.action.retry')}</Text>
           </TouchableOpacity>
         </View>
@@ -205,7 +205,7 @@ function MyListingsTab() {
       renderItem={renderItem}
       contentContainerStyle={styles.pad}
       ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-      refreshControl={<RefreshControl refreshing={false} onRefresh={load} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.primary} />}
     />
   );
 }
@@ -218,11 +218,13 @@ function MatchedOrdersTab() {
   const currentUserId = useAppSelector((s) => s.auth.user?.id);
   const [orders, setOrders] = React.useState<Order[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState(false);
   const [statusTab, setStatusTab] = React.useState<string>('all');
 
-  const load = React.useCallback(async () => {
-    setLoading(true);
+  const load = React.useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
     setError(false);
     try {
       const params = statusTab === 'all' ? {} : { status: statusTab };
@@ -232,6 +234,7 @@ function MatchedOrdersTab() {
       setError(true);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [statusTab]);
 
@@ -266,11 +269,7 @@ function MatchedOrdersTab() {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.pad}>
         <StatusTabs />
-        <View style={{ gap: 12 }}>
-          {[0.6, 0.4, 0.25].map((o, i) => (
-            <View key={i} style={[styles.skeleton, { opacity: o }]} />
-          ))}
-        </View>
+        <SkeletonList />
       </ScrollView>
     );
   }
@@ -281,7 +280,7 @@ function MatchedOrdersTab() {
         <View style={styles.centerBox}>
           <Text style={styles.errorMark}>!</Text>
           <Text style={styles.errorTitle}>{t('order.message.errorTitle')}</Text>
-          <TouchableOpacity style={styles.outlineBtn} onPress={load} accessibilityRole="button">
+          <TouchableOpacity style={styles.outlineBtn} onPress={() => load()} accessibilityRole="button">
             <Text style={styles.outlineBtnText}>{t('order.action.retry')}</Text>
           </TouchableOpacity>
         </View>
@@ -338,7 +337,7 @@ function MatchedOrdersTab() {
       ListHeaderComponent={<StatusTabs />}
       contentContainerStyle={styles.pad}
       ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-      refreshControl={<RefreshControl refreshing={false} onRefresh={load} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.primary} />}
     />
   );
 }
@@ -457,7 +456,6 @@ const styles = StyleSheet.create({
 
   screen: { flex: 1, backgroundColor: colors.bgContent },
   pad: { padding: 16 },
-  skeleton: { height: 96, backgroundColor: colors.bgCard, borderRadius: 8, borderWidth: 1, borderColor: colors.borderCard },
 
   centerBox: { alignItems: 'center', paddingVertical: 56, paddingHorizontal: 20 },
   errorMark: { fontSize: 32, color: colors.danger, marginBottom: 8, fontWeight: '700' },

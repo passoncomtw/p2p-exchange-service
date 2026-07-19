@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import * as tokens from '@/theme';
 import { listingsApi } from '@/apis/listingsApi';
 import { useAppSelector } from '@/navigation/store/hooks';
+import SkeletonList from '@/components/SkeletonList';
 import type { ListingItem } from '@/interfaces/listing';
 
 const { colors } = tokens;
@@ -24,10 +25,12 @@ export default function V1TradeMarketScreen() {
   const currentUserId = useAppSelector((s) => s.auth.user?.id);
   const [listings, setListings] = React.useState<ListingItem[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState(false);
 
-  const load = React.useCallback(async () => {
-    setLoading(true);
+  const load = React.useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
     setError(false);
     try {
       const all = await listingsApi.list({ status: 'active' });
@@ -36,6 +39,7 @@ export default function V1TradeMarketScreen() {
       setError(true);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [currentUserId]);
 
@@ -51,11 +55,7 @@ export default function V1TradeMarketScreen() {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.pad}>
         <Title />
-        <View style={{ gap: 12 }}>
-          {[0.6, 0.4, 0.25].map((o, i) => (
-            <View key={i} style={[styles.skeleton, { opacity: o }]} />
-          ))}
-        </View>
+        <SkeletonList />
       </ScrollView>
     );
   }
@@ -68,7 +68,7 @@ export default function V1TradeMarketScreen() {
           <Text style={styles.errorMark}>!</Text>
           <Text style={styles.errorTitle}>{t('order.message.errorTitle')}</Text>
           <Text style={styles.errorBody}>{t('order.message.loadFailed')}</Text>
-          <TouchableOpacity style={styles.outlineBtn} onPress={load} accessibilityRole="button">
+          <TouchableOpacity style={styles.outlineBtn} onPress={() => load()} accessibilityRole="button">
             <Text style={styles.outlineBtnText}>{t('order.action.retry')}</Text>
           </TouchableOpacity>
         </View>
@@ -120,7 +120,7 @@ export default function V1TradeMarketScreen() {
       ListHeaderComponent={<Title />}
       contentContainerStyle={styles.pad}
       ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-      refreshControl={<RefreshControl refreshing={false} onRefresh={load} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.primary} />}
     />
   );
 }
@@ -138,7 +138,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bgContent },
   pad: { padding: 16 },
   title: { fontSize: 16, fontWeight: '600', color: colors.textPrimary, marginBottom: 14 },
-  skeleton: { height: 96, backgroundColor: colors.bgCard, borderRadius: 8, borderWidth: 1, borderColor: colors.borderCard },
   centerBox: { alignItems: 'center', paddingVertical: 56, paddingHorizontal: 20 },
   errorMark: { fontSize: 32, color: colors.danger, marginBottom: 8, fontWeight: '700' },
   errorTitle: { fontSize: 14, color: colors.textPrimary, fontWeight: '500', marginBottom: 4 },
