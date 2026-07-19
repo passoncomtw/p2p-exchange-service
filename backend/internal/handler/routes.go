@@ -232,6 +232,23 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/backend/orders/:id/resolve",
 				Handler: BackendResolveOrderHandler(serverCtx),
 			},
+			// ── v0.3.0 fiat withdrawal review ──────────────────────────────
+			{
+				Method:  http.MethodGet,
+				Path:    "/backend/fiat-withdrawals",
+				Handler: BackendListFiatWithdrawalsHandler(serverCtx),
+			},
+			{
+				Method:  http.MethodPut,
+				Path:    "/backend/fiat-withdrawals/:id/review",
+				Handler: BackendReviewFiatWithdrawalHandler(serverCtx),
+			},
+			// ── v0.3.0 platform wallet info ────────────────────────────────
+			{
+				Method:  http.MethodGet,
+				Path:    "/backend/platform/wallet-info",
+				Handler: BackendPlatformWalletInfoHandler(serverCtx),
+			},
 		},
 		rest.WithJwt(serverCtx.Config.Backend.AccessSecret),
 	)

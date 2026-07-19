@@ -352,6 +352,60 @@ type FiatWithdrawResponse struct {
 	Status string `json:"status"`
 }
 
+// ── backend fiat withdrawal review (PEP-36) ──────────────────────────────────
+
+type BackendListFiatWithdrawalsRequest struct {
+	Status string `form:"status,optional,default=pending"`
+	Limit  int64  `form:"limit,optional,default=20"`
+	Offset int64  `form:"offset,optional,default=0"`
+}
+
+type FiatWithdrawalItem struct {
+	ID           int64   `json:"id"`
+	UserID       int64   `json:"userId"`
+	Currency     string  `json:"currency"`
+	Amount       string  `json:"amount"`
+	BankCode     string  `json:"bankCode"`
+	BankAccount  string  `json:"bankAccount"`
+	AccountName  string  `json:"accountName"`
+	Status       string  `json:"status"`
+	ReviewedBy   *int64  `json:"reviewedBy"`
+	RejectReason *string `json:"rejectReason"`
+	CreatedAt    string  `json:"createdAt"`
+}
+
+type BackendListFiatWithdrawalsResponse struct {
+	List  []FiatWithdrawalItem `json:"list"`
+	Total int64                `json:"total"`
+}
+
+type BackendReviewFiatWithdrawalRequest struct {
+	ID     int64  `path:"id"`
+	Action string `json:"action"` // approve | reject
+	Reason string `json:"reason,optional"`
+}
+
+// ── backend platform wallet info (PEP-38) ────────────────────────────────────
+
+type TronWalletInfo struct {
+	Enabled            bool   `json:"enabled"`
+	Network            string `json:"network"`
+	HotWalletAddress   string `json:"hotWalletAddress"`
+	USDTContractAddress string `json:"usdtContractAddress"`
+	ConfirmationBlocks  int    `json:"confirmationBlocks"`
+}
+
+type ECPayInfo struct {
+	Enabled    bool   `json:"enabled"`
+	MerchantID string `json:"merchantId"`
+	BaseURL    string `json:"baseUrl"`
+}
+
+type PlatformWalletInfoResponse struct {
+	Tron  TronWalletInfo `json:"tron"`
+	ECPay ECPayInfo      `json:"ecpay"`
+}
+
 // ── v1 掛單（免登入，沿用 listings；createdBy 固定 demo_user） ──────────────────
 
 type V1CreateOrderRequest struct {

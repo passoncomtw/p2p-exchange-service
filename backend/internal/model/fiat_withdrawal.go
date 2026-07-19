@@ -50,14 +50,34 @@ func (m *FiatWithdrawalModel) FindByID(ctx context.Context, id int64) (*FiatWith
 	return &w, nil
 }
 
-func (m *FiatWithdrawalModel) ListPending(ctx context.Context, limit, offset int64) ([]*FiatWithdrawal, error) {
+func (m *FiatWithdrawalModel) ListByStatus(ctx context.Context, status string, limit, offset int64) ([]*FiatWithdrawal, error) {
 	var rows []*FiatWithdrawal
-	err := m.conn.QueryRowsCtx(ctx, &rows,
-		`SELECT id, user_id, currency, amount::text, bank_code, bank_account, account_name, status, reviewed_by, reviewed_at, reject_reason, created_at, updated_at
-		 FROM fiat_withdrawals WHERE status='pending' ORDER BY created_at ASC LIMIT $1 OFFSET $2`,
-		limit, offset,
-	)
+	var err error
+	if status == "" || status == "all" {
+		err = m.conn.QueryRowsCtx(ctx, &rows,
+			`SELECT id, user_id, currency, amount::text, bank_code, bank_account, account_name, status, reviewed_by, reviewed_at, reject_reason, created_at, updated_at
+			 FROM fiat_withdrawals ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+			limit, offset,
+		)
+	} else {
+		err = m.conn.QueryRowsCtx(ctx, &rows,
+			`SELECT id, user_id, currency, amount::text, bank_code, bank_account, account_name, status, reviewed_by, reviewed_at, reject_reason, created_at, updated_at
+			 FROM fiat_withdrawals WHERE status=$1 ORDER BY created_at ASC LIMIT $2 OFFSET $3`,
+			status, limit, offset,
+		)
+	}
 	return rows, err
+}
+
+func (m *FiatWithdrawalModel) CountByStatus(ctx context.Context, status string) (int64, error) {
+	var count int64
+	var err error
+	if status == "" || status == "all" {
+		err = m.conn.QueryRowCtx(ctx, &count, `SELECT COUNT(*) FROM fiat_withdrawals`)
+	} else {
+		err = m.conn.QueryRowCtx(ctx, &count, `SELECT COUNT(*) FROM fiat_withdrawals WHERE status=$1`, status)
+	}
+	return count, err
 }
 
 func (m *FiatWithdrawalModel) UpdateApproved(ctx context.Context, id, reviewedBy int64, reviewedAt time.Time) error {
