@@ -4,6 +4,9 @@ import type {
   ListWalletsResponse,
   ListWalletLedgersParams,
   ListWalletLedgersResponse,
+  CryptoDepositInfo,
+  CryptoWithdrawRequest,
+  CryptoWithdrawResponse,
 } from '@/interfaces/wallet';
 
 export const walletApi = {
@@ -19,6 +22,21 @@ export const walletApi = {
     const response = await httpClientWithAuth.getWithToken<ApiResponse<ListWalletLedgersResponse>>(
       `/app/wallets/${currency}/ledgers`,
       { params: { limit, offset } }
+    );
+    return response.data.data;
+  },
+
+  getCryptoDepositInfo: async (): Promise<CryptoDepositInfo> => {
+    const response = await httpClientWithAuth.getWithToken<ApiResponse<CryptoDepositInfo>>(
+      '/app/wallets/crypto/deposit-info'
+    );
+    return response.data.data;
+  },
+
+  cryptoWithdraw: async (req: CryptoWithdrawRequest): Promise<CryptoWithdrawResponse> => {
+    const response = await httpClientWithAuth.postWithToken<ApiResponse<CryptoWithdrawResponse>>(
+      '/app/wallets/crypto/withdraw',
+      req
     );
     return response.data.data;
   },

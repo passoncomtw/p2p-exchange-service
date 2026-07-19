@@ -5,10 +5,12 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
+  TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
 import { useDispatch } from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
 import { useAppSelector } from '@/navigation/store/hooks';
 import { fetchWalletsRequest, fetchLedgersRequest } from '@/navigation/store/actions/walletActions';
 import { setSelectedCurrency } from '@/navigation/store/slices/walletSlice';
@@ -22,9 +24,13 @@ const LEDGER_TYPE_LABEL: Record<string, string> = {
   transfer_in: '轉入',
   transfer_out: '轉出',
   fee_deduct: '手續費',
+  crypto_deposit: '虛擬幣入帳',
+  crypto_withdraw: '虛擬幣提領',
+  fiat_deposit: '法幣入金',
+  fiat_withdraw: '法幣出金',
 };
 
-const LEDGER_POSITIVE_TYPES = new Set(['unfreeze', 'deposit', 'transfer_in']);
+const LEDGER_POSITIVE_TYPES = new Set(['unfreeze', 'deposit', 'transfer_in', 'crypto_deposit', 'fiat_deposit']);
 
 function formatBalance(val: string): string {
   const num = parseFloat(val);
@@ -74,6 +80,7 @@ function LedgerRow({ item }: { item: WalletLedgerItem }) {
 
 export default function WalletScreen() {
   const dispatch = useDispatch();
+  const navigation = useNavigation<any>();
   const [balanceVisible, setBalanceVisible] = useState(true);
 
   const { wallets, walletsLoading, ledgers, ledgersLoading, selectedCurrency } = useAppSelector(
@@ -163,6 +170,26 @@ export default function WalletScreen() {
             </View>
           </View>
         </View>
+
+        {/* USDT 操作按鈕 */}
+        {selectedCurrency === 'USDT' && (
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => navigation.navigate('CryptoDeposit')}
+              accessibilityRole="button"
+            >
+              <Text style={styles.actionBtnText}>充值</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.actionBtnSecondary]}
+              onPress={() => navigation.navigate('CryptoWithdraw')}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.actionBtnText, styles.actionBtnTextSecondary]}>提領</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* 交易記錄 */}
         <View style={styles.ledgerCard}>
@@ -289,6 +316,35 @@ const styles = StyleSheet.create({
   },
   frozenValue: {
     color: colors.textSecondary,
+  },
+
+  // ── 操作按鈕 ──────────────────────────────────────────────────────────────
+  actionRow: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginTop: 12,
+    gap: 10,
+  },
+  actionBtn: {
+    flex: 1,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionBtnSecondary: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  actionBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1F2327',
+  },
+  actionBtnTextSecondary: {
+    color: colors.primaryDeep,
   },
 
   // ── 交易記錄 ──────────────────────────────────────────────────────────────

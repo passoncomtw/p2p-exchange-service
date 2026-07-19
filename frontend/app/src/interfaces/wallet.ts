@@ -26,3 +26,21 @@ export interface ListWalletLedgersResponse {
   list: WalletLedgerItem[];
   total: number;
 }
+
+export interface CryptoDepositInfo {
+  address: string;
+  memo: string;
+  network: string;
+  currency: string;
+  contract_address: string;
+}
+
+export interface CryptoWithdrawRequest {
+  to_address: string;
+  amount: string;
+}
+
+export interface CryptoWithdrawResponse {
+  id: number;
+  status: string;
+}

@@ -24,6 +24,8 @@ import V1AddPaymentMethodScreen from './screens/V1AddPaymentMethodScreen';
 import V1CreateOrderScreen from './screens/V1CreateOrderScreen';
 import WalletScreen from './screens/WalletScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import CryptoDepositScreen from './screens/CryptoDepositScreen';
+import CryptoWithdrawScreen from './screens/CryptoWithdrawScreen';
 
 const { colors } = tokens;
 const Tab = createBottomTabNavigator();
@@ -133,6 +135,16 @@ function MainNavigator() {
         name="AddPaymentMethod"
         component={V1AddPaymentMethodScreen}
         options={{ title: t('order.pageTitle.addPayment') }}
+      />
+      <MainStack.Screen
+        name="CryptoDeposit"
+        component={CryptoDepositScreen}
+        options={{ title: 'USDT 充值' }}
+      />
+      <MainStack.Screen
+        name="CryptoWithdraw"
+        component={CryptoWithdrawScreen}
+        options={{ title: 'USDT 提領' }}
       />
     </MainStack.Navigator>
   );
