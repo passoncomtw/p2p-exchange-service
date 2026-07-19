@@ -304,6 +304,54 @@ type ListWalletLedgersResponse struct {
 	Total int64              `json:"total"`
 }
 
+// ── crypto deposit (PEP-30) ──────────────────────────────────────────────────
+
+type GetCryptoDepositInfoResponse struct {
+	Address         string `json:"address"`
+	Memo            string `json:"memo"`
+	Network         string `json:"network"`
+	Currency        string `json:"currency"`
+	ContractAddress string `json:"contractAddress"`
+}
+
+// ── crypto withdrawal (PEP-31) ───────────────────────────────────────────────
+
+type CryptoWithdrawRequest struct {
+	ToAddress string `json:"toAddress"`
+	Amount    string `json:"amount"`
+}
+
+type CryptoWithdrawResponse struct {
+	ID     int64  `json:"id"`
+	Status string `json:"status"`
+}
+
+// ── fiat deposit (PEP-34) ────────────────────────────────────────────────────
+
+type FiatDepositRequest struct {
+	Amount int `json:"amount"` // TWD 整數金額
+}
+
+type FiatDepositResponse struct {
+	MerchantTradeNo string            `json:"merchantTradeNo"`
+	PaymentURL      string            `json:"paymentUrl"`
+	FormParams      map[string]string `json:"formParams"`
+}
+
+// ── fiat withdrawal (PEP-35) ─────────────────────────────────────────────────
+
+type FiatWithdrawRequest struct {
+	Amount      string `json:"amount"`
+	BankCode    string `json:"bankCode"`
+	BankAccount string `json:"bankAccount"`
+	AccountName string `json:"accountName"`
+}
+
+type FiatWithdrawResponse struct {
+	ID     int64  `json:"id"`
+	Status string `json:"status"`
+}
+
 // ── v1 掛單（免登入，沿用 listings；createdBy 固定 demo_user） ──────────────────
 
 type V1CreateOrderRequest struct {
