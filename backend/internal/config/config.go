@@ -32,6 +32,24 @@ type NatsConf struct {
 	ConsumerName string
 }
 
+// TronConf 平台 Tron 熱錢包設定（Nile Testnet，mainnet 前替換 HotWalletPrivateKey 為 KMS）
+type TronConf struct {
+	Network                 string `json:",default=nile"`
+	TronGridURL             string `json:",optional,env=TRON_GRID_URL"`
+	TronGridAPIKey          string `json:",optional,env=TRON_GRID_API_KEY"`
+	HotWalletAddress        string `json:",optional,env=TRON_HOT_WALLET_ADDRESS"`
+	HotWalletPrivateKey     string `json:",optional,env=TRON_HOT_WALLET_PRIVATE_KEY"`
+	USDTContractAddress     string `json:",default=TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj"`
+	ConfirmationBlocks      int    `json:",default=6"`
+	ScanIntervalSeconds     int    `json:",default=30"`
+	WithdrawIntervalSeconds int    `json:",default=10"`
+}
+
+// IsEnabled 回傳 Tron 功能是否已設定（熱錢包地址與私鑰皆必填）
+func (c TronConf) IsEnabled() bool {
+	return c.HotWalletAddress != "" && c.HotWalletPrivateKey != ""
+}
+
 type Config struct {
 	rest.RestConf
 	App      PlatformConfig
@@ -39,4 +57,5 @@ type Config struct {
 	Database DatabaseConf
 	Redis    RedisConf
 	Nats     NatsConf
+	Tron     TronConf
 }
