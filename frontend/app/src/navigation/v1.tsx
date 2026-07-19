@@ -1,6 +1,11 @@
 import * as React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+export const AppBarRightContext = React.createContext<{
+  right: React.ReactNode;
+  setRight: (node: React.ReactNode) => void;
+}>({ right: null, setRight: () => {} });
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
@@ -28,6 +33,7 @@ const MainStack = createNativeStackNavigator();
 function AppBar() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { right } = React.useContext(AppBarRightContext);
   return (
     <View style={[styles.appBarWrap, { paddingTop: insets.top }]}>
       <View style={styles.appBar}>
@@ -35,6 +41,7 @@ function AppBar() {
           <Text style={styles.logoText}>P</Text>
         </View>
         <Text style={styles.brand}>{t('order.login.brand')}</Text>
+        {right && <View style={styles.appBarRight}>{right}</View>}
       </View>
     </View>
   );
@@ -87,11 +94,14 @@ function V1Tabs() {
 }
 
 function TabsShell() {
+  const [right, setRight] = React.useState<React.ReactNode>(null);
   return (
-    <View style={styles.shell}>
-      <AppBar />
-      <V1Tabs />
-    </View>
+    <AppBarRightContext.Provider value={{ right, setRight }}>
+      <View style={styles.shell}>
+        <AppBar />
+        <V1Tabs />
+      </View>
+    </AppBarRightContext.Provider>
   );
 }
 
@@ -169,4 +179,5 @@ const styles = StyleSheet.create({
   },
   logoText: { fontSize: 13, fontWeight: '700', color: '#1F2327' },
   brand: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+  appBarRight: { marginLeft: 'auto' },
 });

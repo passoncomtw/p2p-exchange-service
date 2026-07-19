@@ -9,7 +9,8 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useIsFocused } from '@react-navigation/native';
+import { AppBarRightContext } from '@/navigation/v1';
 import { useTranslation } from 'react-i18next';
 import * as tokens from '@/theme';
 import { listingsApi } from '@/apis/listingsApi';
@@ -349,24 +350,28 @@ type ActiveTab = 'listings' | 'orders';
 export default function V1OrdersTabScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
+  const { setRight } = React.useContext(AppBarRightContext);
+  const isFocused = useIsFocused();
   const [activeTab, setActiveTab] = React.useState<ActiveTab>('listings');
+
+  React.useEffect(() => {
+    if (isFocused && activeTab === 'listings') {
+      setRight(
+        <TouchableOpacity
+          onPress={() => navigation.push('CreateOrder')}
+          accessibilityRole="button"
+          style={styles.navAddButton}
+        >
+          <Text style={styles.navAddButtonText}>+</Text>
+        </TouchableOpacity>
+      );
+    } else {
+      setRight(null);
+    }
+  }, [isFocused, navigation, activeTab, setRight]);
 
   return (
     <View style={styles.container}>
-      {/* 頂部標題列 */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>{t('order.nav.orders')}</Text>
-        {activeTab === 'listings' && (
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => navigation.push('CreateOrder')}
-            accessibilityRole="button"
-          >
-            <Text style={styles.addButtonText}>+</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
       {/* 頂部子 tab 切換 */}
       <View style={styles.segmentedControl}>
         <TouchableOpacity
@@ -412,20 +417,8 @@ function Row({ label, value, amber, muted }: { label: string; value: string; amb
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bgContent },
-  header: {
-    backgroundColor: colors.bgCard,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderCard,
-  },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
-  addButton: { padding: 4 },
-  addButtonText: { fontSize: 28, color: colors.primary, lineHeight: 28 },
+  navAddButton: { paddingHorizontal: 8, paddingVertical: 4 },
+  navAddButtonText: { fontSize: 26, color: colors.primary, lineHeight: 28 },
 
   segmentedControl: {
     flexDirection: 'row',
