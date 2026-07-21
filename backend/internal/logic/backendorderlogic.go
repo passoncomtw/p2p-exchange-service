@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -10,6 +11,7 @@ import (
 	"p2p-exchange/internal/model"
 	"p2p-exchange/internal/svc"
 	"p2p-exchange/internal/types"
+	pkgws "p2p-exchange/pkg/ws"
 )
 
 // ── BackendListListingsLogic ──────────────────────────────────────────────────
@@ -252,6 +254,23 @@ func (l *BackendResolveOrderLogic) Resolve(req *types.ResolveOrderRequest) (inte
 
 	default:
 		return nil, apierrors.New(400, "invalid action")
+	}
+
+	// 推送 WS 事件
+	if l.svcCtx.MQ != nil {
+		finalStatus := "completed"
+		if req.Action == "refund" {
+			finalStatus = "cancelled"
+		}
+		payload := pkgws.OrderStatusChangedData{
+			OrderID:  order.ID,
+			Status:   finalStatus,
+			BuyerID:  order.BuyerID,
+			SellerID: order.SellerID,
+		}
+		if data, err := json.Marshal(payload); err == nil {
+			l.svcCtx.MQ.PublishAsync(pkgws.EventOrderStatusChanged, data)
+		}
 	}
 
 	return map[string]interface{}{"ok": true}, nil

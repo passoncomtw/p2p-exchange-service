@@ -9,6 +9,18 @@ import (
 )
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
+	// ── WebSocket ────────────────────────────────────────────────────────────
+	server.AddRoute(rest.Route{
+		Method:  http.MethodGet,
+		Path:    "/ws/app",
+		Handler: AppWSHandler(serverCtx),
+	})
+	server.AddRoute(rest.Route{
+		Method:  http.MethodGet,
+		Path:    "/ws/backend",
+		Handler: BackendWSHandler(serverCtx),
+	})
+
 	// ── v1 掛單（免登入，沿用 listings；createdBy 固定 demo_user） ──────────────
 	server.AddRoutes([]rest.Route{
 		{

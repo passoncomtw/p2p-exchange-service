@@ -80,6 +80,9 @@ func main() {
 		AppUser:       ctx.AppUser,
 		Wallet:        ctx.Wallet,
 	})
+	job.StartWsEventConsumer(ctx.MQ, job.WsEventDeps{
+		Hub: ctx.Hub,
+	})
 	job.StartTronWithdrawJob(rootCtx, c.Tron, job.TronWithdrawDeps{
 		RDB:            ctx.RDB,
 		CryptoWithdraw: ctx.CryptoWithdraw,

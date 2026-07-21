@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"time"
@@ -13,9 +14,27 @@ import (
 	"p2p-exchange/internal/svc"
 	"p2p-exchange/internal/types"
 	"p2p-exchange/pkg/notification"
+	pkgws "p2p-exchange/pkg/ws"
 )
 
 // ── helpers ───────────────────────────────────────────────────────────────────
+
+func publishOrderStatusChanged(ctx context.Context, svcCtx *svc.ServiceContext, order *model.Order, status string) {
+	if svcCtx.MQ == nil {
+		return
+	}
+	payload := pkgws.OrderStatusChangedData{
+		OrderID:  order.ID,
+		Status:   status,
+		BuyerID:  order.BuyerID,
+		SellerID: order.SellerID,
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+	svcCtx.MQ.PublishAsync(pkgws.EventOrderStatusChanged, data)
+}
 
 func sendNotification(ctx context.Context, svcCtx *svc.ServiceContext, recipientID, orderID int64, title, body, channel, priority string) {
 	svcCtx.Notifier.Send(ctx, notification.Message{
@@ -321,6 +340,7 @@ func (l *AppPayOrderLogic) Pay(uid int64, id int64) error {
 	}
 
 	sendNotification(l.ctx, l.svcCtx, order.SellerID, id, "買家已付款", "請確認收款並放行訂單", "orders", "high")
+	publishOrderStatusChanged(l.ctx, l.svcCtx, order, "paid")
 
 	return nil
 }
@@ -401,6 +421,7 @@ func (l *AppConfirmOrderLogic) Confirm(uid int64, id int64) error {
 	}
 
 	sendNotification(l.ctx, l.svcCtx, order.BuyerID, id, "訂單已完成", "賣家已放行，資產已轉入您的錢包", "orders", "high")
+	publishOrderStatusChanged(l.ctx, l.svcCtx, order, "completed")
 
 	return nil
 }
@@ -489,6 +510,7 @@ func (l *AppCancelOrderLogic) Cancel(uid int64, req *types.CancelOrderRequest) e
 		notifyID = order.BuyerID
 	}
 	sendNotification(l.ctx, l.svcCtx, notifyID, req.ID, "訂單已取消", "對方已取消此筆訂單", "orders", "normal")
+	publishOrderStatusChanged(l.ctx, l.svcCtx, order, "cancelled")
 
 	return nil
 }
@@ -552,6 +574,7 @@ func (l *AppDisputeOrderLogic) Dispute(uid int64, req *types.DisputeOrderRequest
 		notifyID = order.BuyerID
 	}
 	sendNotification(l.ctx, l.svcCtx, notifyID, req.ID, "訂單申訴", "對方已對此筆訂單提交申訴，客服將介入處理", "orders", "high")
+	publishOrderStatusChanged(l.ctx, l.svcCtx, order, "disputed")
 
 	return nil
 }
