@@ -1,5 +1,20 @@
 # P2P Exchange Service
 
+## Spec-Driven Development (SDD)
+
+本專案採用 OpenSpec 進行規格驅動開發。
+
+- **規格目錄**：[`openspec/specs/`](openspec/specs/) — 各領域業務規格
+- **變更追蹤**：[`openspec/changes/`](openspec/changes/) — 進行中與已封存的變更提案
+- **專案概覽**：[`openspec/project.md`](openspec/project.md) — 技術棧、領域表、核心狀態機
+
+常用指令（需安裝 `@fission-ai/openspec`）：
+- `/opsx:propose "描述"` — 提出新需求並產生規格與任務
+- `/opsx:apply` — 根據任務清單開始實作
+- `/opsx:explore "問題"` — 探索問題與釐清需求
+
+---
+
 ## 原型設計 (Claude design)
 
 v1 原型(使用者端手機 + 後台桌面)設計連結:

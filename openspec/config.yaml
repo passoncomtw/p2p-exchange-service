@@ -1,0 +1,19 @@
+schema: spec-driven
+
+context: |
+  P2P C2C 加密貨幣交易所。
+  Tech stack: Go (go-zero v1.10.1), PostgreSQL, Redis, NATS JetStream, gorilla/websocket,
+              React Native (Expo SDK 56, TypeScript), React Admin (MUI v5, Vite, JSX).
+  Auth: JWT — App 與 Backend 各自獨立 secret。
+  Clean Architecture: handler → logic/service → model/repository。
+  Response 格式: { code, message, data }。
+  分散式鎖: Redis AcquireLock，錢包操作前必須持鎖。
+  NATS subjects: order.status.changed / wallet.balance.changed / order.timeout.check / notification.push。
+  所有 spec 使用繁體中文撰寫。
+  參閱 openspec/project.md 取得完整領域與狀態機說明。
+
+rules:
+  spec:
+    - 使用繁體中文
+    - 包含狀態機、不變式、邊界條件、API 摘要四個區塊
+    - 邊界條件必須列出至少 3 個角落案例
