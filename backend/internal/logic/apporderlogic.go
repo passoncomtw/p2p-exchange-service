@@ -33,7 +33,8 @@ func publishOrderStatusChanged(ctx context.Context, svcCtx *svc.ServiceContext, 
 	if err != nil {
 		return
 	}
-	svcCtx.MQ.PublishAsync(pkgws.EventOrderStatusChanged, data)
+	// 發布到 P2P_NOTIFY stream，由 ws_event_job 消費後廣播至後台 WebSocket。
+	svcCtx.MQ.PublishAsync(pkgws.SubjectNotifyAdmin, data)
 }
 
 func sendNotification(ctx context.Context, svcCtx *svc.ServiceContext, recipientID, orderID int64, title, body, channel, priority string) {

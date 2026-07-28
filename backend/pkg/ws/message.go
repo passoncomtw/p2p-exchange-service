@@ -3,7 +3,11 @@ package ws
 import "encoding/json"
 
 const (
-	EventOrderStatusChanged  = "order.status.changed"
+	// SubjectNotifyAdmin 是發布到 NATS P2P_NOTIFY stream 的 admin 廣播 subject。
+	SubjectNotifyAdmin = "notify.admin.order"
+
+	// WebSocket message type（前端 event.type 識別用）。
+	EventOrderStatusChanged   = "order.status.changed"
 	EventWalletBalanceChanged = "wallet.balance.changed"
 )
 

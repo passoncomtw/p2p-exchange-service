@@ -14,50 +14,30 @@ type WsEventDeps struct {
 	Hub *pkgws.Hub
 }
 
-// StartWsEventConsumer 訂閱 NATS 事件並推送到 WebSocket 連線。
+// StartWsEventConsumer 訂閱 P2P_NOTIFY stream 的 notify.admin.* subject，
+// 將訂單狀態事件廣播至所有後台 WebSocket 連線。
 func StartWsEventConsumer(mqClient *mq.Client, deps WsEventDeps) {
 	if mqClient == nil || deps.Hub == nil {
 		return
 	}
-	subjects := []string{
-		pkgws.EventOrderStatusChanged,
-		pkgws.EventWalletBalanceChanged,
-	}
-	for _, subj := range subjects {
-		subj := subj
-		if err := mqClient.Subscribe(subj, func(_ context.Context, data []byte) error {
-			return handleWsEvent(subj, data, deps.Hub)
-		}); err != nil {
-			logx.Errorf("ws event consumer: subscribe %s error: %v", subj, err)
-		}
+	if err := mqClient.Subscribe("notify.admin.*", func(_ context.Context, data []byte) error {
+		return handleAdminNotify(data, deps.Hub)
+	}); err != nil {
+		logx.Errorf("ws event consumer: subscribe notify.admin.* error: %v", err)
 	}
 }
 
-func handleWsEvent(subject string, data []byte, hub *pkgws.Hub) error {
-	msg, err := pkgws.NewMessage(subject, json.RawMessage(data))
+func handleAdminNotify(data []byte, hub *pkgws.Hub) error {
+	var payload pkgws.OrderStatusChangedData
+	if err := json.Unmarshal(data, &payload); err != nil {
+		logx.Errorf("ws event: unmarshal admin notify error: %v", err)
+		return nil
+	}
+	msg, err := pkgws.NewMessage(pkgws.EventOrderStatusChanged, payload)
 	if err != nil {
 		logx.Errorf("ws event: marshal message error: %v", err)
 		return nil
 	}
-
-	switch subject {
-	case pkgws.EventOrderStatusChanged:
-		var payload pkgws.OrderStatusChangedData
-		if err := json.Unmarshal(data, &payload); err != nil {
-			logx.Errorf("ws event: unmarshal order.status.changed error: %v", err)
-			return nil
-		}
-		hub.SendToUser(payload.BuyerID, msg)
-		hub.SendToUser(payload.SellerID, msg)
-		hub.BroadcastToBackend(msg)
-
-	case pkgws.EventWalletBalanceChanged:
-		var payload pkgws.WalletBalanceChangedData
-		if err := json.Unmarshal(data, &payload); err != nil {
-			logx.Errorf("ws event: unmarshal wallet.balance.changed error: %v", err)
-			return nil
-		}
-		hub.SendToUser(payload.UserID, msg)
-	}
+	hub.BroadcastToBackend(msg)
 	return nil
 }

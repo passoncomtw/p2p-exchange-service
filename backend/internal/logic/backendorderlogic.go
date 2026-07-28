@@ -256,7 +256,7 @@ func (l *BackendResolveOrderLogic) Resolve(req *types.ResolveOrderRequest) (inte
 		return nil, apierrors.New(400, "invalid action")
 	}
 
-	// 推送 WS 事件
+	// 發布到 P2P_NOTIFY stream，由 ws_event_job 消費後廣播至後台 WebSocket。
 	if l.svcCtx.MQ != nil {
 		finalStatus := "completed"
 		if req.Action == "refund" {
@@ -269,7 +269,7 @@ func (l *BackendResolveOrderLogic) Resolve(req *types.ResolveOrderRequest) (inte
 			SellerID: order.SellerID,
 		}
 		if data, err := json.Marshal(payload); err == nil {
-			l.svcCtx.MQ.PublishAsync(pkgws.EventOrderStatusChanged, data)
+			l.svcCtx.MQ.PublishAsync(pkgws.SubjectNotifyAdmin, data)
 		}
 	}
 

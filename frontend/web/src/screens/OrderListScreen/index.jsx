@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useBackendWebSocket } from 'src/hooks/useBackendWebSocket'
 import {
   Box,
   Typography,
@@ -265,6 +266,10 @@ const OrderListScreen = () => {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  useBackendWebSocket(useCallback((msg) => {
+    if (msg.type === 'order.status.changed') fetchData()
+  }, [fetchData]))
 
   const handleSearch = () => {
     setPage(1)

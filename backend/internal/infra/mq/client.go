@@ -2,6 +2,7 @@ package mq
 
 import (
 	"fmt"
+	"time"
 
 	nats "github.com/nats-io/nats.go"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -38,6 +39,9 @@ func New(c config.NatsConf) *Client {
 	if err := ensureStream(js, c); err != nil {
 		logx.Errorf("nats ensure stream error: %v", err)
 	}
+	if err := ensureNotifyStream(js); err != nil {
+		logx.Errorf("nats ensure P2P_NOTIFY stream error: %v", err)
+	}
 	logx.Infof("nats jetstream connected: %s stream=%s", c.URL, c.StreamName)
 	return &Client{nc: nc, js: js, consumerName: c.ConsumerName}
 }
@@ -68,6 +72,27 @@ func ensureStream(js nats.JetStreamContext, c config.NatsConf) error {
 		},
 		Storage:   nats.FileStorage,
 		Retention: nats.LimitsPolicy,
+	})
+	return err
+}
+
+// ensureNotifyStream 建立 P2P_NOTIFY stream（WorkQueue，3 天保留）。
+// 用於 notify.admin.*（後台 WS 廣播）、notify.buyer.*、notify.seller.*（Push Notification）。
+func ensureNotifyStream(js nats.JetStreamContext) error {
+	const streamName = "P2P_NOTIFY"
+	if _, err := js.StreamInfo(streamName); err == nil {
+		return nil
+	}
+	_, err := js.AddStream(&nats.StreamConfig{
+		Name: streamName,
+		Subjects: []string{
+			"notify.admin.*",
+			"notify.buyer.*",
+			"notify.seller.*",
+		},
+		Storage:   nats.FileStorage,
+		Retention: nats.WorkQueuePolicy,
+		MaxAge:    72 * time.Hour,
 	})
 	return err
 }
