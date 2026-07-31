@@ -21,6 +21,7 @@ export default {
       orders: '訂單管理',
       finance: '財務管理',
       fiatWithdrawals: '法幣提領審核',
+      platformWallet: '平台錢包',
     },
   },
 

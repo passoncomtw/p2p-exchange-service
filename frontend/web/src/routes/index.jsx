@@ -9,6 +9,7 @@ const DashboardScreen = Loadable(lazy(() => import('src/screens/DashboardScreen'
 const MemberListScreen = Loadable(lazy(() => import('src/screens/MemberListScreen')))
 const OrderListScreen = Loadable(lazy(() => import('src/screens/OrderListScreen')))
 const FiatWithdrawalListScreen = Loadable(lazy(() => import('src/screens/FiatWithdrawalListScreen')))
+const PlatformWalletScreen = Loadable(lazy(() => import('src/screens/PlatformWalletScreen')))
 
 export default function AppRoutes() {
   return useRoutes([
@@ -31,6 +32,7 @@ export default function AppRoutes() {
         { path: 'members', element: <MemberListScreen /> },
         { path: 'orders', element: <OrderListScreen /> },
         { path: 'fiat-withdrawals', element: <FiatWithdrawalListScreen /> },
+        { path: 'platform-wallet', element: <PlatformWalletScreen /> },
       ],
     },
 

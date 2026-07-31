@@ -19,6 +19,9 @@ export default {
       members: '会员管理',
       memberList: '会员列表',
       orders: '订单管理',
+      finance: '财务管理',
+      fiatWithdrawals: '法币提领审核',
+      platformWallet: '平台钱包',
     },
   },
 

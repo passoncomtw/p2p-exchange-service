@@ -370,3 +370,13 @@ func (m *WalletModel) FindByUserID(ctx context.Context, userID int64) ([]*Wallet
 	}
 	return rows, nil
 }
+
+// SumCurrencyBalance returns the sum of available_balance + frozen_balance for all users of the given currency.
+func (m *WalletModel) SumCurrencyBalance(ctx context.Context, currency string) (string, error) {
+	var total string
+	err := m.conn.QueryRowCtx(ctx, &total,
+		`SELECT COALESCE(SUM(available_balance + frozen_balance), 0)::text FROM wallets WHERE currency = $1`,
+		currency,
+	)
+	return total, err
+}

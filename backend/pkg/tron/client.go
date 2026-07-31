@@ -291,6 +291,45 @@ func USDTToSun(amount string) (*big.Int, error) {
 	return sunInt, nil
 }
 
+// GetTRC20Balance queries the TRC-20 token balance for the given wallet address
+// via the TronGrid accounts endpoint. Returns the balance string in USDT (6-decimal).
+func (c *Client) GetTRC20Balance(ctx context.Context, address, contractAddress string) (string, error) {
+	url := fmt.Sprintf("%s/v1/accounts/%s", c.baseURL, address)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "0", err
+	}
+	if c.apiKey != "" {
+		req.Header.Set("TRON-PRO-API-KEY", c.apiKey)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "0", err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Data []struct {
+			TRC20 []map[string]string `json:"trc20"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "0", err
+	}
+	if len(result.Data) == 0 {
+		return "0", nil
+	}
+	for _, tokenMap := range result.Data[0].TRC20 {
+		if sunStr, ok := tokenMap[contractAddress]; ok {
+			if bal, ok := USDTAmountFromSun(sunStr); ok {
+				return bal.Text('f', 6), nil
+			}
+		}
+	}
+	return "0", nil
+}
+
 // HashRawData returns SHA256(rawDataBytes) for Tron transaction signing.
 func HashRawData(rawDataHex string) ([]byte, error) {
 	b, err := hex.DecodeString(rawDataHex)

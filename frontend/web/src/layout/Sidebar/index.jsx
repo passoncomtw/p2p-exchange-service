@@ -52,6 +52,7 @@ const buildMenuItems = (t) => [
     icon: <WalletIcon sx={{ fontSize: 18 }} />,
     children: [
       { key: '/fiat-withdrawals', label: t('sidebar.menu.fiatWithdrawals') },
+      { key: '/platform-wallet', label: t('sidebar.menu.platformWallet') },
     ],
   },
 ]

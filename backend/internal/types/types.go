@@ -472,11 +472,13 @@ type BackendReviewFiatWithdrawalRequest struct {
 // ── backend platform wallet info (PEP-38) ────────────────────────────────────
 
 type TronWalletInfo struct {
-	Enabled            bool   `json:"enabled"`
-	Network            string `json:"network"`
-	HotWalletAddress   string `json:"hotWalletAddress"`
-	USDTContractAddress string `json:"usdtContractAddress"`
-	ConfirmationBlocks  int    `json:"confirmationBlocks"`
+	Enabled              bool   `json:"enabled"`
+	Network              string `json:"network"`
+	HotWalletAddress     string `json:"hotWalletAddress"`
+	USDTContractAddress  string `json:"usdtContractAddress"`
+	ConfirmationBlocks   int    `json:"confirmationBlocks"`
+	OnChainBalance       string `json:"onChainBalance"`
+	PlatformVirtualBalance string `json:"platformVirtualBalance"`
 }
 
 type ECPayInfo struct {
