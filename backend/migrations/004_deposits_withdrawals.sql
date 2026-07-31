@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS fiat_deposits (
     user_id             BIGINT       NOT NULL REFERENCES app_users(id),
     currency            VARCHAR(10)  NOT NULL DEFAULT 'TWD',
     amount              NUMERIC(18, 2) NOT NULL,
-    ecpay_order_no      VARCHAR(50),
+    ecpay_order_no      VARCHAR(50)  UNIQUE,
     merchant_trade_no   VARCHAR(50)  NOT NULL,
     status              VARCHAR(20)  NOT NULL DEFAULT 'pending'
                         CHECK (status IN ('pending', 'paid', 'failed')),
