@@ -64,3 +64,22 @@ func (m *CryptoDepositModel) ListPending(ctx context.Context) ([]*CryptoDeposit,
 	)
 	return rows, err
 }
+
+func (m *CryptoDepositModel) ListByUserID(ctx context.Context, userID int64, limit, offset int64) ([]*CryptoDeposit, error) {
+	var rows []*CryptoDeposit
+	err := m.conn.QueryRowsCtx(ctx, &rows,
+		`SELECT id, user_id, currency, amount::text, tx_hash, from_address, memo, status, confirmed_at, created_at, updated_at
+		 FROM crypto_deposits WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+		userID, limit, offset,
+	)
+	return rows, err
+}
+
+func (m *CryptoDepositModel) CountByUserID(ctx context.Context, userID int64) (int64, error) {
+	var count int64
+	err := m.conn.QueryRowCtx(ctx, &count,
+		`SELECT COUNT(*) FROM crypto_deposits WHERE user_id = $1`,
+		userID,
+	)
+	return count, err
+}

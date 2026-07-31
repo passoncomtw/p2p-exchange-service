@@ -314,6 +314,26 @@ type GetCryptoDepositInfoResponse struct {
 	ContractAddress string `json:"contractAddress"`
 }
 
+type AppListCryptoDepositsRequest struct {
+	Limit  int64 `form:"limit,optional,default=20"`
+	Offset int64 `form:"offset,optional,default=0"`
+}
+
+type CryptoDepositItem struct {
+	ID          int64   `json:"id"`
+	Currency    string  `json:"currency"`
+	Amount      string  `json:"amount"`
+	TxHash      string  `json:"txHash"`
+	Status      string  `json:"status"`
+	ConfirmedAt *string `json:"confirmedAt"`
+	CreatedAt   string  `json:"createdAt"`
+}
+
+type AppListCryptoDepositsResponse struct {
+	List  []CryptoDepositItem `json:"list"`
+	Total int64               `json:"total"`
+}
+
 // ── crypto withdrawal (PEP-31) ───────────────────────────────────────────────
 
 type CryptoWithdrawRequest struct {

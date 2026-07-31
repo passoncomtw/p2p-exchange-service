@@ -105,9 +105,8 @@ func processTransfer(ctx context.Context, conf config.TronConf, client *tron.Cli
 	}
 
 	// Match memo to user (8-char hex of user_id)
-	memo = strings.TrimSpace(memo)
-	userID, parseErr := strconv.ParseInt(memo, 16, 64)
-	if parseErr != nil || userID <= 0 {
+	userID, parseErr := parseMemoToUserID(memo)
+	if parseErr != nil {
 		logx.Infof("[tron-scanner] tx %s: unmatched memo %q – skipping credit", tx.TransactionID, memo)
 		return nil
 	}
@@ -220,4 +219,21 @@ func setTronScannerLastTs(ctx context.Context, rdbClient *rdb.Client, tsMs int64
 		return
 	}
 	_ = rdbClient.Set(ctx, tronScannerLastTsKey, strconv.FormatInt(tsMs, 10), 30*24*time.Hour)
+}
+
+// parseMemoToUserID 將 8-char hex memo 解析為 user ID。
+// memo 為空、非 hex、或解析結果 <= 0 均回傳 error。
+func parseMemoToUserID(memo string) (int64, error) {
+	memo = strings.TrimSpace(memo)
+	if memo == "" {
+		return 0, fmt.Errorf("empty memo")
+	}
+	userID, err := strconv.ParseInt(memo, 16, 64)
+	if err != nil {
+		return 0, fmt.Errorf("invalid hex memo %q: %w", memo, err)
+	}
+	if userID <= 0 {
+		return 0, fmt.Errorf("memo %q parsed to non-positive userID %d", memo, userID)
+	}
+	return userID, nil
 }

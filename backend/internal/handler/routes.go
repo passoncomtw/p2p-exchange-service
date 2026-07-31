@@ -174,6 +174,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Handler: AppGetCryptoDepositInfoHandler(serverCtx),
 			},
 			{
+				Method:  http.MethodGet,
+				Path:    "/app/wallets/crypto/deposits",
+				Handler: AppListCryptoDepositsHandler(serverCtx),
+			},
+			{
 				Method:  http.MethodPost,
 				Path:    "/app/wallets/crypto/withdraw",
 				Handler: AppCryptoWithdrawHandler(serverCtx),
