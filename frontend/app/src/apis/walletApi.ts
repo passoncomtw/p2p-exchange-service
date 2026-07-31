@@ -7,6 +7,8 @@ import type {
   CryptoDepositInfo,
   CryptoWithdrawRequest,
   CryptoWithdrawResponse,
+  ListCryptoDepositsResponse,
+  ListCryptoWithdrawalsResponse,
   FiatDepositRequest,
   FiatDepositResponse,
   FiatWithdrawRequest,
@@ -41,6 +43,22 @@ export const walletApi = {
     const response = await httpClientWithAuth.postWithToken<ApiResponse<CryptoWithdrawResponse>>(
       '/app/wallets/crypto/withdraw',
       req
+    );
+    return response.data.data;
+  },
+
+  listCryptoDeposits: async (limit = 20, offset = 0): Promise<ListCryptoDepositsResponse> => {
+    const response = await httpClientWithAuth.getWithToken<ApiResponse<ListCryptoDepositsResponse>>(
+      '/app/wallets/crypto/deposits',
+      { params: { limit, offset } }
+    );
+    return response.data.data;
+  },
+
+  listCryptoWithdrawals: async (limit = 20, offset = 0): Promise<ListCryptoWithdrawalsResponse> => {
+    const response = await httpClientWithAuth.getWithToken<ApiResponse<ListCryptoWithdrawalsResponse>>(
+      '/app/wallets/crypto/withdrawals',
+      { params: { limit, offset } }
     );
     return response.data.data;
   },

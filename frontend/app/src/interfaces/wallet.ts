@@ -66,3 +66,34 @@ export interface FiatWithdrawResponse {
   id: number;
   status: string;
 }
+
+export interface CryptoDepositItem {
+  id: number;
+  currency: string;
+  amount: string;
+  txHash: string;
+  status: 'pending' | 'confirmed' | 'failed';
+  confirmedAt: string | null;
+  createdAt: string;
+}
+
+export interface ListCryptoDepositsResponse {
+  list: CryptoDepositItem[];
+  total: number;
+}
+
+export interface CryptoWithdrawalItem {
+  id: number;
+  currency: string;
+  amount: string;
+  toAddress: string;
+  txHash: string | null;
+  status: 'pending' | 'broadcasting' | 'confirmed' | 'failed';
+  confirmedAt: string | null;
+  createdAt: string;
+}
+
+export interface ListCryptoWithdrawalsResponse {
+  list: CryptoWithdrawalItem[];
+  total: number;
+}
