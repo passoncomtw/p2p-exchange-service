@@ -346,6 +346,27 @@ type CryptoWithdrawResponse struct {
 	Status string `json:"status"`
 }
 
+type AppListCryptoWithdrawalsRequest struct {
+	Limit  int64 `form:"limit,optional,default=20"`
+	Offset int64 `form:"offset,optional,default=0"`
+}
+
+type CryptoWithdrawalItem struct {
+	ID          int64   `json:"id"`
+	Currency    string  `json:"currency"`
+	Amount      string  `json:"amount"`
+	ToAddress   string  `json:"toAddress"`
+	TxHash      *string `json:"txHash"`
+	Status      string  `json:"status"`
+	ConfirmedAt *string `json:"confirmedAt"`
+	CreatedAt   string  `json:"createdAt"`
+}
+
+type AppListCryptoWithdrawalsResponse struct {
+	List  []CryptoWithdrawalItem `json:"list"`
+	Total int64                  `json:"total"`
+}
+
 // ── fiat deposit (PEP-34) ────────────────────────────────────────────────────
 
 type FiatDepositRequest struct {

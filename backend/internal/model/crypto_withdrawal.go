@@ -76,3 +76,22 @@ func (m *CryptoWithdrawalModel) UpdateFailed(ctx context.Context, id int64) erro
 	)
 	return err
 }
+
+func (m *CryptoWithdrawalModel) ListByUserID(ctx context.Context, userID int64, limit, offset int64) ([]*CryptoWithdrawal, error) {
+	var rows []*CryptoWithdrawal
+	err := m.conn.QueryRowsCtx(ctx, &rows,
+		`SELECT id, user_id, currency, amount::text, to_address, tx_hash, status, broadcast_at, confirmed_at, created_at, updated_at
+		 FROM crypto_withdrawals WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+		userID, limit, offset,
+	)
+	return rows, err
+}
+
+func (m *CryptoWithdrawalModel) CountByUserID(ctx context.Context, userID int64) (int64, error) {
+	var count int64
+	err := m.conn.QueryRowCtx(ctx, &count,
+		`SELECT COUNT(*) FROM crypto_withdrawals WHERE user_id = $1`,
+		userID,
+	)
+	return count, err
+}

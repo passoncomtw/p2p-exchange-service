@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	apperrors "p2p-exchange/internal/errors"
@@ -75,4 +76,57 @@ func (l *AppCryptoWithdrawLogic) Withdraw(userID int64, req *types.CryptoWithdra
 		ID:     w.ID,
 		Status: "pending",
 	}, nil
+}
+
+// ── AppListCryptoWithdrawalsLogic ─────────────────────────────────────────────
+
+type AppListCryptoWithdrawalsLogic struct {
+	logx.Logger
+	ctx    context.Context
+	svcCtx *svc.ServiceContext
+}
+
+func NewAppListCryptoWithdrawalsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AppListCryptoWithdrawalsLogic {
+	return &AppListCryptoWithdrawalsLogic{
+		Logger: logx.WithContext(ctx),
+		ctx:    ctx,
+		svcCtx: svcCtx,
+	}
+}
+
+func (l *AppListCryptoWithdrawalsLogic) List(userID int64, req *types.AppListCryptoWithdrawalsRequest) (*types.AppListCryptoWithdrawalsResponse, error) {
+	limit := req.Limit
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+
+	rows, err := l.svcCtx.CryptoWithdraw.ListByUserID(l.ctx, userID, limit, req.Offset)
+	if err != nil {
+		return nil, apperrors.ErrInternal
+	}
+
+	total, err := l.svcCtx.CryptoWithdraw.CountByUserID(l.ctx, userID)
+	if err != nil {
+		return nil, apperrors.ErrInternal
+	}
+
+	items := make([]types.CryptoWithdrawalItem, 0, len(rows))
+	for _, r := range rows {
+		item := types.CryptoWithdrawalItem{
+			ID:        r.ID,
+			Currency:  r.Currency,
+			Amount:    r.Amount,
+			ToAddress: r.ToAddress,
+			TxHash:    r.TxHash,
+			Status:    r.Status,
+			CreatedAt: r.CreatedAt.Format(time.RFC3339),
+		}
+		if r.ConfirmedAt != nil {
+			s := r.ConfirmedAt.Format(time.RFC3339)
+			item.ConfirmedAt = &s
+		}
+		items = append(items, item)
+	}
+
+	return &types.AppListCryptoWithdrawalsResponse{List: items, Total: total}, nil
 }
