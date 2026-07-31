@@ -6,6 +6,11 @@ const (
 	// SubjectNotifyAdmin 是發布到 NATS P2P_NOTIFY stream 的 admin 廣播 subject。
 	SubjectNotifyAdmin = "notify.admin.order"
 
+	// SubjectNotifyBuyerPrefix / SubjectNotifySellerPrefix 用於 per-user 推送，
+	// 完整 subject 為 prefix + strconv.FormatInt(userID, 10)。
+	SubjectNotifyBuyerPrefix  = "notify.buyer."
+	SubjectNotifySellerPrefix = "notify.seller."
+
 	// WebSocket message type（前端 event.type 識別用）。
 	EventOrderStatusChanged   = "order.status.changed"
 	EventWalletBalanceChanged = "wallet.balance.changed"

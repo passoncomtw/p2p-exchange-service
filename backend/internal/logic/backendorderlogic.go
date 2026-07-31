@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -270,6 +271,8 @@ func (l *BackendResolveOrderLogic) Resolve(req *types.ResolveOrderRequest) (inte
 		}
 		if data, err := json.Marshal(payload); err == nil {
 			l.svcCtx.MQ.PublishAsync(pkgws.SubjectNotifyAdmin, data)
+			l.svcCtx.MQ.PublishAsync(pkgws.SubjectNotifyBuyerPrefix+strconv.FormatInt(order.BuyerID, 10), data)
+			l.svcCtx.MQ.PublishAsync(pkgws.SubjectNotifySellerPrefix+strconv.FormatInt(order.SellerID, 10), data)
 		}
 	}
 

@@ -15,6 +15,7 @@ import { resetTransient } from './navigation/store/slices/authSlices';
 import { setStoreRef } from './apis';
 import { useAppSelector } from './navigation/store/hooks';
 import { usePushNotifications } from './hooks/usePushNotifications';
+import { useAppWebSocket } from './hooks/useAppWebSocket';
 import { NotificationHandler } from './components/NotificationHandler';
 
 SplashScreen.preventAutoHideAsync();
@@ -25,6 +26,7 @@ setStoreRef(store);
 function AppInner({ theme }: { theme: typeof DefaultTheme }) {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   usePushNotifications(isAuthenticated);
+  useAppWebSocket();
 
   return (
     <>

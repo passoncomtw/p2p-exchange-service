@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -33,8 +34,10 @@ func publishOrderStatusChanged(ctx context.Context, svcCtx *svc.ServiceContext, 
 	if err != nil {
 		return
 	}
-	// 發布到 P2P_NOTIFY stream，由 ws_event_job 消費後廣播至後台 WebSocket。
+	// 發布到 P2P_NOTIFY stream：admin 廣播 + 個別 buyer/seller 推送。
 	svcCtx.MQ.PublishAsync(pkgws.SubjectNotifyAdmin, data)
+	svcCtx.MQ.PublishAsync(pkgws.SubjectNotifyBuyerPrefix+strconv.FormatInt(order.BuyerID, 10), data)
+	svcCtx.MQ.PublishAsync(pkgws.SubjectNotifySellerPrefix+strconv.FormatInt(order.SellerID, 10), data)
 }
 
 func sendNotification(ctx context.Context, svcCtx *svc.ServiceContext, recipientID, orderID int64, title, body, channel, priority string) {
