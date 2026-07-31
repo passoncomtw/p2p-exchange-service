@@ -204,6 +204,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Path:    "/app/wallets/fiat/withdraw",
 				Handler: AppFiatWithdrawHandler(serverCtx),
 			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/wallets/fiat/withdrawals",
+				Handler: AppListFiatWithdrawalsHandler(serverCtx),
+			},
 		},
 		rest.WithJwt(serverCtx.Config.App.AccessSecret),
 	)

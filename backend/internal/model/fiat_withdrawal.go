@@ -37,6 +37,30 @@ func (m *FiatWithdrawalModel) Create(ctx context.Context, w *FiatWithdrawal) err
 	)
 }
 
+func (m *FiatWithdrawalModel) CreateInTx(ctx context.Context, session sqlx.Session, w *FiatWithdrawal) error {
+	return session.QueryRowCtx(ctx, &w.ID,
+		`INSERT INTO fiat_withdrawals (user_id, currency, amount, bank_code, bank_account, account_name, status)
+		 VALUES ($1, $2, $3, $4, $5, $6, 'pending') RETURNING id`,
+		w.UserID, w.Currency, w.Amount, w.BankCode, w.BankAccount, w.AccountName,
+	)
+}
+
+func (m *FiatWithdrawalModel) ListByUserID(ctx context.Context, userID int64, limit, offset int64) ([]*FiatWithdrawal, error) {
+	var rows []*FiatWithdrawal
+	err := m.conn.QueryRowsCtx(ctx, &rows,
+		`SELECT id, user_id, currency, amount::text, bank_code, bank_account, account_name, status, reviewed_by, reviewed_at, reject_reason, created_at, updated_at
+		 FROM fiat_withdrawals WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+		userID, limit, offset,
+	)
+	return rows, err
+}
+
+func (m *FiatWithdrawalModel) CountByUserID(ctx context.Context, userID int64) (int64, error) {
+	var count int64
+	err := m.conn.QueryRowCtx(ctx, &count, `SELECT COUNT(*) FROM fiat_withdrawals WHERE user_id = $1`, userID)
+	return count, err
+}
+
 func (m *FiatWithdrawalModel) FindByID(ctx context.Context, id int64) (*FiatWithdrawal, error) {
 	var w FiatWithdrawal
 	err := m.conn.QueryRowCtx(ctx, &w,

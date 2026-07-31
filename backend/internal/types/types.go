@@ -414,6 +414,28 @@ type FiatWithdrawResponse struct {
 	Status string `json:"status"`
 }
 
+// ── app fiat withdrawal list (PEP-35) ────────────────────────────────────────
+
+type AppListFiatWithdrawalsRequest struct {
+	Limit  int64 `form:"limit,optional,default=20"`
+	Offset int64 `form:"offset,optional,default=0"`
+}
+
+type AppFiatWithdrawalItem struct {
+	ID              int64  `json:"id"`
+	Currency        string `json:"currency"`
+	Amount          string `json:"amount"`
+	BankCode        string `json:"bankCode"`
+	BankAccountTail string `json:"bankAccountTail"`
+	Status          string `json:"status"`
+	CreatedAt       string `json:"createdAt"`
+}
+
+type AppListFiatWithdrawalsResponse struct {
+	List  []AppFiatWithdrawalItem `json:"list"`
+	Total int64                   `json:"total"`
+}
+
 // ── backend fiat withdrawal review (PEP-36) ──────────────────────────────────
 
 type BackendListFiatWithdrawalsRequest struct {
