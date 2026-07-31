@@ -195,6 +195,11 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				Handler: AppFiatDepositHandler(serverCtx),
 			},
 			{
+				Method:  http.MethodGet,
+				Path:    "/app/wallets/fiat/deposits",
+				Handler: AppListFiatDepositsHandler(serverCtx),
+			},
+			{
 				Method:  http.MethodPost,
 				Path:    "/app/wallets/fiat/withdraw",
 				Handler: AppFiatWithdrawHandler(serverCtx),

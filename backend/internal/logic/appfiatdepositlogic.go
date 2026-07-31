@@ -79,3 +79,56 @@ func (l *AppFiatDepositLogic) CreateDeposit(userID int64, req *types.FiatDeposit
 		FormParams:      params,
 	}, nil
 }
+
+// ── AppListFiatDepositsLogic ──────────────────────────────────────────────────
+
+type AppListFiatDepositsLogic struct {
+	logx.Logger
+	ctx    context.Context
+	svcCtx *svc.ServiceContext
+}
+
+func NewAppListFiatDepositsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AppListFiatDepositsLogic {
+	return &AppListFiatDepositsLogic{
+		Logger: logx.WithContext(ctx),
+		ctx:    ctx,
+		svcCtx: svcCtx,
+	}
+}
+
+func (l *AppListFiatDepositsLogic) List(userID int64, req *types.AppListFiatDepositsRequest) (*types.AppListFiatDepositsResponse, error) {
+	limit := req.Limit
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+
+	rows, err := l.svcCtx.FiatDeposit.ListByUserID(l.ctx, userID, limit, req.Offset)
+	if err != nil {
+		return nil, apperrors.ErrInternal
+	}
+
+	total, err := l.svcCtx.FiatDeposit.CountByUserID(l.ctx, userID)
+	if err != nil {
+		return nil, apperrors.ErrInternal
+	}
+
+	items := make([]types.FiatDepositItem, 0, len(rows))
+	for _, r := range rows {
+		item := types.FiatDepositItem{
+			ID:              r.ID,
+			Currency:        r.Currency,
+			Amount:          r.Amount,
+			MerchantTradeNo: r.MerchantTradeNo,
+			Status:          r.Status,
+			PaymentType:     r.PaymentType,
+			CreatedAt:       r.CreatedAt.Format(time.RFC3339),
+		}
+		if r.PaidAt != nil {
+			s := r.PaidAt.Format(time.RFC3339)
+			item.PaidAt = &s
+		}
+		items = append(items, item)
+	}
+
+	return &types.AppListFiatDepositsResponse{List: items, Total: total}, nil
+}

@@ -63,3 +63,22 @@ func (m *FiatDepositModel) UpdateFailed(ctx context.Context, id int64) error {
 	)
 	return err
 }
+
+func (m *FiatDepositModel) ListByUserID(ctx context.Context, userID int64, limit, offset int64) ([]*FiatDeposit, error) {
+	var rows []*FiatDeposit
+	err := m.conn.QueryRowsCtx(ctx, &rows,
+		`SELECT id, user_id, currency, amount::text, ecpay_order_no, merchant_trade_no, status, payment_type, paid_at, created_at, updated_at
+		 FROM fiat_deposits WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+		userID, limit, offset,
+	)
+	return rows, err
+}
+
+func (m *FiatDepositModel) CountByUserID(ctx context.Context, userID int64) (int64, error) {
+	var count int64
+	err := m.conn.QueryRowCtx(ctx, &count,
+		`SELECT COUNT(*) FROM fiat_deposits WHERE user_id = $1`,
+		userID,
+	)
+	return count, err
+}

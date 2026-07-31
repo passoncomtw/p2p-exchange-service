@@ -379,6 +379,27 @@ type FiatDepositResponse struct {
 	FormParams      map[string]string `json:"formParams"`
 }
 
+type AppListFiatDepositsRequest struct {
+	Limit  int64 `form:"limit,optional,default=20"`
+	Offset int64 `form:"offset,optional,default=0"`
+}
+
+type FiatDepositItem struct {
+	ID              int64   `json:"id"`
+	Currency        string  `json:"currency"`
+	Amount          string  `json:"amount"`
+	MerchantTradeNo string  `json:"merchantTradeNo"`
+	Status          string  `json:"status"`
+	PaymentType     *string `json:"paymentType"`
+	PaidAt          *string `json:"paidAt"`
+	CreatedAt       string  `json:"createdAt"`
+}
+
+type AppListFiatDepositsResponse struct {
+	List  []FiatDepositItem `json:"list"`
+	Total int64             `json:"total"`
+}
+
 // ── fiat withdrawal (PEP-35) ─────────────────────────────────────────────────
 
 type FiatWithdrawRequest struct {
