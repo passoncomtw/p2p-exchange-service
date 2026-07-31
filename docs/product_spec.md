@@ -28,6 +28,7 @@
 | username | VARCHAR(50) UNIQUE NOT NULL | 帳號 |
 | password_hash | VARCHAR(255) NOT NULL | 密碼雜湊（bcrypt） |
 | email | VARCHAR(255) | 電子郵件（可為 NULL） |
+| expo_push_token | VARCHAR(255) | Expo Push Notification Token（可為 NULL） |
 | created_at | TIMESTAMPTZ | 建立時間 |
 | updated_at | TIMESTAMPTZ | 更新時間 |
 
@@ -175,12 +176,86 @@ v0.2.0 新增。Append-only，不可修改刪除。
 |------|------|------|
 | id | BIGSERIAL PK | |
 | wallet_id | BIGINT FK → wallets | 對應錢包 |
-| type | VARCHAR(20) NOT NULL | freeze / unfreeze / transfer_in / transfer_out / fee_deduct |
+| type | VARCHAR(20) NOT NULL | freeze / unfreeze / transfer_in / transfer_out / fee_deduct / deposit / withdraw / crypto_deposit / crypto_withdraw / fiat_deposit / fiat_withdraw |
 | amount | NUMERIC(38,18) NOT NULL | 變動金額（正數增加，負數減少） |
 | balance_after | NUMERIC(38,18) NOT NULL | 異動後 available_balance 快照 |
 | ref_order_no | VARCHAR(30) | 關聯訂單編號 |
-| tx_hash | VARCHAR(100) | 預留（v0.3.0）；內部轉帳為 NULL，充值/提領為鏈上 tx hash |
+| tx_hash | VARCHAR(100) | 內部轉帳為 NULL，充值/提領為鏈上 tx hash |
 | created_at | TIMESTAMPTZ | 建立時間（無 updated_at） |
+
+### 2.12 crypto_deposits（鏈上 USDT 充值記錄）
+
+v0.3.0 新增。記錄每筆鏈上充值偵測與入帳流程。
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| id | BIGSERIAL PK | |
+| user_id | BIGINT FK → app_users | 充值使用者 |
+| currency | VARCHAR(20) DEFAULT 'USDT' | 幣種 |
+| amount | NUMERIC(38,18) NOT NULL | 充值金額 |
+| tx_hash | VARCHAR(100) UNIQUE NOT NULL | 鏈上 transaction hash |
+| from_address | VARCHAR(100) NOT NULL | 來源地址 |
+| memo | VARCHAR(50) | 識別使用者的備注 |
+| status | VARCHAR(20) DEFAULT 'pending' | pending / confirmed / failed |
+| confirmed_at | TIMESTAMPTZ | 確認入帳時間 |
+| created_at | TIMESTAMPTZ | 建立時間 |
+| updated_at | TIMESTAMPTZ | 更新時間 |
+
+### 2.13 crypto_withdrawals（鏈上 USDT 提領記錄）
+
+v0.3.0 新增。記錄每筆鏈上提領申請與廣播流程。
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| id | BIGSERIAL PK | |
+| user_id | BIGINT FK → app_users | 提領使用者 |
+| currency | VARCHAR(20) DEFAULT 'USDT' | 幣種 |
+| amount | NUMERIC(38,18) NOT NULL | 提領金額 |
+| to_address | VARCHAR(100) NOT NULL | 目標地址 |
+| tx_hash | VARCHAR(100) UNIQUE | 鏈上 transaction hash（廣播後填入） |
+| status | VARCHAR(20) DEFAULT 'pending' | pending / broadcasting / confirmed / failed |
+| broadcast_at | TIMESTAMPTZ | 廣播時間 |
+| confirmed_at | TIMESTAMPTZ | 確認到帳時間 |
+| created_at | TIMESTAMPTZ | 建立時間 |
+| updated_at | TIMESTAMPTZ | 更新時間 |
+
+### 2.14 fiat_deposits（ECPay TWD 入金記錄）
+
+v0.3.0 新增。記錄每筆 ECPay 法幣入金申請與 Webhook 確認。
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| id | BIGSERIAL PK | |
+| user_id | BIGINT FK → app_users | 入金使用者 |
+| currency | VARCHAR(10) DEFAULT 'TWD' | 幣種 |
+| amount | NUMERIC(18,2) NOT NULL | 入金金額 |
+| ecpay_order_no | VARCHAR(50) | ECPay 回傳訂單編號 |
+| merchant_trade_no | VARCHAR(50) UNIQUE NOT NULL | 平台產生的唯一交易號 |
+| status | VARCHAR(20) DEFAULT 'pending' | pending / paid / failed |
+| payment_type | VARCHAR(30) | ECPay 付款方式 |
+| paid_at | TIMESTAMPTZ | 付款確認時間 |
+| created_at | TIMESTAMPTZ | 建立時間 |
+| updated_at | TIMESTAMPTZ | 更新時間 |
+
+### 2.15 fiat_withdrawals（TWD 提領申請記錄）
+
+v0.3.0 新增。記錄每筆 TWD 提領申請與後台審核結果。
+
+| 欄位 | 型別 | 說明 |
+|------|------|------|
+| id | BIGSERIAL PK | |
+| user_id | BIGINT FK → app_users | 提領使用者 |
+| currency | VARCHAR(10) DEFAULT 'TWD' | 幣種 |
+| amount | NUMERIC(18,2) NOT NULL | 提領金額 |
+| bank_code | VARCHAR(10) NOT NULL | 銀行代碼 |
+| bank_account | VARCHAR(30) NOT NULL | 銀行帳號 |
+| account_name | VARCHAR(50) NOT NULL | 戶名 |
+| status | VARCHAR(20) DEFAULT 'pending' | pending / approved / rejected |
+| reviewed_by | BIGINT FK → backend_users | 審核管理員 |
+| reviewed_at | TIMESTAMPTZ | 審核時間 |
+| reject_reason | TEXT | 拒絕原因 |
+| created_at | TIMESTAMPTZ | 建立時間 |
+| updated_at | TIMESTAMPTZ | 更新時間 |
 
 ### 2.11 order_status_logs（訂單狀態日誌）
 
