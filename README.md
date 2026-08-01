@@ -274,3 +274,111 @@ dispatch(pushNotification({ type: 'error', message: t('order.message.submitFaile
 - 需要使用者確認的操作（取消掛單確認、仲裁確認等）
 - 帶有導航按鈕的提示（尚未新增收款帳戶）
 - 欄位格式驗證（金額格式錯誤）
+
+---
+
+## NATS JetStream
+
+### 背景與技術決策
+
+| 項目 | 決定 |
+|---|---|
+| MQ 服務 | Synadia Cloud Free Plan（含 JetStream） |
+| Stream Retention | WorkQueue — 訊息被 consumer ack 後立即刪除 |
+| 連線方式 | `.creds` 憑證檔（Synadia Cloud）或 User/Password（本地） |
+
+### Stream 架構
+
+所有 Stream 使用 WorkQueue Retention，每個 Stream 只能有一個 Consumer。
+
+| Stream | Subjects | 保留 | 用途 |
+|--------|----------|------|------|
+| `P2P_ORDERS` | `order.*`, `order.payment.*` | 7 天 | 訂單生命週期事件 |
+| `P2P_LEDGER` | `ledger.*` | 30 天 | 平台內部帳本操作 |
+| `P2P_NOTIFY` | `notify.buyer.*`, `notify.seller.*`, `notify.admin.*` | 3 天 | WebSocket 推播 |
+
+Stream 於服務啟動時自動初始化，若已存在則跳過建立（冪等）。
+
+### Synadia Cloud 連線設定
+
+| 項目 | 值 |
+|---|---|
+| Server URL | `tls://connect.ngs.global` |
+| Cluster | `ngsprod-aws-apeast2`（Taipei, Taiwan），RTT 約 9–20ms |
+| Account ID | AC5PRLIT |
+| JetStream | 已啟用 |
+| Max Connections | 10 |
+| Max Msg Payload | 512 KiB |
+| Network Data | 10 GiB/month |
+| Storage | 5 GiB |
+
+**設定方式：**
+
+```yaml
+# backend/etc/config.yaml
+Nats:
+  URL: "tls://connect.ngs.global"
+  CredsPath: "/path/to/NGS-Default-CLI.creds"
+  StreamName: "p2p-exchange"
+  ConsumerName: "p2p-exchange-consumer"
+```
+
+憑證檔（`.creds`）從 Synadia Cloud → Get Connected 下載，**不得 commit 至 Git**。建議放置路徑：`~/.config/nats/NGS-Default-CLI.creds`
+
+**本地開發（使用 Docker Compose NATS）：**
+
+```yaml
+Nats:
+  URL: "nats://localhost:30422"
+  User: "nats"
+  Password: "nats@local123"
+  StreamName: "p2p-exchange"
+  ConsumerName: "p2p-exchange-consumer"
+```
+
+### NATS CLI 連線（Synadia Cloud）
+
+```bash
+nats context add "NGS-Default-CLI" \
+  --server "tls://connect.ngs.global" \
+  --creds "~/.config/nats/NGS-Default-CLI.creds" \
+  --select
+```
+
+### Stream 手動建立指令
+
+Retention policy 無法透過 `stream edit` 修改，必須刪除後重建。
+
+```bash
+# 刪除
+nats stream rm P2P_ORDERS --force
+nats stream rm P2P_LEDGER --force
+nats stream rm P2P_NOTIFY --force
+
+# 重建
+nats stream add P2P_ORDERS \
+  --subjects "order.*,order.payment.*" \
+  --storage file --retention workq \
+  --max-age 7d --replicas 1 --discard old --defaults
+
+nats stream add P2P_LEDGER \
+  --subjects "ledger.*" \
+  --storage file --retention workq \
+  --max-age 30d --replicas 1 --discard old --defaults
+
+nats stream add P2P_NOTIFY \
+  --subjects "notify.buyer.*,notify.seller.*,notify.admin.*" \
+  --storage file --retention workq \
+  --max-age 3d --replicas 1 --discard old --defaults
+```
+
+### Go 模組路徑
+
+| 元件 | 路徑 |
+|------|------|
+| Client / Stream 初始化 | `backend/internal/infra/mq/client.go` |
+| Publisher | `backend/internal/infra/mq/publisher.go` |
+| Subscriber（Durable Consumer） | `backend/internal/infra/mq/subscriber.go` |
+| Scheduler（週期發布） | `backend/internal/infra/mq/scheduler.go` |
+| WebSocket 事件路由 | `backend/internal/job/ws_event_job.go` |
+| WS 訊息格式 / Subject 常數 | `backend/pkg/ws/message.go` |

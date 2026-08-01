@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import { useAppDispatch, useAppSelector } from '../navigation/store/hooks';
 import { fetchOrderListRequest } from '../navigation/store/actions/ordersActions';
 
@@ -7,7 +8,7 @@ const WS_BASE_URL = (process.env.EXPO_PUBLIC_API_BASE_URL || 'https://p2p-exchan
   .replace(/^http/, 'ws');
 
 const RECONNECT_DELAY_MS = 3000;
-const MAX_RECONNECT_ATTEMPTS = 10;
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 export function useAppWebSocket(): void {
   const dispatch = useAppDispatch();
@@ -19,6 +20,7 @@ export function useAppWebSocket(): void {
   const unmountedRef = useRef(false);
   const tokenRef = useRef(token);
   tokenRef.current = token;
+  const connectRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     if (!isAuthenticated || !token) return;
@@ -59,11 +61,22 @@ export function useAppWebSocket(): void {
       };
     }
 
+    connectRef.current = connect;
     connect();
+
+    const appStateSub = AppState.addEventListener('change', (state: AppStateStatus) => {
+      if (state !== 'active') return;
+      const ws = wsRef.current;
+      if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+        attemptsRef.current = 0;
+        connectRef.current();
+      }
+    });
 
     return () => {
       unmountedRef.current = true;
       wsRef.current?.close();
+      appStateSub.remove();
     };
   }, [isAuthenticated, token, dispatch]);
 }
