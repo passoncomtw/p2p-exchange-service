@@ -25,7 +25,7 @@ type RedisConf struct {
 
 type NatsConf struct {
 	URL          string `json:",env=NATS_URL"`
-	CredsPath    string `json:",optional"`
+	CredsPath    string `json:",optional,env=NATS_CREDS_PATH"`
 	User         string `json:",optional,env=NATS_USER"`
 	Password     string `json:",optional,env=NATS_PASSWORD"`
 	StreamName   string

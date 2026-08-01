@@ -20,9 +20,7 @@ Redis:
   PoolSize: 10
 
 Nats:
-  URL: "nats://localhost:30422"
-  User: "nats"
-  Password: "nats@local123"
+  URL: "tls://connect.ngs.global"
   CredsPath: ""
   StreamName: "p2p-exchange"
   ConsumerName: "p2p-exchange-consumer"
