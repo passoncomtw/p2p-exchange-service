@@ -5,7 +5,7 @@ const WS_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8888')
   .replace(/^http/, 'ws')
 
 const RECONNECT_DELAY_MS = 3000
-const MAX_RECONNECT_ATTEMPTS = 10
+const MAX_RECONNECT_ATTEMPTS = 5
 
 /**
  * useBackendWebSocket — 連接後台 WebSocket，接收 NATS P2P_NOTIFY 廣播事件。

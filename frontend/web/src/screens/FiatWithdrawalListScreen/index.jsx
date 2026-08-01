@@ -259,7 +259,7 @@ const FiatWithdrawalListScreen = () => {
   useEffect(() => { fetchData() }, [fetchData])
 
   useBackendWebSocket(useCallback((msg) => {
-    if (msg.type === 'order.status.changed') fetchData()
+    if (msg.type === 'fiat.withdrawal.created') fetchData()
   }, [fetchData]))
 
   const handleSearch = () => {

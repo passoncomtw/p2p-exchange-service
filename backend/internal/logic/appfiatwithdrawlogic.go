@@ -14,6 +14,7 @@ import (
 	"p2p-exchange/internal/model"
 	"p2p-exchange/internal/svc"
 	"p2p-exchange/internal/types"
+	pkgws "p2p-exchange/pkg/ws"
 )
 
 const (
@@ -82,6 +83,15 @@ func (l *AppFiatWithdrawLogic) RequestWithdraw(userID int64, req *types.FiatWith
 		return nil
 	}); err != nil {
 		return nil, err
+	}
+
+	if data, err := pkgws.NewMessage(pkgws.EventFiatWithdrawalCreated, pkgws.FiatWithdrawalCreatedData{
+		WithdrawalID: withdrawID,
+		UserID:       userID,
+		Amount:       amountStr,
+		Currency:     "TWD",
+	}); err == nil && l.svcCtx.MQ != nil {
+		l.svcCtx.MQ.PublishAsync(pkgws.SubjectNotifyAdmin, data)
 	}
 
 	return &types.FiatWithdrawResponse{
