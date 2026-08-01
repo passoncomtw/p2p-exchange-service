@@ -20,10 +20,10 @@ func New(c config.NatsConf) *Client {
 		return nil
 	}
 	var opts []nats.Option
-	if c.CredsPath != "" {
+	switch {
+	case c.CredsPath != "":
 		opts = append(opts, nats.UserCredentials(c.CredsPath))
-	}
-	if c.User != "" && c.Password != "" {
+	case c.User != "" && c.Password != "":
 		opts = append(opts, nats.UserInfo(c.User, c.Password))
 	}
 	opts = append(opts,

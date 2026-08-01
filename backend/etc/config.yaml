@@ -21,7 +21,9 @@ Redis:
 
 Nats:
   URL: "tls://connect.ngs.global"
-  CredsPath: ""
+  CredsPath: ""     # Synadia Cloud: 由 NATS_CREDS_PATH 環境變數注入
+  User: ""          # 本地 NATS: 填入帳號（CredsPath 有值時忽略）
+  Password: ""      # 本地 NATS: 填入密碼（CredsPath 有值時忽略）
   StreamName: "p2p-exchange"
   ConsumerName: "p2p-exchange-consumer"
 
