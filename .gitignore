@@ -12,6 +12,13 @@ backend/etc/config.yaml
 # Claude Code 暫存
 .claude/
 
+# Cursor agents / skills 工具產生
+.agents/
+skills-lock.json
+
+# NATS 憑證（含機密，由 CI/CD 注入）
+*.creds
+
 # Expo generated native projects
 frontend/app/android/
 frontend/app/ios/
