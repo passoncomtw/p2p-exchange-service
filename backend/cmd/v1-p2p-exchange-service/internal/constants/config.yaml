@@ -1,0 +1,9 @@
+Name: p2p-api
+Mode: dev
+Host: 0.0.0.0
+Port: 8888
+
+WebSocket:
+  Enabled: true
+  Host: 0.0.0.0
+  Port: 8889
