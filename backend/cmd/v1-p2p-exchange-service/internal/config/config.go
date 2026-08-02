@@ -2,13 +2,11 @@ package config
 
 import (
 	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/zeromicro/go-zero/rest"
 )
 
 type Config struct {
-	Name string
-	Host string
-	Port int
-	Mode string
+	rest.RestConf
 }
 
 func NewConfig() *Config {
