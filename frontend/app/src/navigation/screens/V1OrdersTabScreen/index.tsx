@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useFocusEffect, useNavigation, useIsFocused } from '@react-navigation/native';
-import { AppBarRightContext } from '@/navigation/v1';
+import { AppBarRightContext } from '@/navigation/AppBarContext';
 import { useTranslation } from 'react-i18next';
 import * as tokens from '@/theme';
 import { listingsApi } from '@/apis/listingsApi';

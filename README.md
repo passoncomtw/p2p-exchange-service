@@ -240,6 +240,49 @@ totalAmount      = fiatAmount + totalFee  （買家實際應付金額）
 
 ---
 
+## App 開發工具（Dev Tools）
+
+### 啟動開發伺服器
+
+```bash
+cd frontend/app
+npx expo start
+```
+
+**必須使用 `npx expo start`**，直接用 Xcode / Android Studio 啟動 Metro 時，Expo CLI 鍵盤指令（`shift+m` 等）不會作用。
+
+### Redux DevTools
+
+套件：`redux-devtools-expo-dev-plugin`（已安裝，`configureStore.ts` 已設定）
+
+**開啟步驟：**
+
+1. 在模擬器或實機上開啟 Dev Menu：
+   - iOS 模擬器：`cmd + d`
+   - Android 模擬器：`cmd + m`（Mac）/ `ctrl + m`（Windows/Linux）
+   - 實機：物理搖晃裝置
+2. 選擇 **Open DevTools Plugin**
+3. Chrome 另開新視窗，顯示 Redux state 樹、action 歷程與 diff
+
+或在 `npx expo start` 的終端按 `shift+m`，選擇 `redux-devtools-expo-dev-plugin`。
+
+> **注意**：React Native Debugger（獨立桌面 App）不支援 Expo 56 / RN 0.85 的新架構（Bridgeless），請使用上述 Expo DevTools Plugin 方式。
+
+### React Native JS Debugger（Fusebox）
+
+用於 JS 執行、斷點、Console、網路請求（Expo Network 分頁）偵錯，與 Redux DevTools 是**不同視窗**。
+
+- 開啟網址：`http://localhost:8081/json`，找到對應裝置的 `devtoolsFrontendUrl`
+- 或從 Dev Menu 選擇 **Open JS Debugger**
+
+### 查看已連線裝置
+
+```bash
+curl http://localhost:8081/json
+```
+
+---
+
 ## 通知系統架構
 
 App (React Native) 與 Web (React + Vite) 統一使用 Redux 佇列管理通知，不在 component 層直接呼叫 `Alert.alert` 或內嵌錯誤 UI 顯示 API 回應。

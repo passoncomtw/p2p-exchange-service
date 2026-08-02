@@ -2,10 +2,7 @@ import * as React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export const AppBarRightContext = React.createContext<{
-  right: React.ReactNode;
-  setRight: (node: React.ReactNode) => void;
-}>({ right: null, setRight: () => {} });
+import { AppBarRightContext } from '@/navigation/AppBarContext';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
