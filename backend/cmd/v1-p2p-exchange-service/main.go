@@ -6,6 +6,7 @@ import (
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/server"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/wsserver"
 	databaseModule "p2p-exchange/pkg/database_module"
+	"p2p-exchange/pkg/mq"
 	notificationModule "p2p-exchange/pkg/notification_module"
 
 	"go.uber.org/fx"
@@ -17,6 +18,7 @@ func main() {
 	fx.New(
 		config.Module,
 		databaseModule.Module,
+		mq.Module,
 		server.Module,
 		wsserver.Module,
 		notificationModule.Module,

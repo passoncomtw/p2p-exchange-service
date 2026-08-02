@@ -15,3 +15,11 @@ WebSocket:
   Enabled: true
   Host: 0.0.0.0
   Port: 8889
+
+Nats:
+  URL: "tls://connect.ngs.global"
+  CredsPath: "./NGS-Default-CLI.creds"     # Synadia Cloud: 由 NATS_CREDS_PATH 環境變數注入
+  User: ""          # 本地 NATS: 填入帳號（CredsPath 有值時忽略）
+  Password: ""      # 本地 NATS: 填入密碼（CredsPath 有值時忽略）
+  StreamName: "p2p-exchange"
+  ConsumerName: "p2p-exchange-consumer"
