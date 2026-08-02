@@ -1,0 +1,17 @@
+syntax = "v1"
+
+info (
+	title:   "P2P Exchange API v1"
+	version: "1.0.0"
+)
+
+type (
+	VersionResponse {
+		Version string `json:"version"`
+	}
+)
+
+service v1-api {
+	@handler VersionHandler
+	get /api/v1/version returns (VersionResponse)
+}

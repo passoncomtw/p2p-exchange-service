@@ -24,3 +24,6 @@ frontend/app/android/
 frontend/app/ios/
 *.apk
 *.ipa
+
+# Swagger spec（auto-generated，由 make swagger 產生）
+backend/cmd/v1-p2p-exchange-service/internal/swagger/dist/spec.json

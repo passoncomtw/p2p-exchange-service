@@ -1,9 +1,13 @@
 package config
 
 import (
+	"flag"
+
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/rest"
 )
+
+var configFile = flag.String("f", "internal/constants/config.yaml", "the config file")
 
 type Config struct {
 	rest.RestConf
@@ -24,8 +28,6 @@ type Config struct {
 
 func NewConfig() *Config {
 	var config Config
-	if err := conf.Load("cmd/v1-p2p-exchange-service/internal/constants/config.yaml", &config); err != nil {
-		panic(err)
-	}
+	conf.MustLoad(*configFile, &config)
 	return &config
 }
