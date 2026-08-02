@@ -7,6 +7,14 @@ import (
 
 type Config struct {
 	rest.RestConf
+	Database struct {
+		DSN string `json:"dsn"`
+	} `json:"database"`
+	Redis struct {
+		Addr     string `json:"addr"`
+		Password string `json:"password"`
+		PoolSize int    `json:"poolSize"`
+	} `json:"redis"`
 	WebSocket struct {
 		Enabled bool   `json:"enabled"`
 		Host    string `json:"host"`
