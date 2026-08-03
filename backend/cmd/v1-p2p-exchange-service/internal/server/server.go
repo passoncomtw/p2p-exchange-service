@@ -14,32 +14,69 @@ import (
 	"go.uber.org/fx"
 )
 
-func NewServer(config *config.Config, loginHandler *handlers.LoginHandler, lc fx.Lifecycle) *rest.Server {
-	server := rest.MustNewServer(config.RestConf,
+type Params struct {
+	fx.In
+
+	Config               *config.Config
+	LoginHandler         *handlers.LoginHandler
+	ProfileHandler       *handlers.ProfileHandler
+	PaymentMethodHandler *handlers.PaymentMethodHandler
+	LC                   fx.Lifecycle
+}
+
+func NewServer(p Params) *rest.Server {
+	server := rest.MustNewServer(p.Config.RestConf,
 		rest.WithCors("*"),
 		rest.WithUnauthorizedCallback(func(w http.ResponseWriter, r *http.Request, _ error) {
 			httpx.WriteJsonCtx(r.Context(), w, http.StatusUnauthorized, response.Fail(http.StatusUnauthorized, "Unauthorized"))
 		}),
 	)
 
+	// public routes
 	server.AddRoute(rest.Route{
 		Method:  http.MethodGet,
 		Path:    "/api/v1/version",
 		Handler: handlers.VersionHandler,
 	})
-
 	server.AddRoute(rest.Route{
 		Method:  http.MethodPost,
 		Path:    "/app/auth/login",
-		Handler: loginHandler.Handle,
+		Handler: p.LoginHandler.Handle,
 	})
 
-	if config.RestConf.Mode != "prod" {
+	// app private routes (JWT: App.AccessSecret)
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/profile",
+				Handler: p.ProfileHandler.Handle,
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/app/payment-methods",
+				Handler: p.PaymentMethodHandler.Create,
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/payment-methods",
+				Handler: p.PaymentMethodHandler.List,
+			},
+			{
+				Method:  http.MethodDelete,
+				Path:    "/app/payment-methods/:id",
+				Handler: p.PaymentMethodHandler.Delete,
+			},
+		},
+		rest.WithJwt(p.Config.App.AccessSecret),
+	)
+
+	if p.Config.RestConf.Mode != "prod" {
 		swagger.RegisterRoutes(server)
-		fmt.Printf("Swagger UI: http://localhost:%d/swagger\n", config.RestConf.Port)
+		fmt.Printf("Swagger UI: http://localhost:%d/swagger\n", p.Config.RestConf.Port)
 	}
 
-	lc.Append(fx.Hook{
+	p.LC.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
 			go server.Start()
 			return nil
