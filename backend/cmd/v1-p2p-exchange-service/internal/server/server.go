@@ -22,6 +22,7 @@ type Params struct {
 	ProfileHandler       *handlers.ProfileHandler
 	PaymentMethodHandler *handlers.PaymentMethodHandler
 	ListingHandler       *handlers.ListingHandler
+	OrderHandler         *handlers.OrderHandler
 	LC                   fx.Lifecycle
 }
 
@@ -92,6 +93,41 @@ func NewServer(p Params) *rest.Server {
 				Method:  http.MethodPut,
 				Path:    "/app/listings/:id/cancel",
 				Handler: p.ListingHandler.Cancel,
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/app/orders",
+				Handler: p.OrderHandler.Create,
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/orders",
+				Handler: p.OrderHandler.List,
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/orders/:id",
+				Handler: p.OrderHandler.Get,
+			},
+			{
+				Method:  http.MethodPut,
+				Path:    "/app/orders/:id/pay",
+				Handler: p.OrderHandler.Pay,
+			},
+			{
+				Method:  http.MethodPut,
+				Path:    "/app/orders/:id/confirm",
+				Handler: p.OrderHandler.Confirm,
+			},
+			{
+				Method:  http.MethodPut,
+				Path:    "/app/orders/:id/cancel",
+				Handler: p.OrderHandler.Cancel,
+			},
+			{
+				Method:  http.MethodPut,
+				Path:    "/app/orders/:id/dispute",
+				Handler: p.OrderHandler.Dispute,
 			},
 		},
 		rest.WithJwt(p.Config.App.AccessSecret),
