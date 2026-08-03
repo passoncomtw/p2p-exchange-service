@@ -14,7 +14,7 @@ import (
 	"go.uber.org/fx"
 )
 
-func NewServer(config *config.Config, lc fx.Lifecycle) *rest.Server {
+func NewServer(config *config.Config, loginHandler *handlers.LoginHandler, lc fx.Lifecycle) *rest.Server {
 	server := rest.MustNewServer(config.RestConf,
 		rest.WithCors("*"),
 		rest.WithUnauthorizedCallback(func(w http.ResponseWriter, r *http.Request, _ error) {
@@ -26,6 +26,12 @@ func NewServer(config *config.Config, lc fx.Lifecycle) *rest.Server {
 		Method:  http.MethodGet,
 		Path:    "/api/v1/version",
 		Handler: handlers.VersionHandler,
+	})
+
+	server.AddRoute(rest.Route{
+		Method:  http.MethodPost,
+		Path:    "/app/auth/login",
+		Handler: loginHandler.Handle,
 	})
 
 	if config.RestConf.Mode != "prod" {

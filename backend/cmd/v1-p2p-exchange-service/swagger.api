@@ -9,9 +9,36 @@ type (
 	VersionResponse {
 		Version string `json:"version"`
 	}
+
+	LoginRequest {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	LoginUser {
+		ID      int64  `json:"id"`
+		Account string `json:"account"`
+		Name    string `json:"name"`
+	}
+
+	LoginResponse {
+		AccessToken string    `json:"accessToken"`
+		ExpireIn    int64     `json:"expireIn"`
+		User        LoginUser `json:"user"`
+	}
 )
 
 service v1-api {
 	@handler VersionHandler
 	get /api/v1/version returns (VersionResponse)
+}
+
+// ── App: login (public) ──────────────────────────────────────────────────────
+@server (
+	group: app-auth
+)
+service v1-api {
+	@doc "App 使用者登入"
+	@handler LoginHandler
+	post /app/auth/login (LoginRequest) returns (LoginResponse)
 }
