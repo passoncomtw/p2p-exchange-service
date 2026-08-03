@@ -21,6 +21,7 @@ type Params struct {
 	LoginHandler         *handlers.LoginHandler
 	ProfileHandler       *handlers.ProfileHandler
 	PaymentMethodHandler *handlers.PaymentMethodHandler
+	ListingHandler       *handlers.ListingHandler
 	LC                   fx.Lifecycle
 }
 
@@ -66,6 +67,31 @@ func NewServer(p Params) *rest.Server {
 				Method:  http.MethodDelete,
 				Path:    "/app/payment-methods/:id",
 				Handler: p.PaymentMethodHandler.Delete,
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/app/listings",
+				Handler: p.ListingHandler.Create,
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/listings",
+				Handler: p.ListingHandler.List,
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/listings/mine",
+				Handler: p.ListingHandler.ListMine,
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/listings/:id",
+				Handler: p.ListingHandler.Get,
+			},
+			{
+				Method:  http.MethodPut,
+				Path:    "/app/listings/:id/cancel",
+				Handler: p.ListingHandler.Cancel,
 			},
 		},
 		rest.WithJwt(p.Config.App.AccessSecret),
