@@ -3,6 +3,10 @@ Mode: dev
 Host: 0.0.0.0
 Port: 8888
 
+App:
+  AccessSecret: "b3496b7e-fddb-4a91-a26c-d62acf923722"
+  AccessExpire: 86400
+
 Database:
   DSN: "postgresql://neondb_owner:npg_MnU4eHLIsBS8@ep-holy-thunder-axqogoxt-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 

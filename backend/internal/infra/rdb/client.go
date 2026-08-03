@@ -13,11 +13,25 @@ type Client struct {
 	rdb redis.UniversalClient
 }
 
-// New 依 config.RedisConf.Mode 建立對應的 Redis 連線：
-//   - single   (預設): 單節點，Addr 為一個地址
-//   - sentinel: 哨兵 HA，Addr 為 sentinel 地址列表，MasterName 為主節點名稱
-//   - cluster  : 叢集，Addr 為多個節點地址
+type Config struct {
+	Mode       string
+	Addr       string
+	Password   string
+	MasterName string
+	PoolSize   int
+}
+
 func New(c config.RedisConf) *Client {
+	return NewFromConfig(Config{
+		Mode:       c.Mode,
+		Addr:       c.Addr,
+		Password:   c.Password,
+		MasterName: c.MasterName,
+		PoolSize:   c.PoolSize,
+	})
+}
+
+func NewFromConfig(c Config) *Client {
 	if c.Addr == "" {
 		return nil
 	}
@@ -47,7 +61,7 @@ func New(c config.RedisConf) *Client {
 		})
 		logx.Infof("redis cluster connected: %s", c.Addr)
 
-	default: // single
+	default:
 		rdb = redis.NewClient(&redis.Options{
 			Addr:     addrs[0],
 			Password: c.Password,

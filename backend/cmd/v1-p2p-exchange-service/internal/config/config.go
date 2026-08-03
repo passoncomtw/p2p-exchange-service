@@ -11,6 +11,10 @@ var configFile = flag.String("f", "internal/constants/config.yaml", "the config 
 
 type Config struct {
 	rest.RestConf
+	App struct {
+		AccessSecret string
+		AccessExpire int64
+	}
 	Database struct {
 		DSN string `json:"dsn"`
 	} `json:"database"`
@@ -24,6 +28,14 @@ type Config struct {
 		Host    string `json:"host"`
 		Port    int    `json:"port"`
 	} `json:"webSocket"`
+	Nats struct {
+		URL          string
+		CredsPath    string
+		User         string
+		Password     string
+		StreamName   string
+		ConsumerName string
+	}
 }
 
 func NewConfig() *Config {

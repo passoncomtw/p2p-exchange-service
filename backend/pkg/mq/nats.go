@@ -1,12 +1,20 @@
 package mq
 
 import (
-	"p2p-exchange/internal/config"
 	"time"
 
 	"github.com/nats-io/nats.go"
 	"github.com/zeromicro/go-zero/core/logx"
 )
+
+type Config struct {
+	URL          string
+	CredsPath    string
+	User         string
+	Password     string
+	StreamName   string
+	ConsumerName string
+}
 
 type Client struct {
 	nc           *nats.Conn
@@ -14,13 +22,13 @@ type Client struct {
 	consumerName string
 }
 
-func NewNats(config config.Config) *Client {
+func NewNats(cfg Config) *Client {
 	var opts []nats.Option
 	switch {
-	case config.Nats.CredsPath != "":
-		opts = append(opts, nats.UserCredentials(config.Nats.CredsPath))
-	case config.Nats.User != "" && config.Nats.Password != "":
-		opts = append(opts, nats.UserInfo(config.Nats.User, config.Nats.Password))
+	case cfg.CredsPath != "":
+		opts = append(opts, nats.UserCredentials(cfg.CredsPath))
+	case cfg.User != "" && cfg.Password != "":
+		opts = append(opts, nats.UserInfo(cfg.User, cfg.Password))
 	}
 	opts = append(opts,
 		nats.MaxReconnects(-1),
@@ -33,9 +41,9 @@ func NewNats(config config.Config) *Client {
 		}),
 	)
 
-	nc, err := nats.Connect(config.Nats.URL, opts...)
+	nc, err := nats.Connect(cfg.URL, opts...)
 	if err != nil {
-		logx.Errorf("nats connect %s error: %v", config.Nats.URL, err)
+		logx.Errorf("nats connect %s error: %v", cfg.URL, err)
 		return nil
 	}
 	js, err := nc.JetStream()
@@ -44,6 +52,6 @@ func NewNats(config config.Config) *Client {
 		return nil
 	}
 
-	logx.Infof("nats jetstream connected: %s", config.Nats.URL)
-	return &Client{nc: nc, js: js, consumerName: config.Nats.ConsumerName}
+	logx.Infof("nats jetstream connected: %s", cfg.URL)
+	return &Client{nc: nc, js: js, consumerName: cfg.ConsumerName}
 }
