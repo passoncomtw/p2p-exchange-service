@@ -18,7 +18,7 @@ import (
 type BackendAdminService interface {
 	ListListings(ctx context.Context, req backend_interface.BackendListListingsRequest) (*app_interface.ListListingsResponse, error)
 	ListOrders(ctx context.Context, req backend_interface.BackendListOrdersRequest) (*app_interface.ListOrdersResponse, error)
-	ResolveOrder(ctx context.Context, req backend_interface.BackendResolveOrderRequest) error
+	ResolveOrder(ctx context.Context, req backend_interface.ResolveOrderRequest) error
 }
 
 type backendAdminService struct {
@@ -68,7 +68,7 @@ func (s *backendAdminService) ListOrders(ctx context.Context, req backend_interf
 	return &app_interface.ListOrdersResponse{List: items}, nil
 }
 
-func (s *backendAdminService) ResolveOrder(ctx context.Context, req backend_interface.BackendResolveOrderRequest) error {
+func (s *backendAdminService) ResolveOrder(ctx context.Context, req backend_interface.ResolveOrderRequest) error {
 	order, err := s.orderRepo.FindByID(ctx, req.ID)
 	if err != nil {
 		if err == sqlx.ErrNotFound {

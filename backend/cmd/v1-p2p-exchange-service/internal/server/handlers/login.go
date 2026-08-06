@@ -33,10 +33,10 @@ func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.WriteJsonCtx(r.Context(), w, http.StatusOK, response.Success(app_interface.LoginResponse{
+	httpx.WriteJsonCtx(r.Context(), w, http.StatusOK, response.Success(app_interface.AppLoginResponse{
 		AccessToken: out.AccessToken,
 		ExpireIn:    out.ExpireIn,
-		User: app_interface.LoginUser{
+		User: app_interface.AppLoginUserInfo{
 			ID:      out.UserID,
 			Account: out.Username,
 			Name:    out.Username,

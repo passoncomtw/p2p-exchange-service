@@ -46,11 +46,11 @@
         "parameters": [
           {
             "name": "body",
-            "description": " ── App Auth ────────────────────────────────────────────────────────────",
+            "description": " ── auth ─────────────────────────────────────────────────────────────────",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/AppLoginRequest"
+              "$ref": "#/definitions/LoginRequest"
             }
           }
         ],
@@ -61,8 +61,8 @@
     },
     "/app/listings": {
       "get": {
-        "summary": "廣告列表（公開）",
-        "operationId": "ListListingsHandler",
+        "summary": "查詢掛單列表",
+        "operationId": "AppListListingsHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -102,7 +102,7 @@
           }
         ],
         "tags": [
-          "app"
+          "app-listings"
         ],
         "consumes": [
           "multipart/form-data"
@@ -114,8 +114,8 @@
         ]
       },
       "post": {
-        "summary": "建立廣告",
-        "operationId": "CreateListingHandler",
+        "summary": "建立掛單",
+        "operationId": "AppCreateListingHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -127,7 +127,7 @@
         "parameters": [
           {
             "name": "body",
-            "description": " ── Listings ────────────────────────────────────────────────────────────",
+            "description": " ── listings ─────────────────────────────────────────────────────────────",
             "in": "body",
             "required": true,
             "schema": {
@@ -136,7 +136,7 @@
           }
         ],
         "tags": [
-          "app"
+          "app-listings"
         ],
         "security": [
           {
@@ -147,8 +147,8 @@
     },
     "/app/listings/mine": {
       "get": {
-        "summary": "我的廣告列表",
-        "operationId": "ListMyListingsHandler",
+        "summary": "查詢我的掛單",
+        "operationId": "AppMyListingsHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -188,7 +188,7 @@
           }
         ],
         "tags": [
-          "app"
+          "app-listings"
         ],
         "consumes": [
           "multipart/form-data"
@@ -202,8 +202,8 @@
     },
     "/app/listings/{id}": {
       "get": {
-        "summary": "廣告詳情",
-        "operationId": "GetListingHandler",
+        "summary": "查詢掛單詳情",
+        "operationId": "AppGetListingHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -221,7 +221,7 @@
           }
         ],
         "tags": [
-          "app"
+          "app-listings"
         ],
         "security": [
           {
@@ -232,8 +232,8 @@
     },
     "/app/listings/{id}/cancel": {
       "put": {
-        "summary": "取消廣告",
-        "operationId": "CancelListingHandler",
+        "summary": "取消掛單",
+        "operationId": "AppCancelListingHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -257,7 +257,7 @@
           }
         ],
         "tags": [
-          "app"
+          "app-listings"
         ],
         "security": [
           {
@@ -268,8 +268,8 @@
     },
     "/app/orders": {
       "get": {
-        "summary": "訂單列表",
-        "operationId": "ListOrdersHandler",
+        "summary": "查詢訂單列表",
+        "operationId": "AppListOrdersHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -309,7 +309,7 @@
           }
         ],
         "tags": [
-          "app"
+          "app-orders"
         ],
         "consumes": [
           "multipart/form-data"
@@ -321,8 +321,8 @@
         ]
       },
       "post": {
-        "summary": "建立訂單",
-        "operationId": "CreateOrderHandler",
+        "summary": "建立訂單（接單）",
+        "operationId": "AppCreateOrderHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -334,7 +334,7 @@
         "parameters": [
           {
             "name": "body",
-            "description": " ── Orders ──────────────────────────────────────────────────────────────",
+            "description": " ── orders ───────────────────────────────────────────────────────────────",
             "in": "body",
             "required": true,
             "schema": {
@@ -343,7 +343,7 @@
           }
         ],
         "tags": [
-          "app"
+          "app-orders"
         ],
         "security": [
           {
@@ -354,8 +354,8 @@
     },
     "/app/orders/{id}": {
       "get": {
-        "summary": "訂單詳情",
-        "operationId": "GetOrderHandler",
+        "summary": "查詢訂單詳情",
+        "operationId": "AppGetOrderHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -373,7 +373,7 @@
           }
         ],
         "tags": [
-          "app"
+          "app-orders"
         ],
         "security": [
           {
@@ -385,7 +385,7 @@
     "/app/orders/{id}/cancel": {
       "put": {
         "summary": "取消訂單",
-        "operationId": "CancelOrderHandler",
+        "operationId": "AppCancelOrderHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -409,7 +409,7 @@
           }
         ],
         "tags": [
-          "app"
+          "app-orders"
         ],
         "security": [
           {
@@ -421,7 +421,7 @@
     "/app/orders/{id}/confirm": {
       "put": {
         "summary": "確認收款",
-        "operationId": "ConfirmOrderHandler",
+        "operationId": "AppConfirmOrderHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -445,7 +445,7 @@
           }
         ],
         "tags": [
-          "app"
+          "app-orders"
         ],
         "security": [
           {
@@ -456,8 +456,8 @@
     },
     "/app/orders/{id}/dispute": {
       "put": {
-        "summary": "發起爭議",
-        "operationId": "DisputeOrderHandler",
+        "summary": "提出申訴",
+        "operationId": "AppDisputeOrderHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -481,7 +481,7 @@
           }
         ],
         "tags": [
-          "app"
+          "app-orders"
         ],
         "security": [
           {
@@ -493,7 +493,7 @@
     "/app/orders/{id}/pay": {
       "put": {
         "summary": "標記已付款",
-        "operationId": "PayOrderHandler",
+        "operationId": "AppPayOrderHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -517,7 +517,7 @@
           }
         ],
         "tags": [
-          "app"
+          "app-orders"
         ],
         "security": [
           {
@@ -528,8 +528,8 @@
     },
     "/app/payment-methods": {
       "get": {
-        "summary": "列出付款方式",
-        "operationId": "ListPaymentMethodsHandler",
+        "summary": "查詢收款帳戶列表",
+        "operationId": "AppListPaymentMethodsHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -539,7 +539,7 @@
           }
         },
         "tags": [
-          "app"
+          "app-payment-methods"
         ],
         "security": [
           {
@@ -548,8 +548,8 @@
         ]
       },
       "post": {
-        "summary": "新增付款方式",
-        "operationId": "CreatePaymentMethodHandler",
+        "summary": "新增收款帳戶",
+        "operationId": "AppCreatePaymentMethodHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -561,7 +561,7 @@
         "parameters": [
           {
             "name": "body",
-            "description": " ── Payment Methods ─────────────────────────────────────────────────────",
+            "description": " ── payment methods ──────────────────────────────────────────────────────",
             "in": "body",
             "required": true,
             "schema": {
@@ -570,7 +570,7 @@
           }
         ],
         "tags": [
-          "app"
+          "app-payment-methods"
         ],
         "security": [
           {
@@ -581,8 +581,8 @@
     },
     "/app/payment-methods/{id}": {
       "delete": {
-        "summary": "刪除付款方式",
-        "operationId": "DeletePaymentMethodHandler",
+        "summary": "刪除收款帳戶",
+        "operationId": "AppDeletePaymentMethodHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -606,7 +606,7 @@
           }
         ],
         "tags": [
-          "app"
+          "app-payment-methods"
         ],
         "security": [
           {
@@ -617,8 +617,8 @@
     },
     "/app/profile": {
       "get": {
-        "summary": "取得個人資料",
-        "operationId": "ProfileHandler",
+        "summary": "取得使用者資料",
+        "operationId": "AppProfileHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -628,7 +628,7 @@
           }
         },
         "tags": [
-          "app"
+          "app-profile"
         ],
         "security": [
           {
@@ -639,24 +639,24 @@
     },
     "/backend/auth/login": {
       "post": {
-        "summary": "後台使用者登入",
+        "summary": "後台管理員登入",
         "operationId": "BackendLoginHandler",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/BackendLoginResponse"
+              "$ref": "#/definitions/LoginResponse"
             }
           }
         },
         "parameters": [
           {
             "name": "body",
-            "description": " ── Backend Auth ────────────────────────────────────────────────────────",
+            "description": " ── auth ─────────────────────────────────────────────────────────────────",
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/BackendLoginRequest"
+              "$ref": "#/definitions/LoginRequest"
             }
           }
         ],
@@ -673,7 +673,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/BackendDashboardResponse"
+              "$ref": "#/definitions/DashboardResponse"
             }
           }
         },
@@ -689,7 +689,7 @@
     },
     "/backend/listings": {
       "get": {
-        "summary": "後台廣告列表",
+        "summary": "後台查詢掛單列表",
         "operationId": "BackendListListingsHandler",
         "responses": {
           "200": {
@@ -744,7 +744,7 @@
     },
     "/backend/orders": {
       "get": {
-        "summary": "後台訂單列表",
+        "summary": "後台查詢訂單列表",
         "operationId": "BackendListOrdersHandler",
         "responses": {
           "200": {
@@ -793,7 +793,7 @@
     },
     "/backend/orders/{id}/resolve": {
       "put": {
-        "summary": "解決爭議訂單",
+        "summary": "後台處理訂單",
         "operationId": "BackendResolveOrderHandler",
         "responses": {
           "200": {
@@ -813,7 +813,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/BackendResolveOrderRequest"
+              "$ref": "#/definitions/ResolveOrderRequest"
             }
           }
         ],
@@ -829,7 +829,7 @@
     },
     "/v1/admin/orders": {
       "get": {
-        "summary": "管理員：V1 掛單列表",
+        "summary": "[Legacy] 後台查詢掛單",
         "operationId": "V1AdminListOrdersHandler",
         "responses": {
           "200": {
@@ -857,7 +857,7 @@
     },
     "/v1/admin/orders/{id}": {
       "get": {
-        "summary": "管理員：V1 掛單詳情",
+        "summary": "[Legacy] 後台查詢掛單詳情",
         "operationId": "V1AdminGetOrderHandler",
         "responses": {
           "200": {
@@ -882,7 +882,7 @@
     },
     "/v1/admin/orders/{id}/complete": {
       "post": {
-        "summary": "管理員：完成 V1 掛單",
+        "summary": "[Legacy] 後台標記完成",
         "operationId": "V1AdminCompleteOrderHandler",
         "responses": {
           "200": {
@@ -913,7 +913,7 @@
     },
     "/v1/orders": {
       "post": {
-        "summary": "建立 V1 掛單",
+        "summary": "[Legacy] 建立掛單",
         "operationId": "V1CreateOrderHandler",
         "responses": {
           "200": {
@@ -926,7 +926,7 @@
         "parameters": [
           {
             "name": "body",
-            "description": " ── V1 Legacy ───────────────────────────────────────────────────────────",
+            "description": " ── v1 legacy ────────────────────────────────────────────────────────────",
             "in": "body",
             "required": true,
             "schema": {
@@ -941,7 +941,7 @@
     },
     "/v1/orders/mine": {
       "get": {
-        "summary": "我的 V1 掛單列表",
+        "summary": "[Legacy] 查詢我的掛單",
         "operationId": "V1ListMyOrdersHandler",
         "responses": {
           "200": {
@@ -958,7 +958,7 @@
     },
     "/v1/orders/{id}/cancel": {
       "post": {
-        "summary": "取消 V1 掛單",
+        "summary": "[Legacy] 取消掛單",
         "operationId": "V1CancelOrderHandler",
         "responses": {
           "200": {
@@ -989,22 +989,6 @@
     }
   },
   "definitions": {
-    "AppLoginRequest": {
-      "type": "object",
-      "properties": {
-        "username": {
-          "type": "string"
-        },
-        "password": {
-          "type": "string"
-        }
-      },
-      "title": "AppLoginRequest",
-      "required": [
-        "username",
-        "password"
-      ]
-    },
     "AppLoginResponse": {
       "type": "object",
       "properties": {
@@ -1016,7 +1000,7 @@
           "format": "int64"
         },
         "user": {
-          "$ref": "#/definitions/AppLoginUser"
+          "$ref": "#/definitions/AppLoginUserInfo"
         }
       },
       "title": "AppLoginResponse",
@@ -1026,7 +1010,7 @@
         "user"
       ]
     },
-    "AppLoginUser": {
+    "AppLoginUserInfo": {
       "type": "object",
       "properties": {
         "id": {
@@ -1040,27 +1024,11 @@
           "type": "string"
         }
       },
-      "title": "AppLoginUser",
+      "title": "AppLoginUserInfo",
       "required": [
         "id",
         "account",
         "name"
-      ]
-    },
-    "BackendDashboardResponse": {
-      "type": "object",
-      "properties": {
-        "username": {
-          "type": "string"
-        },
-        "role": {
-          "type": "string"
-        }
-      },
-      "title": "BackendDashboardResponse",
-      "required": [
-        "username",
-        "role"
       ]
     },
     "BackendListListingsRequest": {
@@ -1103,55 +1071,6 @@
         }
       },
       "title": "BackendListOrdersRequest"
-    },
-    "BackendLoginRequest": {
-      "type": "object",
-      "properties": {
-        "username": {
-          "type": "string"
-        },
-        "password": {
-          "type": "string"
-        }
-      },
-      "title": "BackendLoginRequest",
-      "required": [
-        "username",
-        "password"
-      ]
-    },
-    "BackendLoginResponse": {
-      "type": "object",
-      "properties": {
-        "token": {
-          "type": "string"
-        },
-        "expiresIn": {
-          "type": "integer",
-          "format": "int64"
-        }
-      },
-      "title": "BackendLoginResponse",
-      "required": [
-        "token",
-        "expiresIn"
-      ]
-    },
-    "BackendResolveOrderRequest": {
-      "type": "object",
-      "properties": {
-        "action": {
-          "type": "string"
-        },
-        "reason": {
-          "type": "string"
-        }
-      },
-      "title": "BackendResolveOrderRequest",
-      "required": [
-        "action",
-        "reason"
-      ]
     },
     "CancelListingRequest": {
       "type": "object",
@@ -1198,6 +1117,10 @@
           "format": "double"
         },
         "paymentTimeLimit": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "paymentMethodId": {
           "type": "integer",
           "format": "int64"
         }
@@ -1297,6 +1220,22 @@
       "title": "CreatePaymentMethodResponse",
       "required": [
         "id"
+      ]
+    },
+    "DashboardResponse": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        }
+      },
+      "title": "DashboardResponse",
+      "required": [
+        "username",
+        "role"
       ]
     },
     "DeletePaymentMethodRequest": {
@@ -1472,6 +1411,10 @@
           "type": "integer",
           "format": "int64"
         },
+        "paymentMethodId": {
+          "type": "integer",
+          "format": "int64"
+        },
         "status": {
           "type": "string"
         },
@@ -1498,6 +1441,41 @@
         "paymentTimeLimit",
         "status",
         "createdAt"
+      ]
+    },
+    "LoginRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "example": "testdemo001"
+        },
+        "password": {
+          "type": "string",
+          "example": "a12345678"
+        }
+      },
+      "title": "LoginRequest",
+      "required": [
+        "username",
+        "password"
+      ]
+    },
+    "LoginResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "expiresIn": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "LoginResponse",
+      "required": [
+        "token",
+        "expiresIn"
       ]
     },
     "OrderItem": {
@@ -1577,6 +1555,21 @@
         "paymentDeadline": {
           "type": "string"
         },
+        "paidAt": {
+          "type": "string"
+        },
+        "confirmedAt": {
+          "type": "string"
+        },
+        "completedAt": {
+          "type": "string"
+        },
+        "cancelledAt": {
+          "type": "string"
+        },
+        "cancelReason": {
+          "type": "string"
+        },
         "createdAt": {
           "type": "string"
         }
@@ -1650,6 +1643,22 @@
       "title": "ProfileResponse",
       "required": [
         "username"
+      ]
+    },
+    "ResolveOrderRequest": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "title": "ResolveOrderRequest",
+      "required": [
+        "action",
+        "reason"
       ]
     },
     "UpdateOrderPathRequest": {

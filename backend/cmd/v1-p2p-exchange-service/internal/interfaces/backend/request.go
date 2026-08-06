@@ -1,6 +1,6 @@
 package backend_interface
 
-type BackendLoginRequest struct {
+type LoginRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
@@ -18,7 +18,7 @@ type BackendListOrdersRequest struct {
 	Offset int64  `form:"offset,optional,default=0"`
 }
 
-type BackendResolveOrderRequest struct {
+type ResolveOrderRequest struct {
 	ID     int64  `path:"id"`
 	Action string `json:"action"`
 	Reason string `json:"reason"`

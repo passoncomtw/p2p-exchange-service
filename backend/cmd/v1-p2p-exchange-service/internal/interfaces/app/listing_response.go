@@ -19,9 +19,9 @@ type ListingItem struct {
 	PlatformFeeRate  float64 `json:"platformFeeRate"`
 	PaymentFeeBase   float64 `json:"paymentFeeBase"`
 	PaymentFeeRate   float64 `json:"paymentFeeRate"`
-	PaymentTimeLimit int64   `json:"paymentTimeLimit"`
-	PaymentMethodID  *int64  `json:"paymentMethodId,omitempty"`
-	Status           string  `json:"status"`
+	PaymentTimeLimit int64  `json:"paymentTimeLimit"`
+	PaymentMethodID  *int64 `json:"paymentMethodId,omitempty"`
+	Status           string `json:"status"`
 	CreatedAt        string  `json:"createdAt"`
 }
 

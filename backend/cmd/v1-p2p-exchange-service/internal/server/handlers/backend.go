@@ -21,7 +21,7 @@ func NewBackendHandler(authSvc backend_auth_service.BackendAuthService, adminSvc
 }
 
 func (h *BackendHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var req backend_interface.BackendLoginRequest
+	var req backend_interface.LoginRequest
 	if err := httpx.Parse(r, &req); err != nil {
 		httpx.WriteJsonCtx(r.Context(), w, http.StatusBadRequest, response.Fail(http.StatusBadRequest, err.Error()))
 		return
@@ -34,7 +34,7 @@ func (h *BackendHandler) Login(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteJsonCtx(r.Context(), w, http.StatusUnauthorized, response.Fail(http.StatusUnauthorized, err.Error()))
 		return
 	}
-	httpx.WriteJsonCtx(r.Context(), w, http.StatusOK, response.Success(backend_interface.BackendLoginResponse{
+	httpx.WriteJsonCtx(r.Context(), w, http.StatusOK, response.Success(backend_interface.LoginResponse{
 		Token:     out.Token,
 		ExpiresIn: out.ExpiresIn,
 	}))
@@ -43,7 +43,7 @@ func (h *BackendHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *BackendHandler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	username := ctxStringClaim(r, "username")
 	role := ctxStringClaim(r, "role")
-	httpx.WriteJsonCtx(r.Context(), w, http.StatusOK, response.Success(backend_interface.BackendDashboardResponse{
+	httpx.WriteJsonCtx(r.Context(), w, http.StatusOK, response.Success(backend_interface.DashboardResponse{
 		Username: username,
 		Role:     role,
 	}))
@@ -80,7 +80,7 @@ func (h *BackendHandler) ListOrders(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BackendHandler) ResolveOrder(w http.ResponseWriter, r *http.Request) {
-	var req backend_interface.BackendResolveOrderRequest
+	var req backend_interface.ResolveOrderRequest
 	if err := httpx.Parse(r, &req); err != nil {
 		httpx.WriteJsonCtx(r.Context(), w, http.StatusBadRequest, response.Fail(http.StatusBadRequest, err.Error()))
 		return

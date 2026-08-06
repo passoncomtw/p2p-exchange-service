@@ -8,8 +8,8 @@ type CreateListingRequest struct {
 	Price            float64 `json:"price"`
 	MinOrderFiat     float64 `json:"minOrderFiat"`
 	MaxOrderFiat     float64 `json:"maxOrderFiat"`
-	PaymentTimeLimit int64   `json:"paymentTimeLimit"`
-	PaymentMethodID  *int64  `json:"paymentMethodId,omitempty"`
+	PaymentTimeLimit int64  `json:"paymentTimeLimit"`
+	PaymentMethodID  *int64 `json:"paymentMethodId,omitempty"`
 }
 
 type ListListingsRequest struct {
