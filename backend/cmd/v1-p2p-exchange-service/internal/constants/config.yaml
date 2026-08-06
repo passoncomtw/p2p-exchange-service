@@ -7,6 +7,10 @@ App:
   AccessSecret: "b3496b7e-fddb-4a91-a26c-d62acf923722"
   AccessExpire: 86400
 
+Backend:
+  AccessSecret: "c4507c8f-1eec-4b92-b737-e83bf0d341a3"
+  AccessExpire: 86400
+
 Database:
   DSN: "postgresql://neondb_owner:npg_MnU4eHLIsBS8@ep-holy-thunder-axqogoxt-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 

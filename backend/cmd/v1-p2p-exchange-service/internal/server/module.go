@@ -13,6 +13,7 @@ var Module = fx.Module("server",
 	fx.Provide(handlers.NewPaymentMethodHandler),
 	fx.Provide(handlers.NewListingHandler),
 	fx.Provide(handlers.NewOrderHandler),
+	fx.Provide(handlers.NewBackendHandler),
 	fx.Provide(NewServer),
 	fx.Invoke(func(*rest.Server) {}),
 )

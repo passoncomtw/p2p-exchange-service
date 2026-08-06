@@ -15,6 +15,10 @@ type Config struct {
 		AccessSecret string
 		AccessExpire int64
 	}
+	Backend struct {
+		AccessSecret string
+		AccessExpire int64
+	}
 	Database struct {
 		DSN string `json:"dsn"`
 	} `json:"database"`

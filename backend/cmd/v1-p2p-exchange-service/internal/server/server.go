@@ -23,6 +23,7 @@ type Params struct {
 	PaymentMethodHandler *handlers.PaymentMethodHandler
 	ListingHandler       *handlers.ListingHandler
 	OrderHandler         *handlers.OrderHandler
+	BackendHandler       *handlers.BackendHandler
 	LC                   fx.Lifecycle
 }
 
@@ -131,6 +132,40 @@ func NewServer(p Params) *rest.Server {
 			},
 		},
 		rest.WithJwt(p.Config.App.AccessSecret),
+	)
+
+	// backend public routes
+	server.AddRoute(rest.Route{
+		Method:  http.MethodPost,
+		Path:    "/backend/auth/login",
+		Handler: p.BackendHandler.Login,
+	})
+
+	// backend admin routes (JWT: Backend.AccessSecret)
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				Method:  http.MethodGet,
+				Path:    "/backend/dashboard",
+				Handler: p.BackendHandler.Dashboard,
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/backend/listings",
+				Handler: p.BackendHandler.ListListings,
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/backend/orders",
+				Handler: p.BackendHandler.ListOrders,
+			},
+			{
+				Method:  http.MethodPut,
+				Path:    "/backend/orders/:id/resolve",
+				Handler: p.BackendHandler.ResolveOrder,
+			},
+		},
+		rest.WithJwt(p.Config.Backend.AccessSecret),
 	)
 
 	if p.Config.RestConf.Mode != "prod" {

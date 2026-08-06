@@ -18,6 +18,7 @@ type ListingRepository interface {
 	List(ctx context.Context, listType, status string, limit, offset int64) ([]*entity.Listing, error)
 	ListByUser(ctx context.Context, userID int64, listType, status string, limit, offset int64) ([]*entity.Listing, error)
 	UpdateStatusInTx(ctx context.Context, session sqlx.Session, id int64, status string) error
+	RestoreAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount float64) error
 }
 
 type listingRepository struct {
@@ -105,6 +106,14 @@ func (r *listingRepository) UpdateStatusInTx(ctx context.Context, session sqlx.S
 	_, err := session.ExecCtx(ctx,
 		`UPDATE listings SET status = $1, updated_at = NOW() WHERE id = $2`,
 		status, id,
+	)
+	return err
+}
+
+func (r *listingRepository) RestoreAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount float64) error {
+	_, err := session.ExecCtx(ctx,
+		`UPDATE listings SET remaining_amount = remaining_amount + $1, updated_at = NOW() WHERE id = $2`,
+		amount, id,
 	)
 	return err
 }
