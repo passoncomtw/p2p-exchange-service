@@ -10,24 +10,224 @@ type (
 		Version string `json:"version"`
 	}
 
-	LoginRequest {
+	// ── App Auth ────────────────────────────────────────────────────────────
+	AppLoginRequest {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
-
-	LoginUser {
+	AppLoginUser {
 		ID      int64  `json:"id"`
 		Account string `json:"account"`
 		Name    string `json:"name"`
 	}
+	AppLoginResponse {
+		AccessToken string       `json:"access_token"`
+		ExpireIn    int64        `json:"expireIn"`
+		User        AppLoginUser `json:"user"`
+	}
 
-	LoginResponse {
-		AccessToken string    `json:"accessToken"`
-		ExpireIn    int64     `json:"expireIn"`
-		User        LoginUser `json:"user"`
+	// ── Profile ─────────────────────────────────────────────────────────────
+	ProfileResponse {
+		Username string `json:"username"`
+	}
+
+	// ── Payment Methods ─────────────────────────────────────────────────────
+	CreatePaymentMethodRequest {
+		Type          string `json:"type"`
+		BankName      string `json:"bankName"`
+		AccountName   string `json:"accountName"`
+		AccountNumber string `json:"accountNumber"`
+	}
+	CreatePaymentMethodResponse {
+		ID int64 `json:"id"`
+	}
+	PaymentMethodItem {
+		ID            int64  `json:"id"`
+		Type          string `json:"type"`
+		BankName      string `json:"bankName"`
+		AccountName   string `json:"accountName"`
+		AccountNumber string `json:"accountNumber"`
+		IsActive      bool   `json:"isActive"`
+	}
+	ListPaymentMethodsResponse {
+		List []PaymentMethodItem `json:"list"`
+	}
+	DeletePaymentMethodRequest {
+		ID int64 `path:"id"`
+	}
+
+	// ── Listings ────────────────────────────────────────────────────────────
+	CreateListingRequest {
+		Type             string  `json:"type"`
+		CryptoCurrency   string  `json:"cryptoCurrency"`
+		FiatCurrency     string  `json:"fiatCurrency"`
+		TotalAmount      float64 `json:"totalAmount"`
+		Price            float64 `json:"price"`
+		MinOrderFiat     float64 `json:"minOrderFiat"`
+		MaxOrderFiat     float64 `json:"maxOrderFiat"`
+		PaymentTimeLimit int64   `json:"paymentTimeLimit"`
+	}
+	CreateListingResponse {
+		ID int64 `json:"id"`
+	}
+	ListListingsRequest {
+		Type   string `form:"type,optional"`
+		Status string `form:"status,optional"`
+		Limit  int64  `form:"limit,optional,default=20"`
+		Offset int64  `form:"offset,optional,default=0"`
+	}
+	ListingItem {
+		ID               int64   `json:"id"`
+		UserID           int64   `json:"userId"`
+		Type             string  `json:"type"`
+		CryptoCurrency   string  `json:"cryptoCurrency"`
+		FiatCurrency     string  `json:"fiatCurrency"`
+		TotalAmount      float64 `json:"totalAmount"`
+		RemainingAmount  float64 `json:"remainingAmount"`
+		Price            float64 `json:"price"`
+		MinOrderFiat     float64 `json:"minOrderFiat"`
+		MaxOrderFiat     float64 `json:"maxOrderFiat"`
+		PlatformFeeBase  float64 `json:"platformFeeBase"`
+		PlatformFeeRate  float64 `json:"platformFeeRate"`
+		PaymentFeeBase   float64 `json:"paymentFeeBase"`
+		PaymentFeeRate   float64 `json:"paymentFeeRate"`
+		PaymentTimeLimit int64   `json:"paymentTimeLimit"`
+		Status           string  `json:"status"`
+		CreatedAt        string  `json:"createdAt"`
+	}
+	ListListingsResponse {
+		List []ListingItem `json:"list"`
+	}
+	GetListingRequest {
+		ID int64 `path:"id"`
+	}
+	CancelListingRequest {
+		ID int64 `path:"id"`
+	}
+
+	// ── Orders ──────────────────────────────────────────────────────────────
+	CreateOrderRequest {
+		ListingID    int64   `json:"listingId"`
+		CryptoAmount float64 `json:"cryptoAmount"`
+	}
+	CreateOrderResponse {
+		ID      int64  `json:"id"`
+		OrderNo string `json:"orderNo"`
+	}
+	ListOrdersRequest {
+		Role   string `form:"role,optional"`
+		Status string `form:"status,optional"`
+		Limit  int64  `form:"limit,optional,default=20"`
+		Offset int64  `form:"offset,optional,default=0"`
+	}
+	OrderItem {
+		ID                int64   `json:"id"`
+		OrderNo           string  `json:"orderNo"`
+		ListingID         int64   `json:"listingId"`
+		ListingType       string  `json:"listingType"`
+		SellerID          int64   `json:"sellerId"`
+		BuyerID           int64   `json:"buyerId"`
+		CryptoCurrency    string  `json:"cryptoCurrency"`
+		FiatCurrency      string  `json:"fiatCurrency"`
+		CryptoAmount      float64 `json:"cryptoAmount"`
+		Price             float64 `json:"price"`
+		FiatAmount        float64 `json:"fiatAmount"`
+		PlatformFeeBase   float64 `json:"platformFeeBase"`
+		PlatformFeeAmount float64 `json:"platformFeeAmount"`
+		PaymentFeeBase    float64 `json:"paymentFeeBase"`
+		PaymentFeeAmount  float64 `json:"paymentFeeAmount"`
+		TotalFee          float64 `json:"totalFee"`
+		TotalAmount       float64 `json:"totalAmount"`
+		PaymentMethodID   int64   `json:"paymentMethodId"`
+		Status            string  `json:"status"`
+		PaymentDeadline   string  `json:"paymentDeadline"`
+		CreatedAt         string  `json:"createdAt"`
+	}
+	ListOrdersResponse {
+		List []OrderItem `json:"list"`
+	}
+	GetOrderRequest {
+		ID int64 `path:"id"`
+	}
+	UpdateOrderPathRequest {
+		ID int64 `path:"id"`
+	}
+	CancelOrderRequest {
+		ID     int64  `path:"id"`
+		Reason string `json:"reason"`
+	}
+	DisputeOrderRequest {
+		ID     int64  `path:"id"`
+		Reason string `json:"reason"`
+	}
+
+	// ── Backend Auth ────────────────────────────────────────────────────────
+	BackendLoginRequest {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	BackendLoginResponse {
+		Token     string `json:"token"`
+		ExpiresIn int64  `json:"expiresIn"`
+	}
+
+	// ── Backend Admin ───────────────────────────────────────────────────────
+	BackendDashboardResponse {
+		Username string `json:"username"`
+		Role     string `json:"role"`
+	}
+	BackendListListingsRequest {
+		Type   string `form:"type,optional"`
+		Status string `form:"status,optional"`
+		Limit  int64  `form:"limit,optional,default=20"`
+		Offset int64  `form:"offset,optional,default=0"`
+	}
+	BackendListOrdersRequest {
+		Status string `form:"status,optional"`
+		Limit  int64  `form:"limit,optional,default=20"`
+		Offset int64  `form:"offset,optional,default=0"`
+	}
+	BackendResolveOrderRequest {
+		ID     int64  `path:"id"`
+		Action string `json:"action"`
+		Reason string `json:"reason"`
+	}
+
+	// ── V1 Legacy ───────────────────────────────────────────────────────────
+	V1CreateOrderRequest {
+		Type          string  `json:"type"`
+		Asset         string  `json:"asset"`
+		Fiat          string  `json:"fiat"`
+		Price         float64 `json:"price"`
+		Quantity      float64 `json:"quantity"`
+		PaymentMethod string  `json:"paymentMethod"`
+	}
+	V1Order {
+		ID            string  `json:"id"`
+		Type          string  `json:"type"`
+		Asset         string  `json:"asset"`
+		Fiat          string  `json:"fiat"`
+		Price         float64 `json:"price"`
+		Quantity      float64 `json:"quantity"`
+		TotalAmount   float64 `json:"totalAmount"`
+		PaymentMethod string  `json:"paymentMethod"`
+		Status        string  `json:"status"`
+		CreatedBy     string  `json:"createdBy"`
+		CreatedAt     string  `json:"createdAt"`
+		UpdatedAt     string  `json:"updatedAt"`
+	}
+	V1OrderIDRequest {
+		ID int64 `path:"id"`
+	}
+	V1AdminListOrdersRequest {
+		Status string `form:"status,optional"`
+	}
+	V1OrderListResponse {
+		List []V1Order `json:"list"`
 	}
 )
 
+// ── System ───────────────────────────────────────────────────────────────────
 service v1-api {
 	@handler VersionHandler
 	get /api/v1/version returns (VersionResponse)
@@ -39,6 +239,143 @@ service v1-api {
 )
 service v1-api {
 	@doc "App 使用者登入"
-	@handler LoginHandler
-	post /app/auth/login (LoginRequest) returns (LoginResponse)
+	@handler AppLoginHandler
+	post /app/auth/login (AppLoginRequest) returns (AppLoginResponse)
+}
+
+// ── App: private (JWT) ───────────────────────────────────────────────────────
+@server (
+	jwt:    App
+	prefix: /app
+	group:  app
+)
+service v1-api {
+	@doc "取得個人資料"
+	@handler ProfileHandler
+	get /profile returns (ProfileResponse)
+
+	@doc "新增付款方式"
+	@handler CreatePaymentMethodHandler
+	post /payment-methods (CreatePaymentMethodRequest) returns (CreatePaymentMethodResponse)
+
+	@doc "列出付款方式"
+	@handler ListPaymentMethodsHandler
+	get /payment-methods returns (ListPaymentMethodsResponse)
+
+	@doc "刪除付款方式"
+	@handler DeletePaymentMethodHandler
+	delete /payment-methods/:id (DeletePaymentMethodRequest)
+
+	@doc "建立廣告"
+	@handler CreateListingHandler
+	post /listings (CreateListingRequest) returns (CreateListingResponse)
+
+	@doc "廣告列表（公開）"
+	@handler ListListingsHandler
+	get /listings (ListListingsRequest) returns (ListListingsResponse)
+
+	@doc "我的廣告列表"
+	@handler ListMyListingsHandler
+	get /listings/mine (ListListingsRequest) returns (ListListingsResponse)
+
+	@doc "廣告詳情"
+	@handler GetListingHandler
+	get /listings/:id (GetListingRequest) returns (ListingItem)
+
+	@doc "取消廣告"
+	@handler CancelListingHandler
+	put /listings/:id/cancel (CancelListingRequest)
+
+	@doc "建立訂單"
+	@handler CreateOrderHandler
+	post /orders (CreateOrderRequest) returns (CreateOrderResponse)
+
+	@doc "訂單列表"
+	@handler ListOrdersHandler
+	get /orders (ListOrdersRequest) returns (ListOrdersResponse)
+
+	@doc "訂單詳情"
+	@handler GetOrderHandler
+	get /orders/:id (GetOrderRequest) returns (OrderItem)
+
+	@doc "標記已付款"
+	@handler PayOrderHandler
+	put /orders/:id/pay (UpdateOrderPathRequest)
+
+	@doc "確認收款"
+	@handler ConfirmOrderHandler
+	put /orders/:id/confirm (UpdateOrderPathRequest)
+
+	@doc "取消訂單"
+	@handler CancelOrderHandler
+	put /orders/:id/cancel (CancelOrderRequest)
+
+	@doc "發起爭議"
+	@handler DisputeOrderHandler
+	put /orders/:id/dispute (DisputeOrderRequest)
+}
+
+// ── Backend: login (public) ──────────────────────────────────────────────────
+@server (
+	group: backend-auth
+)
+service v1-api {
+	@doc "後台使用者登入"
+	@handler BackendLoginHandler
+	post /backend/auth/login (BackendLoginRequest) returns (BackendLoginResponse)
+}
+
+// ── Backend: admin (JWT) ─────────────────────────────────────────────────────
+@server (
+	jwt:    Backend
+	prefix: /backend
+	group:  backend-admin
+)
+service v1-api {
+	@doc "後台 Dashboard"
+	@handler BackendDashboardHandler
+	get /dashboard returns (BackendDashboardResponse)
+
+	@doc "後台廣告列表"
+	@handler BackendListListingsHandler
+	get /listings (BackendListListingsRequest) returns (ListListingsResponse)
+
+	@doc "後台訂單列表"
+	@handler BackendListOrdersHandler
+	get /orders (BackendListOrdersRequest) returns (ListOrdersResponse)
+
+	@doc "解決爭議訂單"
+	@handler BackendResolveOrderHandler
+	put /orders/:id/resolve (BackendResolveOrderRequest)
+}
+
+// ── V1 Legacy (public) ───────────────────────────────────────────────────────
+@server (
+	prefix: /v1
+	group:  v1-legacy
+)
+service v1-api {
+	@doc "建立 V1 掛單"
+	@handler V1CreateOrderHandler
+	post /orders (V1CreateOrderRequest) returns (V1Order)
+
+	@doc "我的 V1 掛單列表"
+	@handler V1ListMyOrdersHandler
+	get /orders/mine returns (V1OrderListResponse)
+
+	@doc "取消 V1 掛單"
+	@handler V1CancelOrderHandler
+	post /orders/:id/cancel (V1OrderIDRequest)
+
+	@doc "管理員：V1 掛單列表"
+	@handler V1AdminListOrdersHandler
+	get /admin/orders (V1AdminListOrdersRequest) returns (V1OrderListResponse)
+
+	@doc "管理員：V1 掛單詳情"
+	@handler V1AdminGetOrderHandler
+	get /admin/orders/:id (V1OrderIDRequest) returns (V1Order)
+
+	@doc "管理員：完成 V1 掛單"
+	@handler V1AdminCompleteOrderHandler
+	post /admin/orders/:id/complete (V1OrderIDRequest)
 }

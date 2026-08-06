@@ -1,0 +1,1802 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "P2P Exchange API v1",
+    "version": "1.0.0"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/version": {
+      "get": {
+        "operationId": "VersionHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/VersionResponse"
+            }
+          }
+        },
+        "tags": [
+          "v1-api"
+        ]
+      }
+    },
+    "/app/auth/login": {
+      "post": {
+        "summary": "App 使用者登入",
+        "operationId": "AppLoginHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AppLoginResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": " ── App Auth ────────────────────────────────────────────────────────────",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AppLoginRequest"
+            }
+          }
+        ],
+        "tags": [
+          "app-auth"
+        ]
+      }
+    },
+    "/app/listings": {
+      "get": {
+        "summary": "廣告列表（公開）",
+        "operationId": "ListListingsHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListListingsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "20"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "0"
+          }
+        ],
+        "tags": [
+          "app"
+        ],
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "建立廣告",
+        "operationId": "CreateListingHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/CreateListingResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": " ── Listings ────────────────────────────────────────────────────────────",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateListingRequest"
+            }
+          }
+        ],
+        "tags": [
+          "app"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/listings/mine": {
+      "get": {
+        "summary": "我的廣告列表",
+        "operationId": "ListMyListingsHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListListingsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "20"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "0"
+          }
+        ],
+        "tags": [
+          "app"
+        ],
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/listings/{id}": {
+      "get": {
+        "summary": "廣告詳情",
+        "operationId": "GetListingHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListingItem"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "app"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/listings/{id}/cancel": {
+      "put": {
+        "summary": "取消廣告",
+        "operationId": "CancelListingHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CancelListingRequest"
+            }
+          }
+        ],
+        "tags": [
+          "app"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/orders": {
+      "get": {
+        "summary": "訂單列表",
+        "operationId": "ListOrdersHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListOrdersResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "20"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "0"
+          }
+        ],
+        "tags": [
+          "app"
+        ],
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "建立訂單",
+        "operationId": "CreateOrderHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/CreateOrderResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": " ── Orders ──────────────────────────────────────────────────────────────",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateOrderRequest"
+            }
+          }
+        ],
+        "tags": [
+          "app"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/orders/{id}": {
+      "get": {
+        "summary": "訂單詳情",
+        "operationId": "GetOrderHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/OrderItem"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "app"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/orders/{id}/cancel": {
+      "put": {
+        "summary": "取消訂單",
+        "operationId": "CancelOrderHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CancelOrderRequest"
+            }
+          }
+        ],
+        "tags": [
+          "app"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/orders/{id}/confirm": {
+      "put": {
+        "summary": "確認收款",
+        "operationId": "ConfirmOrderHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateOrderPathRequest"
+            }
+          }
+        ],
+        "tags": [
+          "app"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/orders/{id}/dispute": {
+      "put": {
+        "summary": "發起爭議",
+        "operationId": "DisputeOrderHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DisputeOrderRequest"
+            }
+          }
+        ],
+        "tags": [
+          "app"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/orders/{id}/pay": {
+      "put": {
+        "summary": "標記已付款",
+        "operationId": "PayOrderHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateOrderPathRequest"
+            }
+          }
+        ],
+        "tags": [
+          "app"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/payment-methods": {
+      "get": {
+        "summary": "列出付款方式",
+        "operationId": "ListPaymentMethodsHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListPaymentMethodsResponse"
+            }
+          }
+        },
+        "tags": [
+          "app"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "新增付款方式",
+        "operationId": "CreatePaymentMethodHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/CreatePaymentMethodResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": " ── Payment Methods ─────────────────────────────────────────────────────",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreatePaymentMethodRequest"
+            }
+          }
+        ],
+        "tags": [
+          "app"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/payment-methods/{id}": {
+      "delete": {
+        "summary": "刪除付款方式",
+        "operationId": "DeletePaymentMethodHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DeletePaymentMethodRequest"
+            }
+          }
+        ],
+        "tags": [
+          "app"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/profile": {
+      "get": {
+        "summary": "取得個人資料",
+        "operationId": "ProfileHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ProfileResponse"
+            }
+          }
+        },
+        "tags": [
+          "app"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/backend/auth/login": {
+      "post": {
+        "summary": "後台使用者登入",
+        "operationId": "BackendLoginHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/BackendLoginResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": " ── Backend Auth ────────────────────────────────────────────────────────",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/BackendLoginRequest"
+            }
+          }
+        ],
+        "tags": [
+          "backend-auth"
+        ]
+      }
+    },
+    "/backend/dashboard": {
+      "get": {
+        "summary": "後台 Dashboard",
+        "operationId": "BackendDashboardHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/BackendDashboardResponse"
+            }
+          }
+        },
+        "tags": [
+          "backend-admin"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/backend/listings": {
+      "get": {
+        "summary": "後台廣告列表",
+        "operationId": "BackendListListingsHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListListingsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "20"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "0"
+          }
+        ],
+        "tags": [
+          "backend-admin"
+        ],
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/backend/orders": {
+      "get": {
+        "summary": "後台訂單列表",
+        "operationId": "BackendListOrdersHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListOrdersResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "20"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "0"
+          }
+        ],
+        "tags": [
+          "backend-admin"
+        ],
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/backend/orders/{id}/resolve": {
+      "put": {
+        "summary": "解決爭議訂單",
+        "operationId": "BackendResolveOrderHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/BackendResolveOrderRequest"
+            }
+          }
+        ],
+        "tags": [
+          "backend-admin"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/orders": {
+      "get": {
+        "summary": "管理員：V1 掛單列表",
+        "operationId": "V1AdminListOrdersHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/V1OrderListResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "v1-legacy"
+        ],
+        "consumes": [
+          "multipart/form-data"
+        ]
+      }
+    },
+    "/v1/admin/orders/{id}": {
+      "get": {
+        "summary": "管理員：V1 掛單詳情",
+        "operationId": "V1AdminGetOrderHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/V1Order"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "v1-legacy"
+        ]
+      }
+    },
+    "/v1/admin/orders/{id}/complete": {
+      "post": {
+        "summary": "管理員：完成 V1 掛單",
+        "operationId": "V1AdminCompleteOrderHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/V1OrderIDRequest"
+            }
+          }
+        ],
+        "tags": [
+          "v1-legacy"
+        ]
+      }
+    },
+    "/v1/orders": {
+      "post": {
+        "summary": "建立 V1 掛單",
+        "operationId": "V1CreateOrderHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/V1Order"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": " ── V1 Legacy ───────────────────────────────────────────────────────────",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/V1CreateOrderRequest"
+            }
+          }
+        ],
+        "tags": [
+          "v1-legacy"
+        ]
+      }
+    },
+    "/v1/orders/mine": {
+      "get": {
+        "summary": "我的 V1 掛單列表",
+        "operationId": "V1ListMyOrdersHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/V1OrderListResponse"
+            }
+          }
+        },
+        "tags": [
+          "v1-legacy"
+        ]
+      }
+    },
+    "/v1/orders/{id}/cancel": {
+      "post": {
+        "summary": "取消 V1 掛單",
+        "operationId": "V1CancelOrderHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/V1OrderIDRequest"
+            }
+          }
+        ],
+        "tags": [
+          "v1-legacy"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "AppLoginRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "title": "AppLoginRequest",
+      "required": [
+        "username",
+        "password"
+      ]
+    },
+    "AppLoginResponse": {
+      "type": "object",
+      "properties": {
+        "access_token": {
+          "type": "string"
+        },
+        "expireIn": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "user": {
+          "$ref": "#/definitions/AppLoginUser"
+        }
+      },
+      "title": "AppLoginResponse",
+      "required": [
+        "access_token",
+        "expireIn",
+        "user"
+      ]
+    },
+    "AppLoginUser": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "account": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "title": "AppLoginUser",
+      "required": [
+        "id",
+        "account",
+        "name"
+      ]
+    },
+    "BackendDashboardResponse": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        }
+      },
+      "title": "BackendDashboardResponse",
+      "required": [
+        "username",
+        "role"
+      ]
+    },
+    "BackendListListingsRequest": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int64",
+          "default": "20"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int64",
+          "default": "0"
+        }
+      },
+      "title": "BackendListListingsRequest"
+    },
+    "BackendListOrdersRequest": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int64",
+          "default": "20"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int64",
+          "default": "0"
+        }
+      },
+      "title": "BackendListOrdersRequest"
+    },
+    "BackendLoginRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "title": "BackendLoginRequest",
+      "required": [
+        "username",
+        "password"
+      ]
+    },
+    "BackendLoginResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "expiresIn": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "BackendLoginResponse",
+      "required": [
+        "token",
+        "expiresIn"
+      ]
+    },
+    "BackendResolveOrderRequest": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "title": "BackendResolveOrderRequest",
+      "required": [
+        "action",
+        "reason"
+      ]
+    },
+    "CancelListingRequest": {
+      "type": "object",
+      "title": "CancelListingRequest"
+    },
+    "CancelOrderRequest": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string"
+        }
+      },
+      "title": "CancelOrderRequest",
+      "required": [
+        "reason"
+      ]
+    },
+    "CreateListingRequest": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "cryptoCurrency": {
+          "type": "string"
+        },
+        "fiatCurrency": {
+          "type": "string"
+        },
+        "totalAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "minOrderFiat": {
+          "type": "number",
+          "format": "double"
+        },
+        "maxOrderFiat": {
+          "type": "number",
+          "format": "double"
+        },
+        "paymentTimeLimit": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "CreateListingRequest",
+      "required": [
+        "type",
+        "cryptoCurrency",
+        "fiatCurrency",
+        "totalAmount",
+        "price",
+        "minOrderFiat",
+        "maxOrderFiat",
+        "paymentTimeLimit"
+      ]
+    },
+    "CreateListingResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "CreateListingResponse",
+      "required": [
+        "id"
+      ]
+    },
+    "CreateOrderRequest": {
+      "type": "object",
+      "properties": {
+        "listingId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "cryptoAmount": {
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "title": "CreateOrderRequest",
+      "required": [
+        "listingId",
+        "cryptoAmount"
+      ]
+    },
+    "CreateOrderResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "orderNo": {
+          "type": "string"
+        }
+      },
+      "title": "CreateOrderResponse",
+      "required": [
+        "id",
+        "orderNo"
+      ]
+    },
+    "CreatePaymentMethodRequest": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "bankName": {
+          "type": "string"
+        },
+        "accountName": {
+          "type": "string"
+        },
+        "accountNumber": {
+          "type": "string"
+        }
+      },
+      "title": "CreatePaymentMethodRequest",
+      "required": [
+        "type",
+        "bankName",
+        "accountName",
+        "accountNumber"
+      ]
+    },
+    "CreatePaymentMethodResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "CreatePaymentMethodResponse",
+      "required": [
+        "id"
+      ]
+    },
+    "DeletePaymentMethodRequest": {
+      "type": "object",
+      "title": "DeletePaymentMethodRequest"
+    },
+    "DisputeOrderRequest": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string"
+        }
+      },
+      "title": "DisputeOrderRequest",
+      "required": [
+        "reason"
+      ]
+    },
+    "GetListingRequest": {
+      "type": "object",
+      "title": "GetListingRequest"
+    },
+    "GetOrderRequest": {
+      "type": "object",
+      "title": "GetOrderRequest"
+    },
+    "ListListingsRequest": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int64",
+          "default": "20"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int64",
+          "default": "0"
+        }
+      },
+      "title": "ListListingsRequest"
+    },
+    "ListListingsResponse": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ListingItem"
+          }
+        }
+      },
+      "title": "ListListingsResponse",
+      "required": [
+        "list"
+      ]
+    },
+    "ListOrdersRequest": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int64",
+          "default": "20"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int64",
+          "default": "0"
+        }
+      },
+      "title": "ListOrdersRequest"
+    },
+    "ListOrdersResponse": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OrderItem"
+          }
+        }
+      },
+      "title": "ListOrdersResponse",
+      "required": [
+        "list"
+      ]
+    },
+    "ListPaymentMethodsResponse": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PaymentMethodItem"
+          }
+        }
+      },
+      "title": "ListPaymentMethodsResponse",
+      "required": [
+        "list"
+      ]
+    },
+    "ListingItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "type": {
+          "type": "string"
+        },
+        "cryptoCurrency": {
+          "type": "string"
+        },
+        "fiatCurrency": {
+          "type": "string"
+        },
+        "totalAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "remainingAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "minOrderFiat": {
+          "type": "number",
+          "format": "double"
+        },
+        "maxOrderFiat": {
+          "type": "number",
+          "format": "double"
+        },
+        "platformFeeBase": {
+          "type": "number",
+          "format": "double"
+        },
+        "platformFeeRate": {
+          "type": "number",
+          "format": "double"
+        },
+        "paymentFeeBase": {
+          "type": "number",
+          "format": "double"
+        },
+        "paymentFeeRate": {
+          "type": "number",
+          "format": "double"
+        },
+        "paymentTimeLimit": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "title": "ListingItem",
+      "required": [
+        "id",
+        "userId",
+        "type",
+        "cryptoCurrency",
+        "fiatCurrency",
+        "totalAmount",
+        "remainingAmount",
+        "price",
+        "minOrderFiat",
+        "maxOrderFiat",
+        "platformFeeBase",
+        "platformFeeRate",
+        "paymentFeeBase",
+        "paymentFeeRate",
+        "paymentTimeLimit",
+        "status",
+        "createdAt"
+      ]
+    },
+    "OrderItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "orderNo": {
+          "type": "string"
+        },
+        "listingId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "listingType": {
+          "type": "string"
+        },
+        "sellerId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "buyerId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "cryptoCurrency": {
+          "type": "string"
+        },
+        "fiatCurrency": {
+          "type": "string"
+        },
+        "cryptoAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "fiatAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "platformFeeBase": {
+          "type": "number",
+          "format": "double"
+        },
+        "platformFeeAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "paymentFeeBase": {
+          "type": "number",
+          "format": "double"
+        },
+        "paymentFeeAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalFee": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "paymentMethodId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "string"
+        },
+        "paymentDeadline": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "title": "OrderItem",
+      "required": [
+        "id",
+        "orderNo",
+        "listingId",
+        "listingType",
+        "sellerId",
+        "buyerId",
+        "cryptoCurrency",
+        "fiatCurrency",
+        "cryptoAmount",
+        "price",
+        "fiatAmount",
+        "platformFeeBase",
+        "platformFeeAmount",
+        "paymentFeeBase",
+        "paymentFeeAmount",
+        "totalFee",
+        "totalAmount",
+        "paymentMethodId",
+        "status",
+        "paymentDeadline",
+        "createdAt"
+      ]
+    },
+    "PaymentMethodItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "type": {
+          "type": "string"
+        },
+        "bankName": {
+          "type": "string"
+        },
+        "accountName": {
+          "type": "string"
+        },
+        "accountNumber": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      },
+      "title": "PaymentMethodItem",
+      "required": [
+        "id",
+        "type",
+        "bankName",
+        "accountName",
+        "accountNumber",
+        "isActive"
+      ]
+    },
+    "ProfileResponse": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        }
+      },
+      "title": "ProfileResponse",
+      "required": [
+        "username"
+      ]
+    },
+    "UpdateOrderPathRequest": {
+      "type": "object",
+      "title": "UpdateOrderPathRequest"
+    },
+    "V1AdminListOrdersRequest": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        }
+      },
+      "title": "V1AdminListOrdersRequest"
+    },
+    "V1CreateOrderRequest": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "asset": {
+          "type": "string"
+        },
+        "fiat": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "quantity": {
+          "type": "number",
+          "format": "double"
+        },
+        "paymentMethod": {
+          "type": "string"
+        }
+      },
+      "title": "V1CreateOrderRequest",
+      "required": [
+        "type",
+        "asset",
+        "fiat",
+        "price",
+        "quantity",
+        "paymentMethod"
+      ]
+    },
+    "V1Order": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "asset": {
+          "type": "string"
+        },
+        "fiat": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number",
+          "format": "double"
+        },
+        "quantity": {
+          "type": "number",
+          "format": "double"
+        },
+        "totalAmount": {
+          "type": "number",
+          "format": "double"
+        },
+        "paymentMethod": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "title": "V1Order",
+      "required": [
+        "id",
+        "type",
+        "asset",
+        "fiat",
+        "price",
+        "quantity",
+        "totalAmount",
+        "paymentMethod",
+        "status",
+        "createdBy",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "V1OrderIDRequest": {
+      "type": "object",
+      "title": "V1OrderIDRequest"
+    },
+    "V1OrderListResponse": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/V1Order"
+          }
+        }
+      },
+      "title": "V1OrderListResponse",
+      "required": [
+        "list"
+      ]
+    },
+    "VersionResponse": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "example": "v1.0.0"
+        }
+      },
+      "title": "VersionResponse",
+      "required": [
+        "version"
+      ]
+    }
+  },
+  "securityDefinitions": {
+    "apiKey": {
+      "type": "apiKey",
+      "description": "Enter JWT Bearer token **_only_**",
+      "name": "Authorization",
+      "in": "header"
+    }
+  }
+}
