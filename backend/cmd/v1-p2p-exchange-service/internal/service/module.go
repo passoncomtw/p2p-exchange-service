@@ -7,6 +7,7 @@ import (
 	listing_service "p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/listing"
 	order_service "p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/order"
 	payment_service "p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/payment_method"
+	v1_service "p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/v1"
 
 	"go.uber.org/fx"
 )
@@ -18,4 +19,5 @@ var Module = fx.Module("service",
 	fx.Provide(payment_service.New),
 	fx.Provide(listing_service.New),
 	fx.Provide(order_service.New),
+	fx.Provide(v1_service.New),
 )
