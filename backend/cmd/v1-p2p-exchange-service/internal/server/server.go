@@ -25,6 +25,7 @@ type Params struct {
 	OrderHandler         *handlers.OrderHandler
 	BackendHandler       *handlers.BackendHandler
 	V1Handler            *handlers.V1Handler
+	WSHandler            *handlers.WSHandler
 	LC                   fx.Lifecycle
 }
 
@@ -201,6 +202,18 @@ func NewServer(p Params) *rest.Server {
 			Path:    "/v1/admin/orders/:id/complete",
 			Handler: p.V1Handler.AdminCompleteOrder,
 		},
+	})
+
+	// WebSocket routes
+	server.AddRoute(rest.Route{
+		Method:  http.MethodGet,
+		Path:    "/ws/app",
+		Handler: p.WSHandler.AppWS,
+	})
+	server.AddRoute(rest.Route{
+		Method:  http.MethodGet,
+		Path:    "/ws/backend",
+		Handler: p.WSHandler.BackendWS,
 	})
 
 	if p.Config.RestConf.Mode != "prod" {
