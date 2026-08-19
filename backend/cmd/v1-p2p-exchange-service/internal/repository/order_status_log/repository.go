@@ -17,6 +17,7 @@ type OrderStatusLog struct {
 
 type OrderStatusLogRepository interface {
 	Append(ctx context.Context, log *OrderStatusLog) error
+	AppendInTx(ctx context.Context, session sqlx.Session, log *OrderStatusLog) error
 }
 
 type orderStatusLogRepository struct {
@@ -29,6 +30,15 @@ func New(db sqlx.SqlConn) OrderStatusLogRepository {
 
 func (r *orderStatusLogRepository) Append(ctx context.Context, log *OrderStatusLog) error {
 	_, err := r.db.ExecCtx(ctx,
+		`INSERT INTO order_status_logs (order_id, from_status, to_status, operator_type, operator_id, remark, created_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+		log.OrderID, log.FromStatus, log.ToStatus, log.OperatorType, log.OperatorID, log.Remark,
+	)
+	return err
+}
+
+func (r *orderStatusLogRepository) AppendInTx(ctx context.Context, session sqlx.Session, log *OrderStatusLog) error {
+	_, err := session.ExecCtx(ctx,
 		`INSERT INTO order_status_logs (order_id, from_status, to_status, operator_type, operator_id, remark, created_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
 		log.OrderID, log.FromStatus, log.ToStatus, log.OperatorType, log.OperatorID, log.Remark,

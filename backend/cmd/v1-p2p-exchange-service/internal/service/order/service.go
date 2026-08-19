@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
-	"go.uber.org/fx"
 	app_interface "p2p-exchange/cmd/v1-p2p-exchange-service/internal/interfaces/app"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/model/entity"
 	escrowrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/escrow_record"
@@ -21,6 +19,9 @@ import (
 	apierrors "p2p-exchange/internal/errors"
 	"p2p-exchange/pkg/mq"
 	pkgws "p2p-exchange/pkg/ws"
+
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"go.uber.org/fx"
 )
 
 type OrderService interface {
@@ -34,21 +35,21 @@ type OrderService interface {
 }
 
 type orderService struct {
-	db             sqlx.SqlConn
-	mqClient       *mq.Client
-	orderRepo      orderrepo.OrderRepository
-	listingRepo    listingrepo.ListingRepository
-	paymentRepo    paymentrepo.PaymentMethodRepository
-	walletRepo     walletrepo.WalletRepository
-	escrowRepo     escrowrepo.EscrowRepository
-	statusLogRepo  orderstatuslogrepo.OrderStatusLogRepository
+	db            sqlx.SqlConn
+	mqPublisher   mq.Publisher
+	orderRepo     orderrepo.OrderRepository
+	listingRepo   listingrepo.ListingRepository
+	paymentRepo   paymentrepo.PaymentMethodRepository
+	walletRepo    walletrepo.WalletRepository
+	escrowRepo    escrowrepo.EscrowRepository
+	statusLogRepo orderstatuslogrepo.OrderStatusLogRepository
 }
 
 type Params struct {
 	fx.In
 
 	DB            sqlx.SqlConn
-	MQClient      *mq.Client
+	MQPublisher   mq.Publisher
 	OrderRepo     orderrepo.OrderRepository
 	ListingRepo   listingrepo.ListingRepository
 	PaymentRepo   paymentrepo.PaymentMethodRepository
@@ -60,7 +61,7 @@ type Params struct {
 func New(p Params) OrderService {
 	return &orderService{
 		db:            p.DB,
-		mqClient:      p.MQClient,
+		mqPublisher:   p.MQPublisher,
 		orderRepo:     p.OrderRepo,
 		listingRepo:   p.ListingRepo,
 		paymentRepo:   p.PaymentRepo,
@@ -303,7 +304,7 @@ func (s *orderService) Cancel(ctx context.Context, uid int64, req app_interface.
 
 	if err := s.db.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
 		n, err := s.orderRepo.UpdateStatusInTx(ctx, session, req.ID, "cancelled", map[string]interface{}{
-			"cancelled_at": now,
+			"cancelled_at":  now,
 			"cancel_reason": reason,
 		})
 		if err != nil {
@@ -374,7 +375,7 @@ func (s *orderService) Dispute(ctx context.Context, uid int64, req app_interface
 }
 
 func (s *orderService) publishOrderStatusChanged(order *entity.Order, status string) {
-	if s.mqClient == nil {
+	if s.mqPublisher == nil {
 		return
 	}
 	data, err := json.Marshal(pkgws.OrderStatusChangedData{
@@ -386,9 +387,9 @@ func (s *orderService) publishOrderStatusChanged(order *entity.Order, status str
 	if err != nil {
 		return
 	}
-	s.mqClient.PublishAsync(pkgws.SubjectNotifyAdmin, data)
-	s.mqClient.PublishAsync(pkgws.SubjectNotifyBuyerPrefix+strconv.FormatInt(order.BuyerID, 10), data)
-	s.mqClient.PublishAsync(pkgws.SubjectNotifySellerPrefix+strconv.FormatInt(order.SellerID, 10), data)
+	s.mqPublisher.PublishAsync(pkgws.SubjectNotifyAdmin, data)
+	s.mqPublisher.PublishAsync(pkgws.SubjectNotifyBuyerPrefix+strconv.FormatInt(order.BuyerID, 10), data)
+	s.mqPublisher.PublishAsync(pkgws.SubjectNotifySellerPrefix+strconv.FormatInt(order.SellerID, 10), data)
 }
 
 func toOrderItem(o *entity.Order) app_interface.OrderItem {

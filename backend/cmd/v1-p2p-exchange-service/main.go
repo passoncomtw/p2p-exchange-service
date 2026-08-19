@@ -10,6 +10,7 @@ import (
 	databaseModule "p2p-exchange/pkg/database_module"
 	"p2p-exchange/pkg/mq"
 	notificationModule "p2p-exchange/pkg/notification_module"
+	"p2p-exchange/pkg/schedule"
 
 	"go.uber.org/fx"
 )
@@ -26,5 +27,6 @@ func main() {
 		server.Module,
 		wsserver.Module,
 		notificationModule.Module,
+		schedule.Module,
 	).Run()
 }

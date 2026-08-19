@@ -16,6 +16,7 @@ const orderSelectCols = `id, order_no, listing_id, listing_type, seller_id, buye
 type OrderRepository interface {
 	Create(ctx context.Context, o *entity.Order) (int64, error)
 	FindByID(ctx context.Context, id int64) (*entity.Order, error)
+	FindExpired(ctx context.Context) ([]*entity.Order, error)
 	List(ctx context.Context, userID int64, role, status string, limit, offset int64) ([]*entity.Order, error)
 	BackendList(ctx context.Context, status string, limit, offset int64) ([]*entity.Order, error)
 	UpdateStatusInTx(ctx context.Context, session sqlx.Session, id int64, status string, extras map[string]interface{}) (int64, error)
@@ -122,6 +123,14 @@ func (r *orderRepository) UpdateStatusInTx(ctx context.Context, session sqlx.Ses
 	}
 	n, _ := result.RowsAffected()
 	return n, nil
+}
+
+func (r *orderRepository) FindExpired(ctx context.Context) ([]*entity.Order, error) {
+	var rows []*entity.Order
+	err := r.db.QueryRowsCtx(ctx, &rows,
+		`SELECT `+orderSelectCols+` FROM orders WHERE status = 'matched' AND payment_deadline < NOW()`,
+	)
+	return rows, err
 }
 
 func (r *orderRepository) DeductListingAmount(ctx context.Context, listingID int64, amount float64) error {

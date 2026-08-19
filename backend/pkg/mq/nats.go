@@ -1,10 +1,12 @@
 package mq
 
 import (
+	"context"
 	"time"
 
-	"github.com/nats-io/nats.go"
+	nats "github.com/nats-io/nats.go"
 	"github.com/zeromicro/go-zero/core/logx"
+	"go.uber.org/fx"
 )
 
 type Config struct {
@@ -22,7 +24,10 @@ type Client struct {
 	consumerName string
 }
 
-func NewNats(cfg Config) *Client {
+func NewNats(cfg Config, lc fx.Lifecycle) *Client {
+	if cfg.URL == "" {
+		return nil
+	}
 	var opts []nats.Option
 	switch {
 	case cfg.CredsPath != "":
@@ -49,9 +54,19 @@ func NewNats(cfg Config) *Client {
 	js, err := nc.JetStream()
 	if err != nil {
 		logx.Errorf("nats jetstream error: %v", err)
+		nc.Close()
 		return nil
 	}
 
 	logx.Infof("nats jetstream connected: %s", cfg.URL)
-	return &Client{nc: nc, js: js, consumerName: cfg.ConsumerName}
+	client := &Client{nc: nc, js: js, consumerName: cfg.ConsumerName}
+
+	lc.Append(fx.Hook{
+		OnStop: func(_ context.Context) error {
+			logx.Info("nats: draining connection")
+			return nc.Drain()
+		},
+	})
+
+	return client
 }
