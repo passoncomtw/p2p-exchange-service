@@ -2,17 +2,21 @@ Name: p2p-api
 Host: 0.0.0.0
 Port: 8888
 
+# 敏感欄位透過環境變數注入：APP_JWT_ACCESS_SECRET（正式環境請勿寫在此檔）
 App:
   AccessSecret: "replace-with-random-secret"
   AccessExpire: 86400
 
+# 敏感欄位透過環境變數注入：BACKEND_JWT_ACCESS_SECRET（正式環境請勿寫在此檔）
 Backend:
   AccessSecret: "replace-with-another-random-secret"
   AccessExpire: 86400
 
+# 敏感欄位透過環境變數注入：DATABASE_DSN（正式環境請勿寫在此檔）
 Database:
   DSN: "postgresql://user:password@host/dbname?sslmode=require"
 
+# 敏感欄位透過環境變數注入：REDIS_ADDR / REDIS_PASSWORD（正式環境請勿寫在此檔）
 Redis:
   Addr: "localhost:6379"
   Password: ""

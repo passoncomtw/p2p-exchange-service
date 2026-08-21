@@ -3,20 +3,24 @@ Mode: dev
 Host: 0.0.0.0
 Port: 8888
 
+# 敏感欄位透過環境變數注入：APP_JWT_ACCESS_SECRET
 App:
-  AccessSecret: "b3496b7e-fddb-4a91-a26c-d62acf923722"
+  AccessSecret: ""
   AccessExpire: 86400
 
+# 敏感欄位透過環境變數注入：BACKEND_JWT_ACCESS_SECRET
 Backend:
-  AccessSecret: "c4507c8f-1eec-4b92-b737-e83bf0d341a3"
+  AccessSecret: ""
   AccessExpire: 86400
 
+# 敏感欄位透過環境變數注入：DATABASE_DSN（與 legacy 共用同一個 DB）
 Database:
-  DSN: "postgresql://neondb_owner:npg_MnU4eHLIsBS8@ep-holy-thunder-axqogoxt-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+  DSN: ""
 
+# 敏感欄位透過環境變數注入：REDIS_ADDR / REDIS_PASSWORD（與 legacy 共用同一個 Redis）
 Redis:
-  Addr: "stem-destined-cheese-29981.db.redis.io:16698"
-  Password: "mvGFzf9sBAlCdGl1fVBEnLWPz7yJbmTh"
+  Addr: ""
+  Password: ""
   PoolSize: 10
 
 WebSocket:

@@ -3,15 +3,27 @@
 
 package config
 
-import "github.com/zeromicro/go-zero/rest"
+import (
+	"fmt"
 
-type PlatformConfig struct {
-	AccessSecret string
+	"github.com/zeromicro/go-zero/rest"
+)
+
+// AppPlatformConfig App 端 JWT 設定（AccessSecret 敏感，透過環境變數注入）
+type AppPlatformConfig struct {
+	AccessSecret string `json:",env=APP_JWT_ACCESS_SECRET"`
 	AccessExpire int64
 }
 
+// BackendPlatformConfig Backend 端 JWT 設定（AccessSecret 敏感，透過環境變數注入）
+type BackendPlatformConfig struct {
+	AccessSecret string `json:",env=BACKEND_JWT_ACCESS_SECRET"`
+	AccessExpire int64
+}
+
+// DatabaseConf 資料庫連線設定（DSN 含帳密，透過環境變數注入，不得 commit）
 type DatabaseConf struct {
-	DSN string
+	DSN string `json:",env=DATABASE_DSN"`
 }
 
 type RedisConf struct {
@@ -67,11 +79,27 @@ func (c ECPayConf) IsEnabled() bool {
 
 type Config struct {
 	rest.RestConf
-	App      PlatformConfig
-	Backend  PlatformConfig
+	App      AppPlatformConfig
+	Backend  BackendPlatformConfig
 	Database DatabaseConf
 	Redis    RedisConf
 	Nats     NatsConf
 	Tron     TronConf
 	ECPay    ECPayConf
+}
+
+// Validate 檢查敏感欄位是否已透過環境變數注入；config.yaml 本身不再提供實際值，
+// 缺任何一項就代表對應的環境變數沒設，寧可啟動失敗也不要用空字串連線。
+func (c Config) Validate() error {
+	switch {
+	case c.App.AccessSecret == "":
+		return fmt.Errorf("config: App.AccessSecret is empty — set APP_JWT_ACCESS_SECRET")
+	case c.Backend.AccessSecret == "":
+		return fmt.Errorf("config: Backend.AccessSecret is empty — set BACKEND_JWT_ACCESS_SECRET")
+	case c.Database.DSN == "":
+		return fmt.Errorf("config: Database.DSN is empty — set DATABASE_DSN")
+	case c.Redis.Addr == "":
+		return fmt.Errorf("config: Redis.Addr is empty — set REDIS_ADDR")
+	}
+	return nil
 }
