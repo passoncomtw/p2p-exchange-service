@@ -6,11 +6,13 @@ import (
 	"time"
 
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/config"
 	app_interface "p2p-exchange/cmd/v1-p2p-exchange-service/internal/interfaces/app"
 	backend_interface "p2p-exchange/cmd/v1-p2p-exchange-service/internal/interfaces/backend"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/model/entity"
 	listingrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/listing"
 	orderrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/order"
+	userrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/user"
 	walletrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/wallet"
 	apierrors "p2p-exchange/internal/errors"
 )
@@ -19,26 +21,40 @@ type BackendAdminService interface {
 	ListListings(ctx context.Context, req backend_interface.BackendListListingsRequest) (*app_interface.ListListingsResponse, error)
 	ListOrders(ctx context.Context, req backend_interface.BackendListOrdersRequest) (*app_interface.ListOrdersResponse, error)
 	ResolveOrder(ctx context.Context, req backend_interface.ResolveOrderRequest) error
+	// ListMembers 分頁查詢 App 會員。
+	ListMembers(ctx context.Context, keyword string, limit, offset int64) (*backend_interface.BackendListMembersResponse, error)
+	// DepositToMember 後台手動為會員入金。
+	// adminUID 為執行此操作的後台帳號 ID，必須由 handler 從 JWT context 取得後傳入，
+	// 用於稽核記錄；絕不可來自 request body。
+	DepositToMember(ctx context.Context, adminUID int64, id int64, currency string, amount string) (*backend_interface.BackendDepositResponse, error)
+	// GetPlatformWalletInfo 聚合平台 Tron 熱錢包與 ECPay 設定資訊（唯讀，永遠成功回應）。
+	GetPlatformWalletInfo(ctx context.Context) (*backend_interface.PlatformWalletInfoResponse, error)
 }
 
 type backendAdminService struct {
 	db          sqlx.SqlConn
+	cfg         *config.Config
 	listingRepo listingrepo.ListingRepository
 	orderRepo   orderrepo.OrderRepository
 	walletRepo  walletrepo.WalletRepository
+	userRepo    userrepo.UserRepository
 }
 
 func New(
 	db sqlx.SqlConn,
+	cfg *config.Config,
 	listingRepo listingrepo.ListingRepository,
 	orderRepo orderrepo.OrderRepository,
 	walletRepo walletrepo.WalletRepository,
+	userRepo userrepo.UserRepository,
 ) BackendAdminService {
 	return &backendAdminService{
 		db:          db,
+		cfg:         cfg,
 		listingRepo: listingRepo,
 		orderRepo:   orderRepo,
 		walletRepo:  walletRepo,
+		userRepo:    userRepo,
 	}
 }
 

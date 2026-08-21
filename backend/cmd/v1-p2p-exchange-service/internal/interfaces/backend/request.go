@@ -23,3 +23,18 @@ type ResolveOrderRequest struct {
 	Action string `json:"action"`
 	Reason string `json:"reason"`
 }
+
+type BackendListMembersRequest struct {
+	Keyword string `form:"keyword,optional"`
+	Limit   int64  `form:"limit,optional,default=10"`
+	Offset  int64  `form:"offset,optional,default=0"`
+}
+
+// BackendDepositRequest 後台手動入金請求。
+// ID 為入金對象（路徑參數）；操作人一律取自 JWT context，刻意不在此結構出現，
+// 避免呼叫端從 body 偽造操作人。
+type BackendDepositRequest struct {
+	ID       int64  `path:"id"`
+	Currency string `json:"currency"`
+	Amount   string `json:"amount"`
+}

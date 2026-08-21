@@ -93,6 +93,49 @@ func (h *BackendHandler) ResolveOrder(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJsonCtx(r.Context(), w, http.StatusOK, response.Success(nil))
 }
 
+func (h *BackendHandler) ListMembers(w http.ResponseWriter, r *http.Request) {
+	var req backend_interface.BackendListMembersRequest
+	if err := httpx.Parse(r, &req); err != nil {
+		httpx.WriteJsonCtx(r.Context(), w, http.StatusBadRequest, response.Fail(http.StatusBadRequest, err.Error()))
+		return
+	}
+	resp, err := h.adminSvc.ListMembers(r.Context(), req.Keyword, req.Limit, req.Offset)
+	if err != nil {
+		code := appErrCode(err)
+		httpx.WriteJsonCtx(r.Context(), w, code, response.Fail(code, err.Error()))
+		return
+	}
+	httpx.WriteJsonCtx(r.Context(), w, http.StatusOK, response.Success(resp))
+}
+
+func (h *BackendHandler) Deposit(w http.ResponseWriter, r *http.Request) {
+	var req backend_interface.BackendDepositRequest
+	if err := httpx.Parse(r, &req); err != nil {
+		httpx.WriteJsonCtx(r.Context(), w, http.StatusBadRequest, response.Fail(http.StatusBadRequest, err.Error()))
+		return
+	}
+	// 操作人一律取自 Backend JWT context，不從 request body 讀取，
+	// 否則稽核記錄可被呼叫端偽造成任意管理員。
+	adminUID := ctxUID(r)
+	resp, err := h.adminSvc.DepositToMember(r.Context(), adminUID, req.ID, req.Currency, req.Amount)
+	if err != nil {
+		code := appErrCode(err)
+		httpx.WriteJsonCtx(r.Context(), w, code, response.Fail(code, err.Error()))
+		return
+	}
+	httpx.WriteJsonCtx(r.Context(), w, http.StatusOK, response.Success(resp))
+}
+
+func (h *BackendHandler) PlatformWalletInfo(w http.ResponseWriter, r *http.Request) {
+	resp, err := h.adminSvc.GetPlatformWalletInfo(r.Context())
+	if err != nil {
+		code := appErrCode(err)
+		httpx.WriteJsonCtx(r.Context(), w, code, response.Fail(code, err.Error()))
+		return
+	}
+	httpx.WriteJsonCtx(r.Context(), w, http.StatusOK, response.Success(resp))
+}
+
 func ctxStringClaim(r *http.Request, key string) string {
 	v := r.Context().Value(key)
 	switch val := v.(type) {

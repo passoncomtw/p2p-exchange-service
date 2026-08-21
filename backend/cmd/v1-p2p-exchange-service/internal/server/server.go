@@ -21,6 +21,8 @@ type Params struct {
 	LoginHandler         *handlers.LoginHandler
 	ProfileHandler       *handlers.ProfileHandler
 	PaymentMethodHandler *handlers.PaymentMethodHandler
+	WalletHandler        *handlers.WalletHandler
+	FiatDepositHandler   *handlers.FiatDepositHandler
 	ListingHandler       *handlers.ListingHandler
 	OrderHandler         *handlers.OrderHandler
 	BackendHandler       *handlers.BackendHandler
@@ -71,6 +73,26 @@ func NewServer(p Params) *rest.Server {
 				Method:  http.MethodDelete,
 				Path:    "/app/payment-methods/:id",
 				Handler: p.PaymentMethodHandler.Delete,
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/wallets",
+				Handler: p.WalletHandler.List,
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/wallets/:currency/ledgers",
+				Handler: p.WalletHandler.ListLedgers,
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/app/wallets/fiat/deposit",
+				Handler: p.FiatDepositHandler.Create,
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/wallets/fiat/deposits",
+				Handler: p.FiatDepositHandler.List,
 			},
 			{
 				Method:  http.MethodPost,
@@ -165,6 +187,21 @@ func NewServer(p Params) *rest.Server {
 				Method:  http.MethodPut,
 				Path:    "/backend/orders/:id/resolve",
 				Handler: p.BackendHandler.ResolveOrder,
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/backend/members",
+				Handler: p.BackendHandler.ListMembers,
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/backend/members/:id/deposit",
+				Handler: p.BackendHandler.Deposit,
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/backend/platform/wallet-info",
+				Handler: p.BackendHandler.PlatformWalletInfo,
 			},
 		},
 		rest.WithJwt(p.Config.Backend.AccessSecret),

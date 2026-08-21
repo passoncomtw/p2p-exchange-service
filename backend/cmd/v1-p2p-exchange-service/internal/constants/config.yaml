@@ -35,3 +35,10 @@ Nats:
   Password: ""      # 本地 NATS: 填入密碼（CredsPath 有值時忽略）
   StreamName: "p2p-exchange"
   ConsumerName: "p2p-exchange-consumer"
+
+# ECPay 金流設定（與 legacy etc/config.yaml 同一組非機敏預設值）
+# 機敏欄位透過環境變數注入：ECPAY_HASH_KEY / ECPAY_HASH_IV / ECPAY_RETURN_URL / ECPAY_CLIENT_BACK_URL
+# HashKey / HashIV 未注入時 ECPay.IsEnabled() 為 false，TWD 入金 API 回 503，服務仍可啟動
+ECPay:
+  MerchantID: "2000132"
+  BaseURL: "https://payment-stage.ecpay.com.tw"
