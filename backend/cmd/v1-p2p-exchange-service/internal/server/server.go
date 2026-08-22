@@ -23,6 +23,7 @@ type Params struct {
 	PaymentMethodHandler *handlers.PaymentMethodHandler
 	WalletHandler        *handlers.WalletHandler
 	FiatDepositHandler   *handlers.FiatDepositHandler
+	CryptoDepositHandler *handlers.CryptoDepositHandler
 	ListingHandler       *handlers.ListingHandler
 	OrderHandler         *handlers.OrderHandler
 	BackendHandler       *handlers.BackendHandler
@@ -93,6 +94,16 @@ func NewServer(p Params) *rest.Server {
 				Method:  http.MethodGet,
 				Path:    "/app/wallets/fiat/deposits",
 				Handler: p.FiatDepositHandler.List,
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/wallets/crypto/deposit-info",
+				Handler: p.CryptoDepositHandler.GetInfo,
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/wallets/crypto/deposits",
+				Handler: p.CryptoDepositHandler.List,
 			},
 			{
 				Method:  http.MethodPost,

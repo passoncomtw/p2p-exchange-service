@@ -2,6 +2,7 @@ package repository
 
 import (
 	backenduserrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/backend_user"
+	cryptodepositrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/crypto_deposit"
 	escrowrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/escrow_record"
 	fiatdepositrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/fiat_deposit"
 	listingrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/listing"
@@ -26,4 +27,5 @@ var Module = fx.Module("repository",
 	fx.Provide(orderstatuslogrepo.New),
 	fx.Provide(v1orderrepo.New),
 	fx.Provide(fiatdepositrepo.New),
+	fx.Provide(cryptodepositrepo.New),
 )

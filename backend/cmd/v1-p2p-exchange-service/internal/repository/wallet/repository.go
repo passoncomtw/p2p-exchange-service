@@ -44,6 +44,10 @@ type WalletRepository interface {
 	Deposit(ctx context.Context, userID int64, currency string, amount string) (availableBalance string, frozenBalance string, err error)
 	// DepositWithLedgerType 同 Deposit，但可指定帳本類型（crypto_deposit / fiat_deposit）與關聯單號。
 	DepositWithLedgerType(ctx context.Context, userID int64, currency string, amount string, ledgerType string, refOrderNo string) error
+	// DepositWithLedgerTypeInTx 與 DepositWithLedgerType 相同，但在呼叫端傳入的交易 session 內執行，
+	// 讓「狀態轉換 + 入帳」可以是同一個原子交易（例如鏈上充值確認）。
+	// 不自行取 Redis 鎖（比照 UnfreezeInTx / TransferInTx）：需要鎖時由呼叫端負責。
+	DepositWithLedgerTypeInTx(ctx context.Context, session sqlx.Session, userID int64, currency string, amount string, ledgerType string, refOrderNo string) error
 	// DeductFrozenBalance 自 frozen_balance 扣除金額（提領確認），凍結餘額不足時回傳 400。
 	DeductFrozenBalance(ctx context.Context, userID int64, currency string, amount string) error
 	// UnfreezeBalance 將凍結金額退回 available_balance（提領失敗/駁回），凍結餘額不足時回傳 400。
@@ -324,26 +328,39 @@ func (r *walletRepository) DepositWithLedgerType(ctx context.Context, userID int
 
 	return r.withWalletLock(ctx, userID, currency, func(ctx context.Context) error {
 		return r.db.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
-			var w walletRow
-			if err := session.QueryRowCtx(ctx, &w,
-				`INSERT INTO wallets (user_id, currency, available_balance, frozen_balance)
-				 VALUES ($1, $2, $3, 0)
-				 ON CONFLICT (user_id, currency) DO UPDATE
-				 SET available_balance = wallets.available_balance + $3, updated_at = NOW()
-				 RETURNING id, user_id, currency, available_balance::text, frozen_balance::text`,
-				userID, currency, amount,
-			); err != nil {
-				return err
-			}
-
-			_, err := session.ExecCtx(ctx,
-				`INSERT INTO wallet_ledgers (wallet_id, type, amount, balance_after, ref_order_no)
-				 VALUES ($1, $2, $3, $4, $5)`,
-				w.ID, ledgerType, amount, w.AvailableBalance, refOrderNo,
-			)
-			return err
+			return depositWithLedgerTypeInTx(ctx, session, userID, currency, amount, ledgerType, refOrderNo)
 		})
 	})
+}
+
+func (r *walletRepository) DepositWithLedgerTypeInTx(ctx context.Context, session sqlx.Session, userID int64, currency string, amount string, ledgerType string, refOrderNo string) error {
+	if err := validateAmount(amount); err != nil {
+		return err
+	}
+	return depositWithLedgerTypeInTx(ctx, session, userID, currency, amount, ledgerType, refOrderNo)
+}
+
+// depositWithLedgerTypeInTx 在既有交易 session 內把金額加到 available_balance（錢包不存在則建立），
+// 並寫入指定類型的帳本。呼叫端必須先通過 validateAmount，避免負數金額寫成扣款。
+func depositWithLedgerTypeInTx(ctx context.Context, session sqlx.Session, userID int64, currency, amount, ledgerType, refOrderNo string) error {
+	var w walletRow
+	if err := session.QueryRowCtx(ctx, &w,
+		`INSERT INTO wallets (user_id, currency, available_balance, frozen_balance)
+		 VALUES ($1, $2, $3, 0)
+		 ON CONFLICT (user_id, currency) DO UPDATE
+		 SET available_balance = wallets.available_balance + $3, updated_at = NOW()
+		 RETURNING id, user_id, currency, available_balance::text, frozen_balance::text`,
+		userID, currency, amount,
+	); err != nil {
+		return err
+	}
+
+	_, err := session.ExecCtx(ctx,
+		`INSERT INTO wallet_ledgers (wallet_id, type, amount, balance_after, ref_order_no)
+		 VALUES ($1, $2, $3, $4, $5)`,
+		w.ID, ledgerType, amount, w.AvailableBalance, refOrderNo,
+	)
+	return err
 }
 
 func (r *walletRepository) DeductFrozenBalance(ctx context.Context, userID int64, currency string, amount string) error {
