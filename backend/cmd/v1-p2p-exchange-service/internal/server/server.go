@@ -28,6 +28,7 @@ type Params struct {
 	CryptoWithdrawHandler *handlers.CryptoWithdrawHandler
 	ListingHandler        *handlers.ListingHandler
 	OrderHandler          *handlers.OrderHandler
+	ECPayWebhookHandler   *handlers.ECPayWebhookHandler
 	BackendHandler        *handlers.BackendHandler
 	V1Handler             *handlers.V1Handler
 	WSHandler             *handlers.WSHandler
@@ -52,6 +53,14 @@ func NewServer(p Params) *rest.Server {
 		Method:  http.MethodPost,
 		Path:    "/app/auth/login",
 		Handler: p.LoginHandler.Handle,
+	})
+	// ECPay 付款結果通知：由 ECPay 伺服器直接呼叫，不可能帶我方 JWT，
+	// 因此必須維持 public（不進任何 rest.WithJwt 群組）；
+	// 呼叫方身分改由 CheckMacValue 簽章驗證（見 ecpaywebhook_service.HandleNotify）。
+	server.AddRoute(rest.Route{
+		Method:  http.MethodPost,
+		Path:    "/webhook/ecpay/notify",
+		Handler: p.ECPayWebhookHandler.Notify,
 	})
 
 	// app private routes (JWT: App.AccessSecret)
