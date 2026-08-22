@@ -28,6 +28,11 @@ type walletRow struct {
 
 type WalletRepository interface {
 	Freeze(ctx context.Context, userID int64, currency string, amount float64) error
+	// FreezeInTx 與 Freeze 相同（可用餘額轉入凍結餘額並寫 type='freeze' 帳本），
+	// 但在呼叫端傳入的交易 session 內執行，讓「凍結 + 建立單據」可以是同一個原子交易。
+	// 不自行取 Redis 鎖（比照 UnfreezeInTx / TransferInTx）：需要鎖時由呼叫端負責；
+	// 餘額檢查本身由 SELECT ... FOR UPDATE 的列鎖保證原子性。
+	FreezeInTx(ctx context.Context, session sqlx.Session, userID int64, currency string, amount string) error
 	UnfreezeInTx(ctx context.Context, session sqlx.Session, userID int64, currency string, amount float64) error
 	TransferInTx(ctx context.Context, session sqlx.Session, sellerID, buyerID int64, currency string, amount float64, orderNo string) error
 	AcquireLocks(ctx context.Context, userIDs []int64, currency string) (unlock func(), err error)
@@ -80,38 +85,52 @@ func (r *walletRepository) Freeze(ctx context.Context, userID int64, currency st
 
 	amountStr := fmt.Sprintf("%.18f", amount)
 	return r.db.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
-		var w walletRow
-		if err := session.QueryRowCtx(ctx, &w,
-			`SELECT id, user_id, currency, available_balance::text, frozen_balance::text
-			 FROM wallets WHERE user_id = $1 AND currency = $2 FOR UPDATE`,
-			userID, currency,
-		); err != nil {
-			if err == sqlx.ErrNotFound {
-				return apierrors.New(400, "wallet not found for currency "+currency)
-			}
-			return err
-		}
-
-		avail, _, _ := new(big.Float).Parse(w.AvailableBalance, 10)
-		if avail.Cmp(new(big.Float).SetFloat64(amount)) < 0 {
-			return apierrors.New(400, "insufficient balance")
-		}
-
-		var newAvail string
-		if err := session.QueryRowCtx(ctx, &newAvail,
-			`UPDATE wallets SET available_balance = available_balance - $2, frozen_balance = frozen_balance + $2, updated_at = NOW()
-			 WHERE id = $1 RETURNING available_balance::text`,
-			w.ID, amountStr,
-		); err != nil {
-			return err
-		}
-
-		_, err := session.ExecCtx(ctx,
-			`INSERT INTO wallet_ledgers (wallet_id, type, amount, balance_after) VALUES ($1, 'freeze', -$2::numeric, $3)`,
-			w.ID, amountStr, newAvail,
-		)
-		return err
+		return freezeInTx(ctx, session, userID, currency, amountStr)
 	})
+}
+
+func (r *walletRepository) FreezeInTx(ctx context.Context, session sqlx.Session, userID int64, currency string, amount string) error {
+	if err := validateAmount(amount); err != nil {
+		return err
+	}
+	return freezeInTx(ctx, session, userID, currency, amount)
+}
+
+// freezeInTx 在既有交易 session 內把可用餘額轉入凍結餘額，並寫入 type='freeze' 帳本。
+// 先以 SELECT ... FOR UPDATE 鎖住錢包列再檢查可用餘額，檢查與扣減之間不會有其他交易插入，
+// 因此不需要額外的分散式鎖也不會凍結超過可用餘額。
+func freezeInTx(ctx context.Context, session sqlx.Session, userID int64, currency, amount string) error {
+	w, err := lockWalletRow(ctx, session, userID, currency)
+	if err != nil {
+		return err
+	}
+
+	avail, _, err := new(big.Float).Parse(w.AvailableBalance, 10)
+	if err != nil {
+		return err
+	}
+	amt, _, err := new(big.Float).Parse(amount, 10)
+	if err != nil {
+		return apierrors.New(400, "invalid amount")
+	}
+	if avail.Cmp(amt) < 0 {
+		return apierrors.New(400, "insufficient balance")
+	}
+
+	var newAvail string
+	if err := session.QueryRowCtx(ctx, &newAvail,
+		`UPDATE wallets SET available_balance = available_balance - $2, frozen_balance = frozen_balance + $2, updated_at = NOW()
+		 WHERE id = $1 RETURNING available_balance::text`,
+		w.ID, amount,
+	); err != nil {
+		return err
+	}
+
+	_, err = session.ExecCtx(ctx,
+		`INSERT INTO wallet_ledgers (wallet_id, type, amount, balance_after) VALUES ($1, 'freeze', -$2::numeric, $3)`,
+		w.ID, amount, newAvail,
+	)
+	return err
 }
 
 func (r *walletRepository) UnfreezeInTx(ctx context.Context, session sqlx.Session, userID int64, currency string, amount float64) error {

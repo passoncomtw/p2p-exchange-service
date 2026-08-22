@@ -5,6 +5,7 @@ import (
 	cryptodepositrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/crypto_deposit"
 	escrowrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/escrow_record"
 	fiatdepositrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/fiat_deposit"
+	fiatwithdrawrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/fiat_withdraw"
 	listingrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/listing"
 	orderrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/order"
 	orderstatuslogrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/order_status_log"
@@ -27,5 +28,6 @@ var Module = fx.Module("repository",
 	fx.Provide(orderstatuslogrepo.New),
 	fx.Provide(v1orderrepo.New),
 	fx.Provide(fiatdepositrepo.New),
+	fx.Provide(fiatwithdrawrepo.New),
 	fx.Provide(cryptodepositrepo.New),
 )
