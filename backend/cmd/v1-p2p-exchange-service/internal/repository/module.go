@@ -3,6 +3,7 @@ package repository
 import (
 	backenduserrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/backend_user"
 	cryptodepositrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/crypto_deposit"
+	cryptowithdrawrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/crypto_withdraw"
 	escrowrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/escrow_record"
 	fiatdepositrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/fiat_deposit"
 	fiatwithdrawrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/fiat_withdraw"
@@ -30,4 +31,5 @@ var Module = fx.Module("repository",
 	fx.Provide(fiatdepositrepo.New),
 	fx.Provide(fiatwithdrawrepo.New),
 	fx.Provide(cryptodepositrepo.New),
+	fx.Provide(cryptowithdrawrepo.New),
 )

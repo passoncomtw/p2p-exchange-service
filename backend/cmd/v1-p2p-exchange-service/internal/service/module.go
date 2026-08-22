@@ -5,6 +5,7 @@ import (
 	backend_admin_service "p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/backend_admin"
 	backend_auth_service "p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/backend_auth"
 	cryptodeposit_service "p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/crypto_deposit"
+	cryptowithdraw_service "p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/crypto_withdraw"
 	fiatdeposit_service "p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/fiat_deposit"
 	fiatwithdraw_service "p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/fiat_withdraw"
 	listing_service "p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/listing"
@@ -30,6 +31,7 @@ var Module = fx.Module("service",
 	fx.Provide(fiatdeposit_service.New),
 	fx.Provide(fiatwithdraw_service.New),
 	fx.Provide(cryptodeposit_service.New),
+	fx.Provide(cryptowithdraw_service.New),
 	// 定時任務：注冊進 schedule_runner group，由 Scheduler 統一啟停
 	fx.Provide(fx.Annotate(
 		order_service.NewOrderTimeoutRunner,
@@ -38,6 +40,11 @@ var Module = fx.Module("service",
 	)),
 	fx.Provide(fx.Annotate(
 		cryptodeposit_service.NewTronScannerRunner,
+		fx.As(new(schedule.Runner)),
+		fx.ResultTags(`group:"schedule_runner"`),
+	)),
+	fx.Provide(fx.Annotate(
+		cryptowithdraw_service.NewTronWithdrawRunner,
 		fx.As(new(schedule.Runner)),
 		fx.ResultTags(`group:"schedule_runner"`),
 	)),

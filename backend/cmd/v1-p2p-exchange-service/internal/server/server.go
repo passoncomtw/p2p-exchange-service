@@ -17,20 +17,21 @@ import (
 type Params struct {
 	fx.In
 
-	Config               *config.Config
-	LoginHandler         *handlers.LoginHandler
-	ProfileHandler       *handlers.ProfileHandler
-	PaymentMethodHandler *handlers.PaymentMethodHandler
-	WalletHandler        *handlers.WalletHandler
-	FiatDepositHandler   *handlers.FiatDepositHandler
-	FiatWithdrawHandler  *handlers.FiatWithdrawHandler
-	CryptoDepositHandler *handlers.CryptoDepositHandler
-	ListingHandler       *handlers.ListingHandler
-	OrderHandler         *handlers.OrderHandler
-	BackendHandler       *handlers.BackendHandler
-	V1Handler            *handlers.V1Handler
-	WSHandler            *handlers.WSHandler
-	LC                   fx.Lifecycle
+	Config                *config.Config
+	LoginHandler          *handlers.LoginHandler
+	ProfileHandler        *handlers.ProfileHandler
+	PaymentMethodHandler  *handlers.PaymentMethodHandler
+	WalletHandler         *handlers.WalletHandler
+	FiatDepositHandler    *handlers.FiatDepositHandler
+	FiatWithdrawHandler   *handlers.FiatWithdrawHandler
+	CryptoDepositHandler  *handlers.CryptoDepositHandler
+	CryptoWithdrawHandler *handlers.CryptoWithdrawHandler
+	ListingHandler        *handlers.ListingHandler
+	OrderHandler          *handlers.OrderHandler
+	BackendHandler        *handlers.BackendHandler
+	V1Handler             *handlers.V1Handler
+	WSHandler             *handlers.WSHandler
+	LC                    fx.Lifecycle
 }
 
 func NewServer(p Params) *rest.Server {
@@ -115,6 +116,16 @@ func NewServer(p Params) *rest.Server {
 				Method:  http.MethodGet,
 				Path:    "/app/wallets/crypto/deposits",
 				Handler: p.CryptoDepositHandler.List,
+			},
+			{
+				Method:  http.MethodPost,
+				Path:    "/app/wallets/crypto/withdraw",
+				Handler: p.CryptoWithdrawHandler.Create,
+			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/app/wallets/crypto/withdrawals",
+				Handler: p.CryptoWithdrawHandler.List,
 			},
 			{
 				Method:  http.MethodPost,

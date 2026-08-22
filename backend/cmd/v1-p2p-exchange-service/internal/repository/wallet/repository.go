@@ -16,6 +16,9 @@ import (
 const (
 	walletLockTTL         = 5
 	defaultLedgerPageSize = 20
+
+	// defaultWithdrawLedgerType DeductFrozenBalance 的固定帳本類型（維持既有行為不變）。
+	defaultWithdrawLedgerType = "withdraw"
 )
 
 type walletRow struct {
@@ -53,8 +56,16 @@ type WalletRepository interface {
 	// 讓「狀態轉換 + 入帳」可以是同一個原子交易（例如鏈上充值確認）。
 	// 不自行取 Redis 鎖（比照 UnfreezeInTx / TransferInTx）：需要鎖時由呼叫端負責。
 	DepositWithLedgerTypeInTx(ctx context.Context, session sqlx.Session, userID int64, currency string, amount string, ledgerType string, refOrderNo string) error
-	// DeductFrozenBalance 自 frozen_balance 扣除金額（提領確認），凍結餘額不足時回傳 400。
+	// DeductFrozenBalance 自 frozen_balance 扣除金額（提領確認），凍結餘額不足時回傳 400，
+	// 帳本類型固定為 'withdraw'。
 	DeductFrozenBalance(ctx context.Context, userID int64, currency string, amount string) error
+	// DeductFrozenBalanceWithLedgerTypeInTx 與 DeductFrozenBalance 相同的守衛
+	// （frozen_balance >= amount 條件式 UPDATE + RowsAffected 檢查），但可指定帳本類型
+	// （crypto_withdraw / fiat_withdraw）並在呼叫端傳入的交易 session 內執行，
+	// 讓「提領狀態轉換 + 扣款」可以是同一個原子交易。
+	// 不自行取 Redis 鎖（比照 UnfreezeInTx / TransferInTx）：需要鎖時由呼叫端負責；
+	// 餘額檢查本身由 SELECT ... FOR UPDATE 的列鎖保證原子性。
+	DeductFrozenBalanceWithLedgerTypeInTx(ctx context.Context, session sqlx.Session, userID int64, currency, amount, ledgerType string) error
 	// UnfreezeBalance 將凍結金額退回 available_balance（提領失敗/駁回），凍結餘額不足時回傳 400。
 	UnfreezeBalance(ctx context.Context, userID int64, currency string, amount string) error
 	// SumCurrencyBalance 回傳該幣別所有使用者的 available_balance + frozen_balance 總和。
@@ -389,47 +400,60 @@ func (r *walletRepository) DeductFrozenBalance(ctx context.Context, userID int64
 
 	return r.withWalletLock(ctx, userID, currency, func(ctx context.Context) error {
 		return r.db.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
-			w, err := lockWalletRow(ctx, session, userID, currency)
-			if err != nil {
-				return err
-			}
-
-			// 條件式 UPDATE：凍結餘額不足時不會異動任何列，靠 RowsAffected 攔截，
-			// 不可只靠先前 SELECT 的值判斷（legacy 版本沒有這道檢查，會扣成負數）。
-			res, err := session.ExecCtx(ctx,
-				`UPDATE wallets SET frozen_balance = frozen_balance - $2, updated_at = NOW()
-				 WHERE id = $1 AND frozen_balance >= $2`,
-				w.ID, amount,
-			)
-			if err != nil {
-				return err
-			}
-			affected, err := res.RowsAffected()
-			if err != nil {
-				return err
-			}
-			if affected == 0 {
-				return apierrors.New(400, "insufficient frozen balance")
-			}
-
-			var newFrozen string
-			if err := session.QueryRowCtx(ctx, &newFrozen,
-				`SELECT frozen_balance::text FROM wallets WHERE id = $1`,
-				w.ID,
-			); err != nil {
-				return err
-			}
-
-			// balance_after 記錄異動後的凍結餘額（與既有 transfer_out 帳本一致：
-			// 提領扣的是凍結餘額，available_balance 並未變動）。
-			_, err = session.ExecCtx(ctx,
-				`INSERT INTO wallet_ledgers (wallet_id, type, amount, balance_after)
-				 VALUES ($1, 'withdraw', $2, $3)`,
-				w.ID, "-"+amount, newFrozen,
-			)
-			return err
+			return deductFrozenBalanceInTx(ctx, session, userID, currency, amount, defaultWithdrawLedgerType)
 		})
 	})
+}
+
+func (r *walletRepository) DeductFrozenBalanceWithLedgerTypeInTx(ctx context.Context, session sqlx.Session, userID int64, currency, amount, ledgerType string) error {
+	if err := validateAmount(amount); err != nil {
+		return err
+	}
+	return deductFrozenBalanceInTx(ctx, session, userID, currency, amount, ledgerType)
+}
+
+// deductFrozenBalanceInTx 在既有交易 session 內自 frozen_balance 永久扣除金額並寫入指定類型的帳本。
+// 呼叫端必須先通過 validateAmount，避免負數金額讓 `frozen_balance >= $2` 的條件形同虛設。
+func deductFrozenBalanceInTx(ctx context.Context, session sqlx.Session, userID int64, currency, amount, ledgerType string) error {
+	w, err := lockWalletRow(ctx, session, userID, currency)
+	if err != nil {
+		return err
+	}
+
+	// 條件式 UPDATE：凍結餘額不足時不會異動任何列，靠 RowsAffected 攔截，
+	// 不可只靠先前 SELECT 的值判斷（legacy 版本沒有這道檢查，會扣成負數）。
+	res, err := session.ExecCtx(ctx,
+		`UPDATE wallets SET frozen_balance = frozen_balance - $2, updated_at = NOW()
+		 WHERE id = $1 AND frozen_balance >= $2`,
+		w.ID, amount,
+	)
+	if err != nil {
+		return err
+	}
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return apierrors.New(400, "insufficient frozen balance")
+	}
+
+	var newFrozen string
+	if err := session.QueryRowCtx(ctx, &newFrozen,
+		`SELECT frozen_balance::text FROM wallets WHERE id = $1`,
+		w.ID,
+	); err != nil {
+		return err
+	}
+
+	// balance_after 記錄異動後的凍結餘額（與既有 transfer_out 帳本一致：
+	// 提領扣的是凍結餘額，available_balance 並未變動）。
+	_, err = session.ExecCtx(ctx,
+		`INSERT INTO wallet_ledgers (wallet_id, type, amount, balance_after)
+		 VALUES ($1, $2, $3, $4)`,
+		w.ID, ledgerType, "-"+amount, newFrozen,
+	)
+	return err
 }
 
 func (r *walletRepository) UnfreezeBalance(ctx context.Context, userID int64, currency string, amount string) error {
