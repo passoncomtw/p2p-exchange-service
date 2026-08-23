@@ -245,6 +245,16 @@ func NewServer(p Params) *rest.Server {
 				Path:    "/backend/platform/wallet-info",
 				Handler: p.BackendHandler.PlatformWalletInfo,
 			},
+			{
+				Method:  http.MethodGet,
+				Path:    "/backend/fiat-withdrawals",
+				Handler: p.BackendHandler.ListFiatWithdrawals,
+			},
+			{
+				Method:  http.MethodPut,
+				Path:    "/backend/fiat-withdrawals/:id/review",
+				Handler: p.BackendHandler.ReviewFiatWithdrawal,
+			},
 		},
 		rest.WithJwt(p.Config.Backend.AccessSecret),
 	)

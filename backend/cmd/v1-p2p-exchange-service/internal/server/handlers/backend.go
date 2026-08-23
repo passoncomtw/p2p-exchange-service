@@ -136,6 +136,38 @@ func (h *BackendHandler) PlatformWalletInfo(w http.ResponseWriter, r *http.Reque
 	httpx.WriteJsonCtx(r.Context(), w, http.StatusOK, response.Success(resp))
 }
 
+func (h *BackendHandler) ListFiatWithdrawals(w http.ResponseWriter, r *http.Request) {
+	var req backend_interface.BackendListFiatWithdrawalsRequest
+	if err := httpx.Parse(r, &req); err != nil {
+		httpx.WriteJsonCtx(r.Context(), w, http.StatusBadRequest, response.Fail(http.StatusBadRequest, err.Error()))
+		return
+	}
+	resp, err := h.adminSvc.ListFiatWithdrawals(r.Context(), req.Status, req.Limit, req.Offset)
+	if err != nil {
+		code := appErrCode(err)
+		httpx.WriteJsonCtx(r.Context(), w, code, response.Fail(code, err.Error()))
+		return
+	}
+	httpx.WriteJsonCtx(r.Context(), w, http.StatusOK, response.Success(resp))
+}
+
+func (h *BackendHandler) ReviewFiatWithdrawal(w http.ResponseWriter, r *http.Request) {
+	var req backend_interface.BackendReviewFiatWithdrawalRequest
+	if err := httpx.Parse(r, &req); err != nil {
+		httpx.WriteJsonCtx(r.Context(), w, http.StatusBadRequest, response.Fail(http.StatusBadRequest, err.Error()))
+		return
+	}
+	// 審核人一律取自 Backend JWT context，不從 request body 讀取，
+	// 否則稽核記錄（fiat_withdrawals.reviewed_by）可被呼叫端偽造成任意管理員。
+	reviewerID := ctxUID(r)
+	if err := h.adminSvc.ReviewFiatWithdrawal(r.Context(), reviewerID, req.ID, req.Action, req.Reason); err != nil {
+		code := appErrCode(err)
+		httpx.WriteJsonCtx(r.Context(), w, code, response.Fail(code, err.Error()))
+		return
+	}
+	httpx.WriteJsonCtx(r.Context(), w, http.StatusOK, response.Success(nil))
+}
+
 func ctxStringClaim(r *http.Request, key string) string {
 	v := r.Context().Value(key)
 	switch val := v.(type) {

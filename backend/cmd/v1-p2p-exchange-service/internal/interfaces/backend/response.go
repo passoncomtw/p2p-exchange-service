@@ -55,3 +55,25 @@ type PlatformWalletInfoResponse struct {
 	Tron  TronWalletInfo `json:"tron"`
 	ECPay ECPayInfo      `json:"ecpay"`
 }
+
+// FiatWithdrawalItem 後台法幣提領申請列表單筆資料。
+// BankAccount 為完整帳號（後台審核人員需核對匯款資訊，刻意不遮蔽），
+// 與 App 端列表（只回後 4 碼）不同；此結構只會經 Backend JWT 保護的路由輸出。
+type FiatWithdrawalItem struct {
+	ID           int64   `json:"id"`
+	UserID       int64   `json:"userId"`
+	Currency     string  `json:"currency"`
+	Amount       string  `json:"amount"`
+	BankCode     string  `json:"bankCode"`
+	BankAccount  string  `json:"bankAccount"`
+	AccountName  string  `json:"accountName"`
+	Status       string  `json:"status"`
+	ReviewedBy   *int64  `json:"reviewedBy"`
+	RejectReason *string `json:"rejectReason"`
+	CreatedAt    string  `json:"createdAt"`
+}
+
+type BackendListFiatWithdrawalsResponse struct {
+	List  []FiatWithdrawalItem `json:"list"`
+	Total int64                `json:"total"`
+}

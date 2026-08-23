@@ -10,6 +10,7 @@ import (
 	app_interface "p2p-exchange/cmd/v1-p2p-exchange-service/internal/interfaces/app"
 	backend_interface "p2p-exchange/cmd/v1-p2p-exchange-service/internal/interfaces/backend"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/model/entity"
+	fiatwithdrawrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/fiat_withdraw"
 	listingrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/listing"
 	orderrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/order"
 	userrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/user"
@@ -29,15 +30,22 @@ type BackendAdminService interface {
 	DepositToMember(ctx context.Context, adminUID int64, id int64, currency string, amount string) (*backend_interface.BackendDepositResponse, error)
 	// GetPlatformWalletInfo 聚合平台 Tron 熱錢包與 ECPay 設定資訊（唯讀，永遠成功回應）。
 	GetPlatformWalletInfo(ctx context.Context) (*backend_interface.PlatformWalletInfoResponse, error)
+	// ListFiatWithdrawals 分頁查詢法幣提領申請（含完整銀行帳號，供後台審核核對）。
+	ListFiatWithdrawals(ctx context.Context, status string, limit, offset int64) (*backend_interface.BackendListFiatWithdrawalsResponse, error)
+	// ReviewFiatWithdrawal 審核法幣提領申請（approve 扣款 / reject 解凍）。
+	// reviewerID 為審核人（後台帳號 ID），必須由 handler 從 JWT context 取得後傳入；
+	// 絕不可來自 request body。已審核過的申請回傳 409。
+	ReviewFiatWithdrawal(ctx context.Context, reviewerID, id int64, action, reason string) error
 }
 
 type backendAdminService struct {
-	db          sqlx.SqlConn
-	cfg         *config.Config
-	listingRepo listingrepo.ListingRepository
-	orderRepo   orderrepo.OrderRepository
-	walletRepo  walletrepo.WalletRepository
-	userRepo    userrepo.UserRepository
+	db               sqlx.SqlConn
+	cfg              *config.Config
+	listingRepo      listingrepo.ListingRepository
+	orderRepo        orderrepo.OrderRepository
+	walletRepo       walletrepo.WalletRepository
+	userRepo         userrepo.UserRepository
+	fiatWithdrawRepo fiatwithdrawrepo.FiatWithdrawRepository
 }
 
 func New(
@@ -47,14 +55,16 @@ func New(
 	orderRepo orderrepo.OrderRepository,
 	walletRepo walletrepo.WalletRepository,
 	userRepo userrepo.UserRepository,
+	fiatWithdrawRepo fiatwithdrawrepo.FiatWithdrawRepository,
 ) BackendAdminService {
 	return &backendAdminService{
-		db:          db,
-		cfg:         cfg,
-		listingRepo: listingRepo,
-		orderRepo:   orderRepo,
-		walletRepo:  walletRepo,
-		userRepo:    userRepo,
+		db:               db,
+		cfg:              cfg,
+		listingRepo:      listingRepo,
+		orderRepo:        orderRepo,
+		walletRepo:       walletRepo,
+		userRepo:         userRepo,
+		fiatWithdrawRepo: fiatWithdrawRepo,
 	}
 }
 
