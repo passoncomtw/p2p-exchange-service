@@ -6,7 +6,6 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/zeromicro/go-zero/core/logx"
-	"p2p-exchange/internal/config"
 )
 
 type Client struct {
@@ -19,16 +18,6 @@ type Config struct {
 	Password   string
 	MasterName string
 	PoolSize   int
-}
-
-func New(c config.RedisConf) *Client {
-	return NewFromConfig(Config{
-		Mode:       c.Mode,
-		Addr:       c.Addr,
-		Password:   c.Password,
-		MasterName: c.MasterName,
-		PoolSize:   c.PoolSize,
-	})
 }
 
 func NewFromConfig(c Config) *Client {
