@@ -11,6 +11,12 @@ import (
 type UserRepository interface {
 	FindByUsername(ctx context.Context, username string) (*entity.AppUser, error)
 	GetPushToken(ctx context.Context, userID int64) (string, error)
+	// Create 建立 App 使用者並回傳完整資料。
+	// passwordHash 必須是呼叫端已雜湊過的密碼，本方法不做任何雜湊或明文處理。
+	// username 的唯一性由 app_users.username 的 UNIQUE 約束保證。
+	Create(ctx context.Context, username, passwordHash string) (*entity.AppUser, error)
+	// UpdatePushToken 更新使用者的 Expo 推播 token。
+	UpdatePushToken(ctx context.Context, userID int64, token string) error
 	// FindByID 依主鍵查詢使用者；查無資料時回傳 sqlx.ErrNotFound。
 	FindByID(ctx context.Context, id int64) (*entity.AppUser, error)
 	// List 分頁查詢使用者，keyword 非空時比對 username / email（不分大小寫的模糊比對）。
@@ -88,6 +94,28 @@ func (r *userRepository) Count(ctx context.Context, keyword string) (int64, erro
 		keyword,
 	)
 	return count, err
+}
+
+func (r *userRepository) Create(ctx context.Context, username, passwordHash string) (*entity.AppUser, error) {
+	var user entity.AppUser
+	err := r.db.QueryRowCtx(ctx, &user,
+		`INSERT INTO app_users (username, password_hash)
+		 VALUES ($1, $2)
+		 RETURNING `+userColumns,
+		username, passwordHash,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *userRepository) UpdatePushToken(ctx context.Context, userID int64, token string) error {
+	_, err := r.db.ExecCtx(ctx,
+		`UPDATE app_users SET expo_push_token = $1, updated_at = NOW() WHERE id = $2`,
+		token, userID,
+	)
+	return err
 }
 
 func (r *userRepository) FindByUsername(ctx context.Context, username string) (*entity.AppUser, error) {

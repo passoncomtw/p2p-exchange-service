@@ -77,6 +77,13 @@ type WalletRepository interface {
 	UnfreezeBalanceInTx(ctx context.Context, session sqlx.Session, userID int64, currency, amount string) error
 	// SumCurrencyBalance 回傳該幣別所有使用者的 available_balance + frozen_balance 總和。
 	SumCurrencyBalance(ctx context.Context, currency string) (string, error)
+	// CreateEmpty 為新註冊的使用者建立餘額為零的錢包。
+	//
+	// 刻意不共用 Deposit / DepositWithLedgerType：那些方法的 validateAmount 會拒絕零與負數金額，
+	// 那道防線是為了擋「用負數金額繞過餘額檢查」，與這裡「建立一個餘額本來就是 0 的新錢包」語意不同。
+	// 本方法不異動任何既有餘額、不寫帳本，因此也不需要取 Redis 鎖
+	// （新帳號的錢包在建立當下不可能有其他交易競爭）。
+	CreateEmpty(ctx context.Context, userID int64, currency string) error
 }
 
 type walletRepository struct {
@@ -530,6 +537,15 @@ func (r *walletRepository) SumCurrencyBalance(ctx context.Context, currency stri
 		currency,
 	)
 	return total, err
+}
+
+func (r *walletRepository) CreateEmpty(ctx context.Context, userID int64, currency string) error {
+	_, err := r.db.ExecCtx(ctx,
+		`INSERT INTO wallets (user_id, currency, available_balance, frozen_balance)
+		 VALUES ($1, $2, 0, 0)`,
+		userID, currency,
+	)
+	return err
 }
 
 func (r *walletRepository) AcquireLocks(ctx context.Context, userIDs []int64, currency string) (unlock func(), err error) {

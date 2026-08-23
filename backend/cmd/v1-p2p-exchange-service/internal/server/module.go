@@ -11,6 +11,7 @@ import (
 var Module = fx.Module("server",
 	fx.Provide(pkgws.NewHub),
 	fx.Provide(handlers.NewLoginHandler),
+	fx.Provide(handlers.NewRegisterHandler),
 	fx.Provide(handlers.NewProfileHandler),
 	fx.Provide(handlers.NewPaymentMethodHandler),
 	fx.Provide(handlers.NewWalletHandler),

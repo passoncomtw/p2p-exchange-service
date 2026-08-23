@@ -19,6 +19,7 @@ type Params struct {
 
 	Config                *config.Config
 	LoginHandler          *handlers.LoginHandler
+	RegisterHandler       *handlers.RegisterHandler
 	ProfileHandler        *handlers.ProfileHandler
 	PaymentMethodHandler  *handlers.PaymentMethodHandler
 	WalletHandler         *handlers.WalletHandler
@@ -54,6 +55,12 @@ func NewServer(p Params) *rest.Server {
 		Path:    "/app/auth/login",
 		Handler: p.LoginHandler.Handle,
 	})
+	// 註冊為 public route（尚未有帳號，不可能帶 App JWT），與 /app/auth/login 同一類。
+	server.AddRoute(rest.Route{
+		Method:  http.MethodPost,
+		Path:    "/app/auth/register",
+		Handler: p.RegisterHandler.Handle,
+	})
 	// ECPay 付款結果通知：由 ECPay 伺服器直接呼叫，不可能帶我方 JWT，
 	// 因此必須維持 public（不進任何 rest.WithJwt 群組）；
 	// 呼叫方身分改由 CheckMacValue 簽章驗證（見 ecpaywebhook_service.HandleNotify）。
@@ -70,6 +77,11 @@ func NewServer(p Params) *rest.Server {
 				Method:  http.MethodGet,
 				Path:    "/app/profile",
 				Handler: p.ProfileHandler.Handle,
+			},
+			{
+				Method:  http.MethodPut,
+				Path:    "/app/profile/push-token",
+				Handler: p.ProfileHandler.UpdatePushToken,
 			},
 			{
 				Method:  http.MethodPost,
