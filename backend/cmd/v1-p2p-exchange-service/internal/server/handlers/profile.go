@@ -20,8 +20,9 @@ func NewProfileHandler(userRepo userrepo.UserRepository) *ProfileHandler {
 }
 
 func (h *ProfileHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	payload, _ := r.Context().Value("payload").(map[string]interface{})
-	username, _ := payload["username"].(string)
+	// go-zero 的 JWT middleware 把每個 claim 個別以 context.WithValue(ctx, k, v) 寫入
+	// context（沒有 "payload" 包裝層），username claim 在簽發時就是字串型別。
+	username, _ := r.Context().Value("username").(string)
 
 	httpx.WriteJsonCtx(r.Context(), w, http.StatusOK, response.Success(app_interface.ProfileResponse{
 		Username: username,
