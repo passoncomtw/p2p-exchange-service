@@ -64,6 +64,143 @@ type (
 		ID int64 `path:"id"`
 	}
 
+	// ── wallets ──────────────────────────────────────────────────────────────
+	WalletItem {
+		Currency         string `json:"currency"`
+		AvailableBalance string `json:"availableBalance"`
+		FrozenBalance    string `json:"frozenBalance"`
+	}
+	ListWalletsResponse {
+		List []WalletItem `json:"list"`
+	}
+	ListWalletLedgersRequest {
+		Currency string `path:"currency"`
+		Limit    int64  `form:"limit,optional,default=20"`
+		Offset   int64  `form:"offset,optional,default=0"`
+	}
+	WalletLedgerItem {
+		Type         string `json:"type"`
+		Amount       string `json:"amount"`
+		BalanceAfter string `json:"balanceAfter"`
+		RefOrderNo   string `json:"refOrderNo,optional"`
+		CreatedAt    string `json:"createdAt"`
+	}
+	ListWalletLedgersResponse {
+		List  []WalletLedgerItem `json:"list"`
+		Total int64              `json:"total"`
+	}
+
+	// ── fiat deposit（TWD 入金，透過 ECPay）────────────────────────────────────
+	FiatDepositRequest {
+		Amount int `json:"amount"`
+	}
+	FiatDepositResponse {
+		MerchantTradeNo string            `json:"merchantTradeNo"`
+		PaymentURL      string            `json:"paymentUrl"`
+		FormParams      map[string]string `json:"formParams"`
+	}
+	AppListFiatDepositsRequest {
+		Limit  int64 `form:"limit,optional,default=20"`
+		Offset int64 `form:"offset,optional,default=0"`
+	}
+	FiatDepositItem {
+		ID              int64  `json:"id"`
+		Currency        string `json:"currency"`
+		Amount          string `json:"amount"`
+		MerchantTradeNo string `json:"merchantTradeNo"`
+		Status          string `json:"status"`
+		PaymentType     string `json:"paymentType,optional"`
+		PaidAt          string `json:"paidAt,optional"`
+		CreatedAt       string `json:"createdAt"`
+	}
+	AppListFiatDepositsResponse {
+		List  []FiatDepositItem `json:"list"`
+		Total int64             `json:"total"`
+	}
+
+	// ── fiat withdraw（TWD 提領）─────────────────────────────────────────────
+	FiatWithdrawRequest {
+		Amount      string `json:"amount"`
+		BankCode    string `json:"bankCode"`
+		BankAccount string `json:"bankAccount"`
+		AccountName string `json:"accountName"`
+	}
+	FiatWithdrawResponse {
+		ID     int64  `json:"id"`
+		Status string `json:"status"`
+	}
+	AppListFiatWithdrawalsRequest {
+		Limit  int64 `form:"limit,optional,default=20"`
+		Offset int64 `form:"offset,optional,default=0"`
+	}
+	AppFiatWithdrawalItem {
+		ID              int64  `json:"id"`
+		Currency        string `json:"currency"`
+		Amount          string `json:"amount"`
+		BankCode        string `json:"bankCode"`
+		BankAccountTail string `json:"bankAccountTail"`
+		Status          string `json:"status"`
+		CreatedAt       string `json:"createdAt"`
+	}
+	AppListFiatWithdrawalsResponse {
+		List  []AppFiatWithdrawalItem `json:"list"`
+		Total int64                   `json:"total"`
+	}
+
+	// ── crypto deposit（USDT 鏈上充值）───────────────────────────────────────
+	GetCryptoDepositInfoResponse {
+		Address         string `json:"address"`
+		Memo            string `json:"memo"`
+		Network         string `json:"network"`
+		Currency        string `json:"currency"`
+		ContractAddress string `json:"contractAddress"`
+	}
+	AppListCryptoDepositsRequest {
+		Limit  int64 `form:"limit,optional,default=20"`
+		Offset int64 `form:"offset,optional,default=0"`
+	}
+	CryptoDepositItem {
+		ID          int64  `json:"id"`
+		Currency    string `json:"currency"`
+		Amount      string `json:"amount"`
+		TxHash      string `json:"txHash"`
+		Status      string `json:"status"`
+		ConfirmedAt string `json:"confirmedAt,optional"`
+		CreatedAt   string `json:"createdAt"`
+	}
+	AppListCryptoDepositsResponse {
+		List  []CryptoDepositItem `json:"list"`
+		Total int64               `json:"total"`
+	}
+
+	// ── crypto withdraw（USDT 鏈上提領）──────────────────────────────────────
+	CryptoWithdrawRequest {
+		ToAddress string `json:"toAddress"`
+		Amount    string `json:"amount"`
+	}
+	CryptoWithdrawResponse {
+		ID     int64  `json:"id"`
+		Status string `json:"status"`
+	}
+	AppListCryptoWithdrawalsRequest {
+		Limit  int64 `form:"limit,optional,default=20"`
+		Offset int64 `form:"offset,optional,default=0"`
+	}
+	CryptoWithdrawalItem {
+		ID          int64  `json:"id"`
+		Currency    string `json:"currency"`
+		Amount      string `json:"amount"`
+		ToAddress   string `json:"toAddress"`
+		TxHash      string `json:"txHash,optional"`
+		Status      string `json:"status"`
+		ConfirmedAt string `json:"confirmedAt,optional"`
+		CreatedAt   string `json:"createdAt"`
+	}
+	AppListCryptoWithdrawalsResponse {
+		List  []CryptoWithdrawalItem `json:"list"`
+		Total int64                  `json:"total"`
+	}
+
 	// ── listings ─────────────────────────────────────────────────────────────
 	CreateListingRequest {
 		Type             string  `json:"type"`
@@ -194,6 +331,85 @@ type (
 		Reason string `json:"reason"`
 	}
 
+	// ── backend: members ─────────────────────────────────────────────────────
+	BackendListMembersRequest {
+		Keyword string `form:"keyword,optional"`
+		Limit   int64  `form:"limit,optional,default=10"`
+		Offset  int64  `form:"offset,optional,default=0"`
+	}
+	MemberItem {
+		ID        int64  `json:"id"`
+		Username  string `json:"username"`
+		Email     string `json:"email"`
+		CreatedAt string `json:"createdAt"`
+		UpdatedAt string `json:"updatedAt"`
+	}
+	BackendListMembersResponse {
+		List  []MemberItem `json:"list"`
+		Total int64        `json:"total"`
+	}
+	// BackendDepositRequest 後台手動入金：操作人一律取自 Backend JWT，不接受 body 指定。
+	BackendDepositRequest {
+		ID       int64  `path:"id"`
+		Currency string `json:"currency"`
+		Amount   string `json:"amount"`
+	}
+	BackendDepositResponse {
+		Currency         string `json:"currency"`
+		AvailableBalance string `json:"available_balance"`
+		FrozenBalance    string `json:"frozen_balance"`
+	}
+
+	// ── backend: platform wallet ─────────────────────────────────────────────
+	TronWalletInfo {
+		Enabled                bool   `json:"enabled"`
+		Network                string `json:"network"`
+		HotWalletAddress       string `json:"hotWalletAddress"`
+		USDTContractAddress    string `json:"usdtContractAddress"`
+		ConfirmationBlocks     int    `json:"confirmationBlocks"`
+		OnChainBalance         string `json:"onChainBalance"`
+		PlatformVirtualBalance string `json:"platformVirtualBalance"`
+	}
+	ECPayInfo {
+		Enabled    bool   `json:"enabled"`
+		MerchantID string `json:"merchantId"`
+		BaseURL    string `json:"baseUrl"`
+	}
+	PlatformWalletInfoResponse {
+		Tron  TronWalletInfo `json:"tron"`
+		ECPay ECPayInfo      `json:"ecpay"`
+	}
+
+	// ── backend: fiat withdrawal review ──────────────────────────────────────
+	BackendListFiatWithdrawalsRequest {
+		Status string `form:"status,optional,default=pending"`
+		Limit  int64  `form:"limit,optional,default=20"`
+		Offset int64  `form:"offset,optional,default=0"`
+	}
+	FiatWithdrawalItem {
+		ID           int64  `json:"id"`
+		UserID       int64  `json:"userId"`
+		Currency     string `json:"currency"`
+		Amount       string `json:"amount"`
+		BankCode     string `json:"bankCode"`
+		BankAccount  string `json:"bankAccount"`
+		AccountName  string `json:"accountName"`
+		Status       string `json:"status"`
+		ReviewedBy   int64  `json:"reviewedBy,optional"`
+		RejectReason string `json:"rejectReason,optional"`
+		CreatedAt    string `json:"createdAt"`
+	}
+	BackendListFiatWithdrawalsResponse {
+		List  []FiatWithdrawalItem `json:"list"`
+		Total int64                `json:"total"`
+	}
+	// BackendReviewFiatWithdrawalRequest 審核人一律取自 Backend JWT，不接受 body 指定。
+	BackendReviewFiatWithdrawalRequest {
+		ID     int64  `path:"id"`
+		Action string `json:"action"`
+		Reason string `json:"reason,optional"`
+	}
+
 	// ── v1 legacy ────────────────────────────────────────────────────────────
 	V1CreateOrderRequest {
 		Type          string  `json:"type"`
@@ -274,6 +490,86 @@ service v1-api {
 	@doc "刪除收款帳戶"
 	@handler AppDeletePaymentMethodHandler
 	delete /payment-methods/:id (DeletePaymentMethodRequest)
+}
+
+// ── App: wallets ─────────────────────────────────────────────────────────────
+@server (
+	jwt:    App
+	prefix: /app
+	group:  app-wallets
+)
+service v1-api {
+	@doc "查詢各幣別錢包餘額"
+	@handler AppListWalletsHandler
+	get /wallets returns (ListWalletsResponse)
+
+	@doc "查詢指定幣別的錢包帳本流水"
+	@handler AppListWalletLedgersHandler
+	get /wallets/:currency/ledgers (ListWalletLedgersRequest) returns (ListWalletLedgersResponse)
+}
+
+// ── App: fiat deposit（TWD 入金）───────────────────────────────────────────────
+@server (
+	jwt:    App
+	prefix: /app/wallets/fiat
+	group:  app-fiat-deposit
+)
+service v1-api {
+	@doc "建立 TWD 入金訂單（導轉 ECPay）"
+	@handler AppCreateFiatDepositHandler
+	post /deposit (FiatDepositRequest) returns (FiatDepositResponse)
+
+	@doc "查詢 TWD 入金紀錄"
+	@handler AppListFiatDepositsHandler
+	get /deposits (AppListFiatDepositsRequest) returns (AppListFiatDepositsResponse)
+}
+
+// ── App: fiat withdraw（TWD 提領）──────────────────────────────────────────────
+@server (
+	jwt:    App
+	prefix: /app/wallets/fiat
+	group:  app-fiat-withdraw
+)
+service v1-api {
+	@doc "建立 TWD 提領申請"
+	@handler AppCreateFiatWithdrawHandler
+	post /withdraw (FiatWithdrawRequest) returns (FiatWithdrawResponse)
+
+	@doc "查詢 TWD 提領紀錄"
+	@handler AppListFiatWithdrawalsHandler
+	get /withdrawals (AppListFiatWithdrawalsRequest) returns (AppListFiatWithdrawalsResponse)
+}
+
+// ── App: crypto deposit（USDT 鏈上充值）────────────────────────────────────────
+@server (
+	jwt:    App
+	prefix: /app/wallets/crypto
+	group:  app-crypto-deposit
+)
+service v1-api {
+	@doc "取得 USDT 充值地址與 memo"
+	@handler AppGetCryptoDepositInfoHandler
+	get /deposit-info returns (GetCryptoDepositInfoResponse)
+
+	@doc "查詢 USDT 充值紀錄"
+	@handler AppListCryptoDepositsHandler
+	get /deposits (AppListCryptoDepositsRequest) returns (AppListCryptoDepositsResponse)
+}
+
+// ── App: crypto withdraw（USDT 鏈上提領）───────────────────────────────────────
+@server (
+	jwt:    App
+	prefix: /app/wallets/crypto
+	group:  app-crypto-withdraw
+)
+service v1-api {
+	@doc "建立 USDT 提領申請"
+	@handler AppCreateCryptoWithdrawHandler
+	post /withdraw (CryptoWithdrawRequest) returns (CryptoWithdrawResponse)
+
+	@doc "查詢 USDT 提領紀錄"
+	@handler AppListCryptoWithdrawalsHandler
+	get /withdrawals (AppListCryptoWithdrawalsRequest) returns (AppListCryptoWithdrawalsResponse)
 }
 
 // ── App: listings ────────────────────────────────────────────────────────────
@@ -372,6 +668,61 @@ service v1-api {
 	@doc "後台處理訂單"
 	@handler BackendResolveOrderHandler
 	put /orders/:id/resolve (ResolveOrderRequest)
+}
+
+// ── Backend: members ─────────────────────────────────────────────────────────
+@server (
+	jwt:    Backend
+	prefix: /backend
+	group:  backend-members
+)
+service v1-api {
+	@doc "後台查詢會員列表"
+	@handler BackendListMembersHandler
+	get /members (BackendListMembersRequest) returns (BackendListMembersResponse)
+
+	@doc "後台手動為會員入金"
+	@handler BackendDepositHandler
+	post /members/:id/deposit (BackendDepositRequest) returns (BackendDepositResponse)
+}
+
+// ── Backend: platform wallet ─────────────────────────────────────────────────
+@server (
+	jwt:    Backend
+	prefix: /backend
+	group:  backend-platform-wallet
+)
+service v1-api {
+	@doc "查詢平台熱錢包鏈上餘額與虛擬餘額"
+	@handler BackendPlatformWalletInfoHandler
+	get /platform/wallet-info returns (PlatformWalletInfoResponse)
+}
+
+// ── Backend: fiat withdrawal review ───────────────────────────────────────────
+@server (
+	jwt:    Backend
+	prefix: /backend
+	group:  backend-fiat-withdrawals
+)
+service v1-api {
+	@doc "後台查詢法幣提領申請列表"
+	@handler BackendListFiatWithdrawalsHandler
+	get /fiat-withdrawals (BackendListFiatWithdrawalsRequest) returns (BackendListFiatWithdrawalsResponse)
+
+	@doc "後台審核法幣提領申請（核可/駁回）"
+	@handler BackendReviewFiatWithdrawalHandler
+	put /fiat-withdrawals/:id/review (BackendReviewFiatWithdrawalRequest)
+}
+
+// ── ECPay webhook (public) ────────────────────────────────────────────────────
+@server (
+	prefix: /webhook/ecpay
+	group:  ecpay-webhook
+)
+service v1-api {
+	@doc "ECPay 付款結果通知。實際請求為 application/x-www-form-urlencoded（非 JSON），回應為純文字 1|OK 或 0|<message>；此處僅登記路由供文件索引，不代表真實的 JSON 請求/回應格式。"
+	@handler ECPayWebhookNotifyHandler
+	post /notify
 }
 
 // ── V1 legacy (public) ──────────────────────────────────────────────────────

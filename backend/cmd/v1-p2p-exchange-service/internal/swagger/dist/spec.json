@@ -637,6 +637,370 @@
         ]
       }
     },
+    "/app/wallets": {
+      "get": {
+        "summary": "查詢各幣別錢包餘額",
+        "operationId": "AppListWalletsHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListWalletsResponse"
+            }
+          }
+        },
+        "tags": [
+          "app-wallets"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/wallets/crypto/deposit-info": {
+      "get": {
+        "summary": "取得 USDT 充值地址與 memo",
+        "operationId": "AppGetCryptoDepositInfoHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/GetCryptoDepositInfoResponse"
+            }
+          }
+        },
+        "tags": [
+          "app-crypto-deposit"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/wallets/crypto/deposits": {
+      "get": {
+        "summary": "查詢 USDT 充值紀錄",
+        "operationId": "AppListCryptoDepositsHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AppListCryptoDepositsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "20"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "0"
+          }
+        ],
+        "tags": [
+          "app-crypto-deposit"
+        ],
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/wallets/crypto/withdraw": {
+      "post": {
+        "summary": "建立 USDT 提領申請",
+        "operationId": "AppCreateCryptoWithdrawHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/CryptoWithdrawResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": " ── crypto withdraw（USDT 鏈上提領）──────────────────────────────────────",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CryptoWithdrawRequest"
+            }
+          }
+        ],
+        "tags": [
+          "app-crypto-withdraw"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/wallets/crypto/withdrawals": {
+      "get": {
+        "summary": "查詢 USDT 提領紀錄",
+        "operationId": "AppListCryptoWithdrawalsHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AppListCryptoWithdrawalsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "20"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "0"
+          }
+        ],
+        "tags": [
+          "app-crypto-withdraw"
+        ],
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/wallets/fiat/deposit": {
+      "post": {
+        "summary": "建立 TWD 入金訂單（導轉 ECPay）",
+        "operationId": "AppCreateFiatDepositHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/FiatDepositResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": " ── fiat deposit（TWD 入金，透過 ECPay）────────────────────────────────────",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/FiatDepositRequest"
+            }
+          }
+        ],
+        "tags": [
+          "app-fiat-deposit"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/wallets/fiat/deposits": {
+      "get": {
+        "summary": "查詢 TWD 入金紀錄",
+        "operationId": "AppListFiatDepositsHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AppListFiatDepositsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "20"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "0"
+          }
+        ],
+        "tags": [
+          "app-fiat-deposit"
+        ],
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/wallets/fiat/withdraw": {
+      "post": {
+        "summary": "建立 TWD 提領申請",
+        "operationId": "AppCreateFiatWithdrawHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/FiatWithdrawResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": " ── fiat withdraw（TWD 提領）─────────────────────────────────────────────",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/FiatWithdrawRequest"
+            }
+          }
+        ],
+        "tags": [
+          "app-fiat-withdraw"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/wallets/fiat/withdrawals": {
+      "get": {
+        "summary": "查詢 TWD 提領紀錄",
+        "operationId": "AppListFiatWithdrawalsHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/AppListFiatWithdrawalsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "20"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "0"
+          }
+        ],
+        "tags": [
+          "app-fiat-withdraw"
+        ],
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/app/wallets/{currency}/ledgers": {
+      "get": {
+        "summary": "查詢指定幣別的錢包帳本流水",
+        "operationId": "AppListWalletLedgersHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/ListWalletLedgersResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "currency",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "20"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "0"
+          }
+        ],
+        "tags": [
+          "app-wallets"
+        ],
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
     "/backend/auth/login": {
       "post": {
         "summary": "後台管理員登入",
@@ -679,6 +1043,93 @@
         },
         "tags": [
           "backend-admin"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/backend/fiat-withdrawals": {
+      "get": {
+        "summary": "後台查詢法幣提領申請列表",
+        "operationId": "BackendListFiatWithdrawalsHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/BackendListFiatWithdrawalsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "default": "pending"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "20"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "0"
+          }
+        ],
+        "tags": [
+          "backend-fiat-withdrawals"
+        ],
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/backend/fiat-withdrawals/{id}/review": {
+      "put": {
+        "summary": "後台審核法幣提領申請（核可/駁回）",
+        "operationId": "BackendReviewFiatWithdrawalHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {}
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "description": " BackendReviewFiatWithdrawalRequest 審核人一律取自 Backend JWT，不接受 body 指定。",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/BackendReviewFiatWithdrawalRequest"
+            }
+          }
+        ],
+        "tags": [
+          "backend-fiat-withdrawals"
         ],
         "security": [
           {
@@ -734,6 +1185,94 @@
         ],
         "consumes": [
           "multipart/form-data"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/backend/members": {
+      "get": {
+        "summary": "後台查詢會員列表",
+        "operationId": "BackendListMembersHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/BackendListMembersResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "10"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64",
+            "default": "0"
+          }
+        ],
+        "tags": [
+          "backend-members"
+        ],
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/backend/members/{id}/deposit": {
+      "post": {
+        "summary": "後台手動為會員入金",
+        "operationId": "BackendDepositHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/BackendDepositResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "description": " BackendDepositRequest 後台手動入金：操作人一律取自 Backend JWT，不接受 body 指定。",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/BackendDepositRequest"
+            }
+          }
+        ],
+        "tags": [
+          "backend-members"
         ],
         "security": [
           {
@@ -819,6 +1358,28 @@
         ],
         "tags": [
           "backend-admin"
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ]
+      }
+    },
+    "/backend/platform/wallet-info": {
+      "get": {
+        "summary": "查詢平台熱錢包鏈上餘額與虛擬餘額",
+        "operationId": "BackendPlatformWalletInfoHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/PlatformWalletInfoResponse"
+            }
+          }
+        },
+        "tags": [
+          "backend-platform-wallet"
         ],
         "security": [
           {
@@ -986,9 +1547,205 @@
           "v1-legacy"
         ]
       }
+    },
+    "/webhook/ecpay/notify": {
+      "post": {
+        "summary": "ECPay 付款結果通知。實際請求為 application/x-www-form-urlencoded（非 JSON），回應為純文字 1|OK 或 0|<message>；此處僅登記路由供文件索引，不代表真實的 JSON 請求/回應格式。",
+        "operationId": "ECPayWebhookNotifyHandler",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {}
+          }
+        },
+        "tags": [
+          "ecpay-webhook"
+        ]
+      }
     }
   },
   "definitions": {
+    "AppFiatWithdrawalItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string"
+        },
+        "bankCode": {
+          "type": "string"
+        },
+        "bankAccountTail": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "title": "AppFiatWithdrawalItem",
+      "required": [
+        "id",
+        "currency",
+        "amount",
+        "bankCode",
+        "bankAccountTail",
+        "status",
+        "createdAt"
+      ]
+    },
+    "AppListCryptoDepositsRequest": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "format": "int64",
+          "default": "20"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int64",
+          "default": "0"
+        }
+      },
+      "title": "AppListCryptoDepositsRequest"
+    },
+    "AppListCryptoDepositsResponse": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CryptoDepositItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "AppListCryptoDepositsResponse",
+      "required": [
+        "list",
+        "total"
+      ]
+    },
+    "AppListCryptoWithdrawalsRequest": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "format": "int64",
+          "default": "20"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int64",
+          "default": "0"
+        }
+      },
+      "title": "AppListCryptoWithdrawalsRequest"
+    },
+    "AppListCryptoWithdrawalsResponse": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CryptoWithdrawalItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "AppListCryptoWithdrawalsResponse",
+      "required": [
+        "list",
+        "total"
+      ]
+    },
+    "AppListFiatDepositsRequest": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "format": "int64",
+          "default": "20"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int64",
+          "default": "0"
+        }
+      },
+      "title": "AppListFiatDepositsRequest"
+    },
+    "AppListFiatDepositsResponse": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FiatDepositItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "AppListFiatDepositsResponse",
+      "required": [
+        "list",
+        "total"
+      ]
+    },
+    "AppListFiatWithdrawalsRequest": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "format": "int64",
+          "default": "20"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int64",
+          "default": "0"
+        }
+      },
+      "title": "AppListFiatWithdrawalsRequest"
+    },
+    "AppListFiatWithdrawalsResponse": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AppFiatWithdrawalItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "AppListFiatWithdrawalsResponse",
+      "required": [
+        "list",
+        "total"
+      ]
+    },
     "AppLoginResponse": {
       "type": "object",
       "properties": {
@@ -1031,6 +1788,82 @@
         "name"
       ]
     },
+    "BackendDepositRequest": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string"
+        }
+      },
+      "title": "BackendDepositRequest",
+      "required": [
+        "currency",
+        "amount"
+      ]
+    },
+    "BackendDepositResponse": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "available_balance": {
+          "type": "string"
+        },
+        "frozen_balance": {
+          "type": "string"
+        }
+      },
+      "title": "BackendDepositResponse",
+      "required": [
+        "currency",
+        "available_balance",
+        "frozen_balance"
+      ]
+    },
+    "BackendListFiatWithdrawalsRequest": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "default": "pending"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int64",
+          "default": "20"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int64",
+          "default": "0"
+        }
+      },
+      "title": "BackendListFiatWithdrawalsRequest"
+    },
+    "BackendListFiatWithdrawalsResponse": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/FiatWithdrawalItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "BackendListFiatWithdrawalsResponse",
+      "required": [
+        "list",
+        "total"
+      ]
+    },
     "BackendListListingsRequest": {
       "type": "object",
       "properties": {
@@ -1053,6 +1886,45 @@
       },
       "title": "BackendListListingsRequest"
     },
+    "BackendListMembersRequest": {
+      "type": "object",
+      "properties": {
+        "keyword": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "format": "int64",
+          "default": "10"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int64",
+          "default": "0"
+        }
+      },
+      "title": "BackendListMembersRequest"
+    },
+    "BackendListMembersResponse": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MemberItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "BackendListMembersResponse",
+      "required": [
+        "list",
+        "total"
+      ]
+    },
     "BackendListOrdersRequest": {
       "type": "object",
       "properties": {
@@ -1071,6 +1943,21 @@
         }
       },
       "title": "BackendListOrdersRequest"
+    },
+    "BackendReviewFiatWithdrawalRequest": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "title": "BackendReviewFiatWithdrawalRequest",
+      "required": [
+        "action"
+      ]
     },
     "CancelListingRequest": {
       "type": "object",
@@ -1222,6 +2109,114 @@
         "id"
       ]
     },
+    "CryptoDepositItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string"
+        },
+        "txHash": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "confirmedAt": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "title": "CryptoDepositItem",
+      "required": [
+        "id",
+        "currency",
+        "amount",
+        "txHash",
+        "status",
+        "createdAt"
+      ]
+    },
+    "CryptoWithdrawRequest": {
+      "type": "object",
+      "properties": {
+        "toAddress": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string"
+        }
+      },
+      "title": "CryptoWithdrawRequest",
+      "required": [
+        "toAddress",
+        "amount"
+      ]
+    },
+    "CryptoWithdrawResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "title": "CryptoWithdrawResponse",
+      "required": [
+        "id",
+        "status"
+      ]
+    },
+    "CryptoWithdrawalItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string"
+        },
+        "toAddress": {
+          "type": "string"
+        },
+        "txHash": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "confirmedAt": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "title": "CryptoWithdrawalItem",
+      "required": [
+        "id",
+        "currency",
+        "amount",
+        "toAddress",
+        "status",
+        "createdAt"
+      ]
+    },
     "DashboardResponse": {
       "type": "object",
       "properties": {
@@ -1252,6 +2247,221 @@
       "title": "DisputeOrderRequest",
       "required": [
         "reason"
+      ]
+    },
+    "ECPayInfo": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "merchantId": {
+          "type": "string"
+        },
+        "baseUrl": {
+          "type": "string"
+        }
+      },
+      "title": "ECPayInfo",
+      "required": [
+        "enabled",
+        "merchantId",
+        "baseUrl"
+      ]
+    },
+    "FiatDepositItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string"
+        },
+        "merchantTradeNo": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "paymentType": {
+          "type": "string"
+        },
+        "paidAt": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "title": "FiatDepositItem",
+      "required": [
+        "id",
+        "currency",
+        "amount",
+        "merchantTradeNo",
+        "status",
+        "createdAt"
+      ]
+    },
+    "FiatDepositRequest": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "FiatDepositRequest",
+      "required": [
+        "amount"
+      ]
+    },
+    "FiatDepositResponse": {
+      "type": "object",
+      "properties": {
+        "merchantTradeNo": {
+          "type": "string"
+        },
+        "paymentUrl": {
+          "type": "string"
+        },
+        "formParams": {
+          "type": "object"
+        }
+      },
+      "title": "FiatDepositResponse",
+      "required": [
+        "merchantTradeNo",
+        "paymentUrl",
+        "formParams"
+      ]
+    },
+    "FiatWithdrawRequest": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "bankCode": {
+          "type": "string"
+        },
+        "bankAccount": {
+          "type": "string"
+        },
+        "accountName": {
+          "type": "string"
+        }
+      },
+      "title": "FiatWithdrawRequest",
+      "required": [
+        "amount",
+        "bankCode",
+        "bankAccount",
+        "accountName"
+      ]
+    },
+    "FiatWithdrawResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "title": "FiatWithdrawResponse",
+      "required": [
+        "id",
+        "status"
+      ]
+    },
+    "FiatWithdrawalItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string"
+        },
+        "bankCode": {
+          "type": "string"
+        },
+        "bankAccount": {
+          "type": "string"
+        },
+        "accountName": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "reviewedBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rejectReason": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "title": "FiatWithdrawalItem",
+      "required": [
+        "id",
+        "userId",
+        "currency",
+        "amount",
+        "bankCode",
+        "bankAccount",
+        "accountName",
+        "status",
+        "createdAt"
+      ]
+    },
+    "GetCryptoDepositInfoResponse": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "memo": {
+          "type": "string"
+        },
+        "network": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "contractAddress": {
+          "type": "string"
+        }
+      },
+      "title": "GetCryptoDepositInfoResponse",
+      "required": [
+        "address",
+        "memo",
+        "network",
+        "currency",
+        "contractAddress"
       ]
     },
     "GetListingRequest": {
@@ -1347,6 +2557,57 @@
         }
       },
       "title": "ListPaymentMethodsResponse",
+      "required": [
+        "list"
+      ]
+    },
+    "ListWalletLedgersRequest": {
+      "type": "object",
+      "properties": {
+        "limit": {
+          "type": "integer",
+          "format": "int64",
+          "default": "20"
+        },
+        "offset": {
+          "type": "integer",
+          "format": "int64",
+          "default": "0"
+        }
+      },
+      "title": "ListWalletLedgersRequest"
+    },
+    "ListWalletLedgersResponse": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WalletLedgerItem"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "ListWalletLedgersResponse",
+      "required": [
+        "list",
+        "total"
+      ]
+    },
+    "ListWalletsResponse": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WalletItem"
+          }
+        }
+      },
+      "title": "ListWalletsResponse",
       "required": [
         "list"
       ]
@@ -1476,6 +2737,35 @@
       "required": [
         "token",
         "expiresIn"
+      ]
+    },
+    "MemberItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "username": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "title": "MemberItem",
+      "required": [
+        "id",
+        "username",
+        "email",
+        "createdAt",
+        "updatedAt"
       ]
     },
     "OrderItem": {
@@ -1633,6 +2923,22 @@
         "isActive"
       ]
     },
+    "PlatformWalletInfoResponse": {
+      "type": "object",
+      "properties": {
+        "tron": {
+          "$ref": "#/definitions/TronWalletInfo"
+        },
+        "ecpay": {
+          "$ref": "#/definitions/ECPayInfo"
+        }
+      },
+      "title": "PlatformWalletInfoResponse",
+      "required": [
+        "tron",
+        "ecpay"
+      ]
+    },
     "ProfileResponse": {
       "type": "object",
       "properties": {
@@ -1659,6 +2965,44 @@
       "required": [
         "action",
         "reason"
+      ]
+    },
+    "TronWalletInfo": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "format": "boolean"
+        },
+        "network": {
+          "type": "string"
+        },
+        "hotWalletAddress": {
+          "type": "string"
+        },
+        "usdtContractAddress": {
+          "type": "string"
+        },
+        "confirmationBlocks": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "onChainBalance": {
+          "type": "string"
+        },
+        "platformVirtualBalance": {
+          "type": "string"
+        }
+      },
+      "title": "TronWalletInfo",
+      "required": [
+        "enabled",
+        "network",
+        "hotWalletAddress",
+        "usdtContractAddress",
+        "confirmationBlocks",
+        "onChainBalance",
+        "platformVirtualBalance"
       ]
     },
     "UpdateOrderPathRequest": {
@@ -1797,6 +3141,53 @@
       "title": "VersionResponse",
       "required": [
         "version"
+      ]
+    },
+    "WalletItem": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "availableBalance": {
+          "type": "string"
+        },
+        "frozenBalance": {
+          "type": "string"
+        }
+      },
+      "title": "WalletItem",
+      "required": [
+        "currency",
+        "availableBalance",
+        "frozenBalance"
+      ]
+    },
+    "WalletLedgerItem": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string"
+        },
+        "balanceAfter": {
+          "type": "string"
+        },
+        "refOrderNo": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "title": "WalletLedgerItem",
+      "required": [
+        "type",
+        "amount",
+        "balanceAfter",
+        "createdAt"
       ]
     }
   },
