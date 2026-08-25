@@ -72,13 +72,15 @@ type Config struct {
 		Host    string `json:"host"`
 		Port    int    `json:"port"`
 	} `json:"webSocket"`
+	// Nats 為 optional 區塊：URL 空字串時 NATS 功能關閉（mq.NewNats 回傳 nil），服務仍可啟動。
+	// 機敏欄位（CredsPath/User/Password）透過環境變數注入，與 legacy 使用相同的環境變數名稱。
 	Nats struct {
-		URL          string
-		CredsPath    string
-		User         string
-		Password     string
-		StreamName   string
-		ConsumerName string
+		URL          string `json:",optional,env=NATS_URL"`
+		CredsPath    string `json:",optional,env=NATS_CREDS_PATH"`
+		User         string `json:",optional,env=NATS_USER"`
+		Password     string `json:",optional,env=NATS_PASSWORD"`
+		StreamName   string `json:",optional"`
+		ConsumerName string `json:",optional"`
 	}
 	// Tron / ECPay 皆為 optional 區塊：未設定時 IsEnabled() 為 false，功能關閉但服務仍可啟動，
 	// 不加入 Validate() 的必填檢查（本機開發不需要 ECPay/Tron 憑證也要能啟動）。

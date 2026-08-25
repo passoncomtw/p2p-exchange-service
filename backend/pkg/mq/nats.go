@@ -2,6 +2,7 @@ package mq
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	nats "github.com/nats-io/nats.go"
@@ -69,4 +70,15 @@ func NewNats(cfg Config, lc fx.Lifecycle) *Client {
 	})
 
 	return client
+}
+
+// Ping 回傳目前的 NATS 連線是否健康，供健康檢查端點使用。
+func (c *Client) Ping() error {
+	if c == nil || c.nc == nil {
+		return fmt.Errorf("nats: client not configured")
+	}
+	if !c.nc.IsConnected() {
+		return fmt.Errorf("nats: not connected")
+	}
+	return nil
 }

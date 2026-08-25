@@ -26,24 +26,123 @@ spec:
           image: ghcr.io/OWNER/p2p-exchange-service/backend:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 8888
+            - name: http
+              containerPort: 8888
+            - name: ws
+              containerPort: 8889
           env:
-            # config.yaml 的敏感欄位改由環境變數注入（go-zero 支援 env 覆寫）
+            # config.yaml 的敏感欄位改由環境變數注入（go-zero 支援 env 覆寫）。
+            # 環境變數名稱須與 internal/config/config.go 的 env tag 一致。
             - name: DATABASE_DSN
               valueFrom:
                 secretKeyRef:
                   name: p2p-backend-secret
                   key: database-dsn
-            - name: APP_ACCESS_SECRET
+            - name: APP_JWT_ACCESS_SECRET
               valueFrom:
                 secretKeyRef:
                   name: p2p-backend-secret
-                  key: app-access-secret
-            - name: BACKEND_ACCESS_SECRET
+                  key: app-jwt-access-secret
+            - name: BACKEND_JWT_ACCESS_SECRET
               valueFrom:
                 secretKeyRef:
                   name: p2p-backend-secret
-                  key: backend-access-secret
+                  key: backend-jwt-access-secret
+            - name: REDIS_ADDR
+              valueFrom:
+                secretKeyRef:
+                  name: p2p-backend-secret
+                  key: redis-addr
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: p2p-backend-secret
+                  key: redis-password
+                  optional: true
+            # NATS：URL 未設定時功能關閉、服務仍可啟動。CredsPath 與 User/Password
+            # 為互斥的兩種認證方式（CredsPath 優先），依目標 NATS 環境擇一設定。
+            # CredsPath 指向的檔案需另外掛載（見下方 volumeMounts），不可只靠環境變數。
+            - name: NATS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: p2p-backend-secret
+                  key: nats-url
+                  optional: true
+            - name: NATS_CREDS_PATH
+              valueFrom:
+                secretKeyRef:
+                  name: p2p-backend-secret
+                  key: nats-creds-path
+                  optional: true
+            - name: NATS_USER
+              valueFrom:
+                secretKeyRef:
+                  name: p2p-backend-secret
+                  key: nats-user
+                  optional: true
+            - name: NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: p2p-backend-secret
+                  key: nats-password
+                  optional: true
+            # Tron：HotWalletAddress 與 HotWalletPrivateKey 未設定時功能關閉（crypto 存提款 API 回 503）。
+            - name: TRON_GRID_URL
+              valueFrom:
+                secretKeyRef:
+                  name: p2p-backend-secret
+                  key: tron-grid-url
+                  optional: true
+            - name: TRON_GRID_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: p2p-backend-secret
+                  key: tron-grid-api-key
+                  optional: true
+            - name: TRON_HOT_WALLET_ADDRESS
+              valueFrom:
+                secretKeyRef:
+                  name: p2p-backend-secret
+                  key: tron-hot-wallet-address
+                  optional: true
+            - name: TRON_HOT_WALLET_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: p2p-backend-secret
+                  key: tron-hot-wallet-private-key
+                  optional: true
+            # ECPay：HashKey/HashIV 未設定時功能關閉（TWD 入金 API 回 503）。
+            - name: ECPAY_HASH_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: p2p-backend-secret
+                  key: ecpay-hash-key
+                  optional: true
+            - name: ECPAY_HASH_IV
+              valueFrom:
+                secretKeyRef:
+                  name: p2p-backend-secret
+                  key: ecpay-hash-iv
+                  optional: true
+            - name: ECPAY_RETURN_URL
+              valueFrom:
+                secretKeyRef:
+                  name: p2p-backend-secret
+                  key: ecpay-return-url
+                  optional: true
+            - name: ECPAY_CLIENT_BACK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: p2p-backend-secret
+                  key: ecpay-client-back-url
+                  optional: true
+          # 若採用 NATS_CREDS_PATH（Synadia Cloud 等 creds 檔認證），
+          # 取消以下註解並建立對應的 Secret（key 為檔名，value 為 .creds 檔內容），
+          # 同時把 NATS_CREDS_PATH 指向掛載路徑（例如 /etc/nats/creds/NGS-Default-CLI.creds）。
+          # volumeMounts:
+          #   - name: nats-creds
+          #     mountPath: /etc/nats/creds
+          #     readOnly: true
           resources:
             requests:
               cpu: "100m"
@@ -53,15 +152,19 @@ spec:
               memory: "256Mi"
           livenessProbe:
             httpGet:
-              path: /from/me
+              path: /healthz
               port: 8888
             initialDelaySeconds: 10
             periodSeconds: 15
           readinessProbe:
             httpGet:
-              path: /from/me
+              path: /healthz
               port: 8888
             initialDelaySeconds: 5
             periodSeconds: 10
+      # volumes:
+      #   - name: nats-creds
+      #     secret:
+      #       secretName: p2p-backend-nats-creds
       imagePullSecrets:
         - name: ghcr-pull-secret

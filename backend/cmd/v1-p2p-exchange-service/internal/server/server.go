@@ -30,6 +30,7 @@ type Params struct {
 	ListingHandler        *handlers.ListingHandler
 	OrderHandler          *handlers.OrderHandler
 	ECPayWebhookHandler   *handlers.ECPayWebhookHandler
+	HealthzHandler        *handlers.HealthzHandler
 	BackendHandler        *handlers.BackendHandler
 	V1Handler             *handlers.V1Handler
 	WSHandler             *handlers.WSHandler
@@ -49,6 +50,12 @@ func NewServer(p Params) *rest.Server {
 		Method:  http.MethodGet,
 		Path:    "/api/v1/version",
 		Handler: handlers.VersionHandler,
+	})
+	// k8s liveness/readiness probe：檢查 DB（必要）與 Redis/NATS（選用，未設定時不計入）。
+	server.AddRoute(rest.Route{
+		Method:  http.MethodGet,
+		Path:    "/healthz",
+		Handler: p.HealthzHandler.Handle,
 	})
 	server.AddRoute(rest.Route{
 		Method:  http.MethodPost,

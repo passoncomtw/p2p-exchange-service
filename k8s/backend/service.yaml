@@ -7,9 +7,14 @@ spec:
   selector:
     app: p2p-backend
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 80
       targetPort: 8888
+    - name: ws
+      protocol: TCP
+      port: 8889
+      targetPort: 8889
   type: ClusterIP
 ---
 apiVersion: v1

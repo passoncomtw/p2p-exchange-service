@@ -28,11 +28,15 @@ WebSocket:
   Host: 0.0.0.0
   Port: 8889
 
+# URL 空字串時 NATS 功能關閉、服務仍可啟動（適合本機開發不需要 NATS 的情境）。
+# 機敏欄位透過環境變數注入：NATS_URL / NATS_CREDS_PATH（Synadia Cloud 等 TLS + creds 檔）
+# 或 NATS_URL / NATS_USER / NATS_PASSWORD（本地 NATS，帳密登入）。
+# CredsPath 指向的檔案需由部署環境掛載（K8s Secret volume），不可打包進 image。
 Nats:
-  URL: "tls://connect.ngs.global"
-  CredsPath: "./NGS-Default-CLI.creds"     # Synadia Cloud: 由 NATS_CREDS_PATH 環境變數注入
-  User: ""          # 本地 NATS: 填入帳號（CredsPath 有值時忽略）
-  Password: ""      # 本地 NATS: 填入密碼（CredsPath 有值時忽略）
+  URL: ""
+  CredsPath: ""
+  User: ""
+  Password: ""
   StreamName: "p2p-exchange"
   ConsumerName: "p2p-exchange-consumer"
 
