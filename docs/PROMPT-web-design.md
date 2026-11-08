@@ -12,10 +12,9 @@ v1 只做一件事的完整閉環:使用者可建立掛單(買幣/賣幣),且後
 
 ## 先讀以下既有資產(若可存取)
 
-- `docs/SPEC-v1.md` — 前端規格(資料模型、狀態機、API 契約、驗收條件)。
 - `docs/HANDOFF-v1.md` — 每個畫面的 token / 元件 / 狀態 / 邊界 / 無障礙規格。
 - `DESIGN.md` — 設計系統與 token 來源。
-- `shared/src/**` — 共用核心(型別、驗證、狀態機、i18n、API client),**直接匯入,勿重複實作**。
+- `shared/src/**` — 共用核心(型別、驗證、狀態機、i18n),**直接匯入,勿重複實作**。
 - `frontend/web/src/theme/index.js` — Web 設計 token 與 `statusColor`/`typeColor`(token 不與 App 共用)。
 
 ## 技術棧(沿用既有,勿替換)
