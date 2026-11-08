@@ -18,6 +18,7 @@ import (
 	orderstatuslogrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/order_status_log"
 	paymentrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/payment_method"
 	walletrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/wallet"
+	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/orderallocation"
 	apierrors "p2p-exchange/internal/errors"
 	"p2p-exchange/pkg/mq"
 	pkgws "p2p-exchange/pkg/ws"
@@ -371,7 +372,7 @@ func (s *orderService) Cancel(ctx context.Context, uid int64, req app_interface.
 		if n == 0 {
 			return errOrderStatusChanged
 		}
-		return s.walletRepo.UnfreezeInTx(ctx, session, order.SellerID, order.CryptoCurrency, order.CryptoAmount)
+		return orderallocation.ReleaseInTx(ctx, session, s.listingRepo, s.walletRepo, order)
 	}); err != nil {
 		return err
 	}

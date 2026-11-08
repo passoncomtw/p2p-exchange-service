@@ -9,10 +9,12 @@ import (
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"go.uber.org/fx"
 
+	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/model/entity"
 	listingrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/listing"
 	orderrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/order"
 	orderstatuslogrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/order_status_log"
 	walletrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/wallet"
+	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/orderallocation"
 	"p2p-exchange/internal/infra/rdb"
 	"p2p-exchange/pkg/mq"
 )
@@ -46,16 +48,17 @@ func processExpiredOrders(ctx context.Context, deps ExpiredOrderConsumerDeps) er
 		return fmt.Errorf("find expired orders: %w", err)
 	}
 	for _, o := range orders {
-		if err := cancelExpiredOrder(ctx, deps, o.ID, o.SellerID, o.CryptoCurrency, o.CryptoAmount, o.ListingID); err != nil {
+		if err := cancelExpiredOrder(ctx, deps, o); err != nil {
 			logx.Errorf("expired-order: cancel order %d error: %v", o.ID, err)
 		}
 	}
 	return nil
 }
 
-func cancelExpiredOrder(ctx context.Context, deps ExpiredOrderConsumerDeps, orderID, sellerID int64, currency string, amount float64, listingID int64) error {
+// cancelExpiredOrder 把逾時的 matched 訂單轉為 timeout，資產處理與使用者取消相同（orderallocation.ReleaseInTx）。
+func cancelExpiredOrder(ctx context.Context, deps ExpiredOrderConsumerDeps, order *entity.Order) error {
 	if deps.RDB != nil {
-		lockKey := fmt.Sprintf("processing:order:%d", orderID)
+		lockKey := fmt.Sprintf("processing:order:%d", order.ID)
 		unlock, err := deps.RDB.AcquireLock(ctx, lockKey, expiredOrderLockTTL)
 		if err != nil {
 			return nil
@@ -67,26 +70,26 @@ func cancelExpiredOrder(ctx context.Context, deps ExpiredOrderConsumerDeps, orde
 		result, err := session.ExecCtx(ctx,
 			`UPDATE orders SET status = 'timeout', cancelled_at = NOW(), updated_at = NOW()
 			 WHERE id = $1 AND status = 'matched'`,
-			orderID,
+			order.ID,
 		)
 		if err != nil {
 			return err
 		}
-		if n, _ := result.RowsAffected(); n == 0 {
+		n, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if n == 0 {
 			return nil
 		}
 
-		if err := deps.WalletRepo.UnfreezeInTx(ctx, session, sellerID, currency, amount); err != nil {
-			return fmt.Errorf("unfreeze seller wallet: %w", err)
-		}
-
-		if err := deps.ListingRepo.RestoreAmountInTx(ctx, session, listingID, amount); err != nil {
-			return fmt.Errorf("restore listing amount: %w", err)
+		if err := orderallocation.ReleaseInTx(ctx, session, deps.ListingRepo, deps.WalletRepo, order); err != nil {
+			return fmt.Errorf("release order allocation: %w", err)
 		}
 
 		fromStatus := "matched"
 		return deps.StatusLogRepo.AppendInTx(ctx, session, &orderstatuslogrepo.OrderStatusLog{
-			OrderID:      orderID,
+			OrderID:      order.ID,
 			FromStatus:   &fromStatus,
 			ToStatus:     "timeout",
 			OperatorType: "system",
