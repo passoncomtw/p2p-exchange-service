@@ -48,7 +48,7 @@ frontend/web/    後台 Web
 frontend/pkg/    notifications
 shared/src/      api design domain dto i18n validation
 openspec/        規格（specs/）與專案概覽
-docs/            SPEC-v1、RUNBOOK-v1、HANDOFF-*、product_spec
+docs/            RUNBOOK-v1、HANDOFF-*、product_spec
 k8s/             backend 與 local（nats、redis）
 ```
 
