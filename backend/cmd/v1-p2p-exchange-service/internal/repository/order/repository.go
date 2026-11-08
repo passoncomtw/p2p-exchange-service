@@ -13,8 +13,30 @@ const orderSelectCols = `id, order_no, listing_id, listing_type, seller_id, buye
   total_fee, total_amount, payment_method_id, status, payment_deadline, paid_at, confirmed_at, completed_at,
   cancelled_at, cancel_reason, created_at, updated_at`
 
+// activeOrderStatusesSQL 為訂單的非終態，SQL 片段與 p2p-listing 規格「進行中訂單」的定義一致。
+const activeOrderStatusesSQL = `('matched', 'paid', 'releasing', 'disputed')`
+
+const (
+	insertOrderQuery = `INSERT INTO orders (order_no, listing_id, listing_type, seller_id, buyer_id, crypto_currency, fiat_currency,
+		  crypto_amount, price, fiat_amount, platform_fee_base, platform_fee_amount, payment_fee_base, payment_fee_amount,
+		  total_fee, total_amount, payment_method_id, status, payment_deadline, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, NOW(), NOW())
+		 RETURNING id`
+
+	// hasActiveOrdersByListingQuery 刻意不加任何鎖子句（FOR UPDATE / FOR SHARE）：
+	// 呼叫端已持有掛單列的 FOR UPDATE 鎖，建單與釋放都先鎖同一列，
+	// 在 READ COMMITTED 下這個一般 SELECT 能看到所有已提交的訂單，不會漏掉並發建立的訂單。
+	hasActiveOrdersByListingQuery = `SELECT EXISTS (SELECT 1 FROM orders WHERE listing_id = $1 AND status IN ` + activeOrderStatusesSQL + `)`
+)
+
 type OrderRepository interface {
 	Create(ctx context.Context, o *entity.Order) (int64, error)
+	// CreateInTx 與 Create 相同，但在呼叫端傳入的交易 session 內寫入，
+	// 讓「凍結 + 寫入訂單 + 扣減剩餘量 + 託管紀錄 + 狀態日誌」是同一個原子交易。
+	CreateInTx(ctx context.Context, session sqlx.Session, o *entity.Order) (int64, error)
+	// HasActiveOrdersByListingInTx 在交易內查詢該掛單是否仍有非終態訂單
+	// （matched、paid、releasing、disputed）。必須在取得掛單列的 FOR UPDATE 鎖之後呼叫。
+	HasActiveOrdersByListingInTx(ctx context.Context, session sqlx.Session, listingID int64) (bool, error)
 	FindByID(ctx context.Context, id int64) (*entity.Order, error)
 	FindExpired(ctx context.Context) ([]*entity.Order, error)
 	List(ctx context.Context, userID int64, role, status string, limit, offset int64) ([]*entity.Order, error)
@@ -25,7 +47,6 @@ type OrderRepository interface {
 	UpdateStatusInTx(ctx context.Context, session sqlx.Session, id int64, fromStatus, toStatus string, extras map[string]interface{}) (int64, error)
 	// UpdateStatus 與 UpdateStatusInTx 相同的條件式狀態轉換，但不在交易內執行。
 	UpdateStatus(ctx context.Context, id int64, fromStatus, toStatus string, extras map[string]interface{}) (int64, error)
-	DeductListingAmount(ctx context.Context, listingID int64, amount float64) error
 }
 
 type orderRepository struct {
@@ -38,17 +59,28 @@ func New(db sqlx.SqlConn) OrderRepository {
 
 func (r *orderRepository) Create(ctx context.Context, o *entity.Order) (int64, error) {
 	var id int64
-	err := r.db.QueryRowCtx(ctx, &id,
-		`INSERT INTO orders (order_no, listing_id, listing_type, seller_id, buyer_id, crypto_currency, fiat_currency,
-		  crypto_amount, price, fiat_amount, platform_fee_base, platform_fee_amount, payment_fee_base, payment_fee_amount,
-		  total_fee, total_amount, payment_method_id, status, payment_deadline, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, NOW(), NOW())
-		 RETURNING id`,
+	err := r.db.QueryRowCtx(ctx, &id, insertOrderQuery, insertOrderArgs(o)...)
+	return id, err
+}
+
+func (r *orderRepository) CreateInTx(ctx context.Context, session sqlx.Session, o *entity.Order) (int64, error) {
+	var id int64
+	err := session.QueryRowCtx(ctx, &id, insertOrderQuery, insertOrderArgs(o)...)
+	return id, err
+}
+
+func insertOrderArgs(o *entity.Order) []interface{} {
+	return []interface{}{
 		o.OrderNo, o.ListingID, o.ListingType, o.SellerID, o.BuyerID, o.CryptoCurrency, o.FiatCurrency,
 		o.CryptoAmount, o.Price, o.FiatAmount, o.PlatformFeeBase, o.PlatformFeeAmount, o.PaymentFeeBase, o.PaymentFeeAmount,
 		o.TotalFee, o.TotalAmount, o.PaymentMethodID, o.Status, o.PaymentDeadline,
-	)
-	return id, err
+	}
+}
+
+func (r *orderRepository) HasActiveOrdersByListingInTx(ctx context.Context, session sqlx.Session, listingID int64) (bool, error) {
+	var exists bool
+	err := session.QueryRowCtx(ctx, &exists, hasActiveOrdersByListingQuery, listingID)
+	return exists, err
 }
 
 func (r *orderRepository) FindByID(ctx context.Context, id int64) (*entity.Order, error) {
@@ -134,15 +166,6 @@ func (r *orderRepository) FindExpired(ctx context.Context) ([]*entity.Order, err
 		`SELECT `+orderSelectCols+` FROM orders WHERE status = 'matched' AND payment_deadline < NOW()`,
 	)
 	return rows, err
-}
-
-func (r *orderRepository) DeductListingAmount(ctx context.Context, listingID int64, amount float64) error {
-	_, err := r.db.ExecCtx(ctx,
-		`UPDATE listings SET remaining_amount = remaining_amount - $1, updated_at = NOW()
-		 WHERE id = $2 AND remaining_amount >= $1`,
-		amount, listingID,
-	)
-	return err
 }
 
 func buildStatusUpdate(db sqlx.SqlConn, ctx context.Context, id int64, fromStatus, toStatus string, extras map[string]interface{}) (int64, error) {

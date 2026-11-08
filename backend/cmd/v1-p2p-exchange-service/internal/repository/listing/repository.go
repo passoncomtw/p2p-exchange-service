@@ -17,9 +17,27 @@ type ListingRepository interface {
 	FindByID(ctx context.Context, id int64) (*entity.Listing, error)
 	List(ctx context.Context, listType, status string, limit, offset int64) ([]*entity.Listing, error)
 	ListByUser(ctx context.Context, userID int64, listType, status string, limit, offset int64) ([]*entity.Listing, error)
-	UpdateStatusInTx(ctx context.Context, session sqlx.Session, id int64, status string) error
+	// FindByIDForUpdateInTx 在呼叫端傳入的交易 session 內以 SELECT ... FOR UPDATE 讀取並鎖住掛單列，
+	// 直到交易結束。建單、釋放訂單配置與取消掛單都必須先取得這把列鎖，彼此才會序列化。
+	FindByIDForUpdateInTx(ctx context.Context, session sqlx.Session, id int64) (*entity.Listing, error)
+	// DeductAmountInTx 在交易內以條件式 UPDATE 扣減掛單剩餘量，只在掛單仍為 active
+	// 且剩餘量足夠時生效，回傳影響列數；影響 0 列代表不可扣減，呼叫端必須回滾整筆交易。
+	DeductAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount float64) (int64, error)
+	// CancelInTx 在交易內以條件式 UPDATE 把 active 或 paused 的掛單轉為 cancelled，回傳影響列數；
+	// 影響 0 列代表掛單狀態已被其他請求改變，呼叫端不得再解凍任何額度。
+	CancelInTx(ctx context.Context, session sqlx.Session, id int64) (int64, error)
 	RestoreAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount float64) error
 }
+
+const (
+	findByIDForUpdateQuery = `SELECT ` + listingSelectCols + ` FROM listings WHERE id = $1 FOR UPDATE`
+
+	deductAmountQuery = `UPDATE listings SET remaining_amount = remaining_amount - $1, updated_at = NOW()
+		 WHERE id = $2 AND status = 'active' AND remaining_amount >= $1`
+
+	cancelQuery = `UPDATE listings SET status = 'cancelled', updated_at = NOW()
+		 WHERE id = $1 AND status IN ('active', 'paused')`
+)
 
 type listingRepository struct {
 	db sqlx.SqlConn
@@ -102,12 +120,20 @@ func (r *listingRepository) ListByUser(ctx context.Context, userID int64, listTy
 	return rows, err
 }
 
-func (r *listingRepository) UpdateStatusInTx(ctx context.Context, session sqlx.Session, id int64, status string) error {
-	_, err := session.ExecCtx(ctx,
-		`UPDATE listings SET status = $1, updated_at = NOW() WHERE id = $2`,
-		status, id,
-	)
-	return err
+func (r *listingRepository) FindByIDForUpdateInTx(ctx context.Context, session sqlx.Session, id int64) (*entity.Listing, error) {
+	var l entity.Listing
+	if err := session.QueryRowCtx(ctx, &l, findByIDForUpdateQuery, id); err != nil {
+		return nil, err
+	}
+	return &l, nil
+}
+
+func (r *listingRepository) DeductAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount float64) (int64, error) {
+	return execRowsAffected(ctx, session, deductAmountQuery, amount, id)
+}
+
+func (r *listingRepository) CancelInTx(ctx context.Context, session sqlx.Session, id int64) (int64, error) {
+	return execRowsAffected(ctx, session, cancelQuery, id)
 }
 
 func (r *listingRepository) RestoreAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount float64) error {
@@ -116,4 +142,13 @@ func (r *listingRepository) RestoreAmountInTx(ctx context.Context, session sqlx.
 		amount, id,
 	)
 	return err
+}
+
+// execRowsAffected 在交易 session 內執行 UPDATE 並回傳影響列數，讓呼叫端以列數判斷條件是否成立。
+func execRowsAffected(ctx context.Context, session sqlx.Session, query string, args ...interface{}) (int64, error) {
+	result, err := session.ExecCtx(ctx, query, args...)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }

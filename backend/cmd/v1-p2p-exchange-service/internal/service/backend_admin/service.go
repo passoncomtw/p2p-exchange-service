@@ -15,6 +15,7 @@ import (
 	orderrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/order"
 	userrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/user"
 	walletrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/wallet"
+	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/orderallocation"
 	apierrors "p2p-exchange/internal/errors"
 )
 
@@ -150,10 +151,7 @@ func (s *backendAdminService) ResolveOrder(ctx context.Context, req backend_inte
 			if n == 0 {
 				return errOrderStatusChanged
 			}
-			if err := s.walletRepo.UnfreezeInTx(ctx, session, order.SellerID, order.CryptoCurrency, order.CryptoAmount); err != nil {
-				return err
-			}
-			return s.listingRepo.RestoreAmountInTx(ctx, session, order.ListingID, order.CryptoAmount)
+			return orderallocation.ReleaseInTx(ctx, session, s.listingRepo, s.walletRepo, order)
 		})
 
 	default:
