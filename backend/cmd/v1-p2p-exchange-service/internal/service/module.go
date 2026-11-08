@@ -13,7 +13,6 @@ import (
 	notification_service "p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/notification"
 	order_service "p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/order"
 	payment_service "p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/payment_method"
-	v1_service "p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/v1"
 	wallet_service "p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/wallet"
 	"p2p-exchange/pkg/schedule"
 
@@ -27,7 +26,6 @@ var Module = fx.Module("service",
 	fx.Provide(payment_service.New),
 	fx.Provide(listing_service.New),
 	fx.Provide(order_service.New),
-	fx.Provide(v1_service.New),
 	fx.Provide(wallet_service.New),
 	fx.Provide(fiatdeposit_service.New),
 	fx.Provide(fiatwithdraw_service.New),

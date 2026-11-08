@@ -409,39 +409,6 @@ type (
 		Action string `json:"action"`
 		Reason string `json:"reason,optional"`
 	}
-
-	// ── v1 legacy ────────────────────────────────────────────────────────────
-	V1CreateOrderRequest {
-		Type          string  `json:"type"`
-		Asset         string  `json:"asset"`
-		Fiat          string  `json:"fiat"`
-		Price         float64 `json:"price"`
-		Quantity      float64 `json:"quantity"`
-		PaymentMethod string  `json:"paymentMethod"`
-	}
-	V1Order {
-		ID            string  `json:"id"`
-		Type          string  `json:"type"`
-		Asset         string  `json:"asset"`
-		Fiat          string  `json:"fiat"`
-		Price         float64 `json:"price"`
-		Quantity      float64 `json:"quantity"`
-		TotalAmount   float64 `json:"totalAmount"`
-		PaymentMethod string  `json:"paymentMethod"`
-		Status        string  `json:"status"`
-		CreatedBy     string  `json:"createdBy"`
-		CreatedAt     string  `json:"createdAt"`
-		UpdatedAt     string  `json:"updatedAt"`
-	}
-	V1OrderIDRequest {
-		ID int64 `path:"id"`
-	}
-	V1AdminListOrdersRequest {
-		Status string `form:"status,optional"`
-	}
-	V1OrderListResponse {
-		List []V1Order `json:"list"`
-	}
 )
 
 // ── System ───────────────────────────────────────────────────────────────────
@@ -723,35 +690,4 @@ service v1-api {
 	@doc "ECPay 付款結果通知。實際請求為 application/x-www-form-urlencoded（非 JSON），回應為純文字 1|OK 或 0|<message>；此處僅登記路由供文件索引，不代表真實的 JSON 請求/回應格式。"
 	@handler ECPayWebhookNotifyHandler
 	post /notify
-}
-
-// ── V1 legacy (public) ──────────────────────────────────────────────────────
-@server (
-	prefix: /v1
-	group:  v1-legacy
-)
-service v1-api {
-	@doc "[Legacy] 建立掛單"
-	@handler V1CreateOrderHandler
-	post /orders (V1CreateOrderRequest) returns (V1Order)
-
-	@doc "[Legacy] 查詢我的掛單"
-	@handler V1ListMyOrdersHandler
-	get /orders/mine returns (V1OrderListResponse)
-
-	@doc "[Legacy] 取消掛單"
-	@handler V1CancelOrderHandler
-	post /orders/:id/cancel (V1OrderIDRequest)
-
-	@doc "[Legacy] 後台查詢掛單"
-	@handler V1AdminListOrdersHandler
-	get /admin/orders (V1AdminListOrdersRequest) returns (V1OrderListResponse)
-
-	@doc "[Legacy] 後台查詢掛單詳情"
-	@handler V1AdminGetOrderHandler
-	get /admin/orders/:id (V1OrderIDRequest) returns (V1Order)
-
-	@doc "[Legacy] 後台標記完成"
-	@handler V1AdminCompleteOrderHandler
-	post /admin/orders/:id/complete (V1OrderIDRequest)
 }
