@@ -19,8 +19,12 @@ type OrderRepository interface {
 	FindExpired(ctx context.Context) ([]*entity.Order, error)
 	List(ctx context.Context, userID int64, role, status string, limit, offset int64) ([]*entity.Order, error)
 	BackendList(ctx context.Context, status string, limit, offset int64) ([]*entity.Order, error)
-	UpdateStatusInTx(ctx context.Context, session sqlx.Session, id int64, status string, extras map[string]interface{}) (int64, error)
-	UpdateStatus(ctx context.Context, id int64, status string, extras map[string]interface{}) error
+	// UpdateStatusInTx 在呼叫端傳入的交易 session 內，以條件式 UPDATE（WHERE status = fromStatus）
+	// 把訂單從 fromStatus 轉為 toStatus，回傳影響列數。影響 0 列代表訂單狀態已被其他請求改變，
+	// 呼叫端必須據此中止後續的錢包操作。
+	UpdateStatusInTx(ctx context.Context, session sqlx.Session, id int64, fromStatus, toStatus string, extras map[string]interface{}) (int64, error)
+	// UpdateStatus 與 UpdateStatusInTx 相同的條件式狀態轉換，但不在交易內執行。
+	UpdateStatus(ctx context.Context, id int64, fromStatus, toStatus string, extras map[string]interface{}) (int64, error)
 	DeductListingAmount(ctx context.Context, listingID int64, amount float64) error
 }
 
@@ -110,13 +114,12 @@ func (r *orderRepository) BackendList(ctx context.Context, status string, limit,
 	return rows, err
 }
 
-func (r *orderRepository) UpdateStatus(ctx context.Context, id int64, status string, extras map[string]interface{}) error {
-	_, err := buildStatusUpdate(r.db, ctx, id, status, extras)
-	return err
+func (r *orderRepository) UpdateStatus(ctx context.Context, id int64, fromStatus, toStatus string, extras map[string]interface{}) (int64, error) {
+	return buildStatusUpdate(r.db, ctx, id, fromStatus, toStatus, extras)
 }
 
-func (r *orderRepository) UpdateStatusInTx(ctx context.Context, session sqlx.Session, id int64, status string, extras map[string]interface{}) (int64, error) {
-	query, args := buildStatusUpdateQuery(id, status, extras)
+func (r *orderRepository) UpdateStatusInTx(ctx context.Context, session sqlx.Session, id int64, fromStatus, toStatus string, extras map[string]interface{}) (int64, error) {
+	query, args := buildStatusUpdateQuery(id, fromStatus, toStatus, extras)
 	result, err := session.ExecCtx(ctx, query, args...)
 	if err != nil {
 		return 0, err
@@ -142,8 +145,8 @@ func (r *orderRepository) DeductListingAmount(ctx context.Context, listingID int
 	return err
 }
 
-func buildStatusUpdate(db sqlx.SqlConn, ctx context.Context, id int64, status string, extras map[string]interface{}) (int64, error) {
-	query, args := buildStatusUpdateQuery(id, status, extras)
+func buildStatusUpdate(db sqlx.SqlConn, ctx context.Context, id int64, fromStatus, toStatus string, extras map[string]interface{}) (int64, error) {
+	query, args := buildStatusUpdateQuery(id, fromStatus, toStatus, extras)
 	result, err := db.ExecCtx(ctx, query, args...)
 	if err != nil {
 		return 0, err
@@ -151,9 +154,12 @@ func buildStatusUpdate(db sqlx.SqlConn, ctx context.Context, id int64, status st
 	return result.RowsAffected()
 }
 
-func buildStatusUpdateQuery(id int64, status string, extras map[string]interface{}) (string, []interface{}) {
+// buildStatusUpdateQuery 組出條件式狀態轉換的 UPDATE 語句。
+// WHERE 必須同時比對 id 與 fromStatus：讀取訂單（FindByID）到寫入之間若有其他請求先改了狀態，
+// 這次 UPDATE 只會影響 0 列，避免同一筆訂單被重複放幣、解凍或退款。
+func buildStatusUpdateQuery(id int64, fromStatus, toStatus string, extras map[string]interface{}) (string, []interface{}) {
 	query := "UPDATE orders SET status = $1, updated_at = NOW()"
-	args := []interface{}{status}
+	args := []interface{}{toStatus}
 	argIdx := 2
 
 	for key, val := range extras {
@@ -165,7 +171,7 @@ func buildStatusUpdateQuery(id int64, status string, extras map[string]interface
 		}
 	}
 
-	query += fmt.Sprintf(" WHERE id = $%d", argIdx)
-	args = append(args, id)
+	query += fmt.Sprintf(" WHERE id = $%d AND status = $%d", argIdx, argIdx+1)
+	args = append(args, id, fromStatus)
 	return query, args
 }

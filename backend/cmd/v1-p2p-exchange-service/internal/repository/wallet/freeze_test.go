@@ -2,9 +2,12 @@ package walletrepo
 
 import (
 	"context"
+	"errors"
+	"math"
 	"testing"
 
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	apierrors "p2p-exchange/internal/errors"
 )
 
 // noSQLSession 內嵌 nil 的 sqlx.Session：只要有任何 SQL 被送出就會 panic，
@@ -24,6 +27,37 @@ func TestFreezeInTxRejectsInvalidAmount(t *testing.T) {
 	for _, amount := range []string{"", "0", "-1", "-0.01", "+100", "1e5", "abc"} {
 		if err := r.FreezeInTx(ctx, noSQLSession{}, 1, "TWD", amount); err == nil {
 			t.Errorf("FreezeInTx(amount=%q) = nil, want error", amount)
+		}
+	}
+}
+
+// noDBWalletRepository 的 db 內嵌 nil 的 sqlx.SqlConn、rdb 為 nil：只要開交易或送出任何 SQL 就會 panic，
+// 用來證明 Freeze 在金額驗證失敗時完全不碰 Redis 與資料庫。
+func noDBWalletRepository() *walletRepository {
+	return &walletRepository{db: noSQLConn{}}
+}
+
+type noSQLConn struct {
+	sqlx.SqlConn
+}
+
+// TestFreezeRejectsNonPositiveAmount 迴歸測試：float64 版 Freeze 必須比照 FreezeInTx 拒絕非正數。
+// 掛單建立時直接以請求的 totalAmount 呼叫 Freeze；若少了驗證，負數金額會讓
+// `available_balance - $amount` 反向增加可用餘額，等同憑空造幣。
+// NaN / Inf 經 %.18f 格式化後為 "NaN" / "+Inf"，極小值會被四捨五入成 0，同樣必須被拒絕。
+func TestFreezeRejectsNonPositiveAmount(t *testing.T) {
+	r := noDBWalletRepository()
+	ctx := context.Background()
+
+	for _, amount := range []float64{-1, -0.000001, 0, math.Copysign(0, -1), 1e-19, math.NaN(), math.Inf(1), math.Inf(-1)} {
+		err := r.Freeze(ctx, 1, "USDT", amount)
+		if err == nil {
+			t.Errorf("Freeze(amount=%v) = nil, want error", amount)
+			continue
+		}
+		var appErr *apierrors.AppError
+		if !errors.As(err, &appErr) || appErr.Code != 400 {
+			t.Errorf("Freeze(amount=%v) = %v, want 400 AppError", amount, err)
 		}
 	}
 }

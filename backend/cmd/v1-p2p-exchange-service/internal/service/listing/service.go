@@ -3,6 +3,7 @@ package listing_service
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -34,6 +35,10 @@ func New(db sqlx.SqlConn, rdb *rdb.Client, listingRepo listingrepo.ListingReposi
 }
 
 func (s *listingService) Create(ctx context.Context, uid int64, req app_interface.CreateListingRequest) (*app_interface.CreateListingResponse, error) {
+	if err := validateCreateListingRequest(req); err != nil {
+		return nil, err
+	}
+
 	if req.Type == "sell" && req.PaymentMethodID == nil {
 		return nil, apierrors.New(400, "sell listing requires a payment method")
 	}
@@ -147,6 +152,32 @@ func (s *listingService) Cancel(ctx context.Context, uid, id int64) error {
 
 		return nil
 	})
+}
+
+// validateCreateListingRequest 驗證掛單的數值欄位，必須在凍結餘額之前執行：
+// 負數或非有限的 totalAmount 會讓 Freeze 反向增加可用餘額，等同憑空造幣。
+func validateCreateListingRequest(req app_interface.CreateListingRequest) error {
+	for _, v := range []float64{req.TotalAmount, req.Price, req.MinOrderFiat, req.MaxOrderFiat} {
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			return apierrors.New(400, "amount fields must be finite numbers")
+		}
+	}
+	if req.TotalAmount <= 0 {
+		return apierrors.New(400, "totalAmount must be greater than 0")
+	}
+	if req.Price <= 0 {
+		return apierrors.New(400, "price must be greater than 0")
+	}
+	if req.MinOrderFiat < 0 {
+		return apierrors.New(400, "minOrderFiat must not be negative")
+	}
+	if req.MaxOrderFiat < req.MinOrderFiat {
+		return apierrors.New(400, "maxOrderFiat must not be less than minOrderFiat")
+	}
+	if req.PaymentTimeLimit <= 0 {
+		return apierrors.New(400, "paymentTimeLimit must be greater than 0")
+	}
+	return nil
 }
 
 func walletLockKey(userID int64, currency string) string {
