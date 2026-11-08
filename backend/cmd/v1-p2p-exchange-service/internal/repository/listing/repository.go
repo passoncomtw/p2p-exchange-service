@@ -26,7 +26,6 @@ type ListingRepository interface {
 	// CancelInTx 在交易內以條件式 UPDATE 把 active 或 paused 的掛單轉為 cancelled，回傳影響列數；
 	// 影響 0 列代表掛單狀態已被其他請求改變，呼叫端不得再解凍任何額度。
 	CancelInTx(ctx context.Context, session sqlx.Session, id int64) (int64, error)
-	UpdateStatusInTx(ctx context.Context, session sqlx.Session, id int64, status string) error
 	RestoreAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount float64) error
 }
 
@@ -135,14 +134,6 @@ func (r *listingRepository) DeductAmountInTx(ctx context.Context, session sqlx.S
 
 func (r *listingRepository) CancelInTx(ctx context.Context, session sqlx.Session, id int64) (int64, error) {
 	return execRowsAffected(ctx, session, cancelQuery, id)
-}
-
-func (r *listingRepository) UpdateStatusInTx(ctx context.Context, session sqlx.Session, id int64, status string) error {
-	_, err := session.ExecCtx(ctx,
-		`UPDATE listings SET status = $1, updated_at = NOW() WHERE id = $2`,
-		status, id,
-	)
-	return err
 }
 
 func (r *listingRepository) RestoreAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount float64) error {

@@ -10,6 +10,7 @@ import (
 	app_interface "p2p-exchange/cmd/v1-p2p-exchange-service/internal/interfaces/app"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/model/entity"
 	listingrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/listing"
+	orderrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/order"
 	walletrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/wallet"
 	apierrors "p2p-exchange/internal/errors"
 	"p2p-exchange/internal/infra/rdb"
@@ -23,15 +24,19 @@ type ListingService interface {
 	Cancel(ctx context.Context, uid, id int64) error
 }
 
+// errListingNotCancellable 掛單已是終態（cancelled / completed），不可再取消。
+var errListingNotCancellable = apierrors.New(400, "only active or paused listings can be cancelled")
+
 type listingService struct {
 	db          sqlx.SqlConn
 	rdb         *rdb.Client
 	listingRepo listingrepo.ListingRepository
+	orderRepo   orderrepo.OrderRepository
 	walletRepo  walletrepo.WalletRepository
 }
 
-func New(db sqlx.SqlConn, rdb *rdb.Client, listingRepo listingrepo.ListingRepository, walletRepo walletrepo.WalletRepository) ListingService {
-	return &listingService{db: db, rdb: rdb, listingRepo: listingRepo, walletRepo: walletRepo}
+func New(db sqlx.SqlConn, rdb *rdb.Client, listingRepo listingrepo.ListingRepository, orderRepo orderrepo.OrderRepository, walletRepo walletrepo.WalletRepository) ListingService {
+	return &listingService{db: db, rdb: rdb, listingRepo: listingRepo, orderRepo: orderRepo, walletRepo: walletRepo}
 }
 
 func (s *listingService) Create(ctx context.Context, uid int64, req app_interface.CreateListingRequest) (*app_interface.CreateListingResponse, error) {
@@ -128,7 +133,7 @@ func (s *listingService) Cancel(ctx context.Context, uid, id int64) error {
 	}
 
 	if listing.Status != "active" && listing.Status != "paused" {
-		return apierrors.New(400, "only active or paused listings can be cancelled")
+		return errListingNotCancellable
 	}
 
 	if listing.Type == "sell" && s.rdb != nil {
@@ -139,13 +144,38 @@ func (s *listingService) Cancel(ctx context.Context, uid, id int64) error {
 		defer unlock()
 	}
 
+	// 以掛單列的 FOR UPDATE 鎖與建單、訂單釋放序列化：鎖內讀到的狀態與 remaining 才是可解凍的額度，
+	// 鎖內查到的進行中訂單也不會漏掉並發建立的訂單（建單同樣先鎖這一列）。
 	return s.db.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
-		if err := s.listingRepo.UpdateStatusInTx(ctx, session, id, "cancelled"); err != nil {
+		locked, err := s.listingRepo.FindByIDForUpdateInTx(ctx, session, id)
+		if err != nil {
+			if err == sqlx.ErrNotFound {
+				return apierrors.ErrNotFound
+			}
 			return apierrors.ErrInternal
 		}
+		if locked.Status != "active" && locked.Status != "paused" {
+			return errListingNotCancellable
+		}
 
-		if listing.Type == "sell" && listing.RemainingAmount > 0 {
-			if err := s.walletRepo.UnfreezeInTx(ctx, session, uid, listing.CryptoCurrency, listing.RemainingAmount); err != nil {
+		hasActiveOrders, err := s.orderRepo.HasActiveOrdersByListingInTx(ctx, session, id)
+		if err != nil {
+			return apierrors.ErrInternal
+		}
+		if hasActiveOrders {
+			return apierrors.New(400, "listing has active orders")
+		}
+
+		n, err := s.listingRepo.CancelInTx(ctx, session, id)
+		if err != nil {
+			return apierrors.ErrInternal
+		}
+		if n == 0 {
+			return apierrors.New(409, "listing status changed")
+		}
+
+		if locked.Type == "sell" && locked.RemainingAmount > 0 {
+			if err := s.walletRepo.UnfreezeInTx(ctx, session, uid, locked.CryptoCurrency, locked.RemainingAmount); err != nil {
 				return err
 			}
 		}

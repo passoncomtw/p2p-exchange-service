@@ -83,7 +83,7 @@ func TestCreateListingValidatesAmounts(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			wallet := &fakeWalletRepo{}
 			listings := &fakeListingRepo{}
-			svc := New(nil, nil, listings, wallet)
+			svc := New(nil, nil, listings, nil, wallet)
 
 			req := validSellListingRequest()
 			tc.mutate(&req)
@@ -117,7 +117,7 @@ func TestCreateListingAcceptsValidInput(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			wallet := &fakeWalletRepo{}
 			listings := &fakeListingRepo{}
-			svc := New(nil, nil, listings, wallet)
+			svc := New(nil, nil, listings, nil, wallet)
 
 			req := validSellListingRequest()
 			tc.mutate(&req)
