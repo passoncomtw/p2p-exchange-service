@@ -47,7 +47,6 @@ type OrderRepository interface {
 	UpdateStatusInTx(ctx context.Context, session sqlx.Session, id int64, fromStatus, toStatus string, extras map[string]interface{}) (int64, error)
 	// UpdateStatus 與 UpdateStatusInTx 相同的條件式狀態轉換，但不在交易內執行。
 	UpdateStatus(ctx context.Context, id int64, fromStatus, toStatus string, extras map[string]interface{}) (int64, error)
-	DeductListingAmount(ctx context.Context, listingID int64, amount float64) error
 }
 
 type orderRepository struct {
@@ -167,15 +166,6 @@ func (r *orderRepository) FindExpired(ctx context.Context) ([]*entity.Order, err
 		`SELECT `+orderSelectCols+` FROM orders WHERE status = 'matched' AND payment_deadline < NOW()`,
 	)
 	return rows, err
-}
-
-func (r *orderRepository) DeductListingAmount(ctx context.Context, listingID int64, amount float64) error {
-	_, err := r.db.ExecCtx(ctx,
-		`UPDATE listings SET remaining_amount = remaining_amount - $1, updated_at = NOW()
-		 WHERE id = $2 AND remaining_amount >= $1`,
-		amount, listingID,
-	)
-	return err
 }
 
 func buildStatusUpdate(db sqlx.SqlConn, ctx context.Context, id int64, fromStatus, toStatus string, extras map[string]interface{}) (int64, error) {

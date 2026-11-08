@@ -3,6 +3,7 @@ package order_service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"math/rand"
@@ -28,6 +29,12 @@ import (
 // errOrderStatusChanged 條件式狀態轉換影響 0 列：訂單在讀取後已被其他請求改變狀態，
 // 本次請求不得再執行任何錢包操作。
 var errOrderStatusChanged = apierrors.New(409, "order status changed")
+
+// errInsufficientRemaining 掛單剩餘量不足以成立這筆訂單（鎖內檢查或條件式扣量影響 0 列）。
+var errInsufficientRemaining = apierrors.New(400, "insufficient remaining amount in listing")
+
+// minCryptoAmount 為 NUMERIC(38, 18) 可表示的最小正數。
+const minCryptoAmount = 1e-18
 
 type OrderService interface {
 	Create(ctx context.Context, uid int64, req app_interface.CreateOrderRequest) (*app_interface.CreateOrderResponse, error)
@@ -81,34 +88,86 @@ func (s *orderService) Create(ctx context.Context, uid int64, req app_interface.
 		return nil, apierrors.New(400, "cryptoAmount must be a positive finite number")
 	}
 
-	listing, err := s.listingRepo.FindByID(ctx, req.ListingID)
-	if err != nil {
-		if err == sqlx.ErrNotFound {
-			return nil, apierrors.ErrNotFound
+	var order *entity.Order
+	// 依 p2p-order「建立訂單的鎖與原子性」：以掛單列的 FOR UPDATE 鎖序列化同一掛單的建單、
+	// 訂單釋放與掛單取消，並在同一交易內完成凍結、寫入訂單、扣量、託管紀錄與狀態日誌；
+	// 任何一步失敗整筆回滾，錯誤一律不得忽略。
+	if err := s.db.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
+		listing, err := s.listingRepo.FindByIDForUpdateInTx(ctx, session, req.ListingID)
+		if err != nil {
+			if err == sqlx.ErrNotFound {
+				return apierrors.ErrNotFound
+			}
+			return err
 		}
-		return nil, apierrors.ErrInternal
+
+		order, err = s.buildOrder(ctx, uid, listing, req.CryptoAmount)
+		if err != nil {
+			return err
+		}
+
+		// buy 掛單由吃單者（賣方）凍結 cryptoAmount；sell 掛單的額度已在掛單時凍結，這裡不再凍結。
+		// 金額字串格式與 UnfreezeInTx / TransferInTx 內部的 %.18f 一致，凍結與釋放才會是同一個數值。
+		if listing.Type == "buy" {
+			if err := s.walletRepo.FreezeInTx(ctx, session, order.SellerID, order.CryptoCurrency, formatCryptoAmount(order.CryptoAmount)); err != nil {
+				return err
+			}
+		}
+
+		orderID, err := s.orderRepo.CreateInTx(ctx, session, order)
+		if err != nil {
+			return err
+		}
+		order.ID = orderID
+
+		n, err := s.listingRepo.DeductAmountInTx(ctx, session, listing.ID, order.CryptoAmount)
+		if err != nil {
+			return err
+		}
+		if n == 0 {
+			return errInsufficientRemaining
+		}
+
+		if err := s.escrowRepo.CreateInTx(ctx, session, &escrowrepo.EscrowRecord{
+			OrderID:        orderID,
+			CryptoCurrency: order.CryptoCurrency,
+			Amount:         order.CryptoAmount,
+			Action:         "lock",
+			Status:         "completed",
+		}); err != nil {
+			return err
+		}
+
+		return s.statusLogRepo.AppendInTx(ctx, session, &orderstatuslogrepo.OrderStatusLog{
+			OrderID:      orderID,
+			ToStatus:     "matched",
+			OperatorType: "system",
+		})
+	}); err != nil {
+		return nil, toAppError(err)
 	}
 
+	s.publishOrderStatusChanged(order, "matched")
+	return &app_interface.CreateOrderResponse{ID: order.ID, OrderNo: order.OrderNo}, nil
+}
+
+// buildOrder 以鎖內讀到的掛單再驗證吃單條件並組出訂單（尚未寫入）。
+func (s *orderService) buildOrder(ctx context.Context, uid int64, listing *entity.Listing, cryptoAmount float64) (*entity.Order, error) {
 	// 買賣方為同一人沒有合法的交易意義，且屬於單一帳號自行造幣的路徑，一律拒絕。
 	if listing.UserID == uid {
 		return nil, apierrors.New(400, "cannot take own listing")
 	}
-
-	// 【臨時行為，H2 必須移除】買幣掛單建立時不會凍結任何資產，接單者（賣方）在建單時也不凍結，
-	// Confirm 卻從賣方的 frozen_balance 轉出，記帳不一致可被濫用。在 H2 修正買幣掛單的凍結流程之前，
-	// 暫時以 503 關閉對買幣掛單下單；H2 完成後必須刪除此段判斷與對應測試。
-	if listing.Type == "buy" {
-		return nil, apierrors.New(503, "buy listings are temporarily unavailable")
-	}
-
 	if listing.Status != "active" {
 		return nil, apierrors.New(400, "listing is not active")
 	}
-	if listing.RemainingAmount < req.CryptoAmount {
-		return nil, apierrors.New(400, "insufficient remaining amount in listing")
+	if listing.RemainingAmount < cryptoAmount {
+		return nil, errInsufficientRemaining
+	}
+	if !isStorableCryptoAmount(cryptoAmount) {
+		return nil, apierrors.New(400, "cryptoAmount must be at least 1e-18 with at most 18 decimal places")
 	}
 
-	fiatAmount := req.CryptoAmount * listing.Price
+	fiatAmount := cryptoAmount * listing.Price
 	if fiatAmount < listing.MinOrderFiat {
 		return nil, apierrors.New(400, "order amount below minimum")
 	}
@@ -130,9 +189,6 @@ func (s *orderService) Create(ctx context.Context, uid int64, req app_interface.
 		buyerID = listing.UserID
 	}
 
-	orderNo := fmt.Sprintf("P2P%s%06d", time.Now().Format("20060102"), rand.Intn(1000000))
-	paymentDeadline := time.Now().Add(time.Duration(listing.PaymentTimeLimit) * time.Minute)
-
 	var paymentMethodID int64
 	if listing.PaymentMethodID != nil {
 		paymentMethodID = *listing.PaymentMethodID
@@ -144,15 +200,15 @@ func (s *orderService) Create(ctx context.Context, uid int64, req app_interface.
 		paymentMethodID = pms[0].ID
 	}
 
-	order := &entity.Order{
-		OrderNo:           orderNo,
+	return &entity.Order{
+		OrderNo:           fmt.Sprintf("P2P%s%06d", time.Now().Format("20060102"), rand.Intn(1000000)),
 		ListingID:         listing.ID,
 		ListingType:       listing.Type,
 		SellerID:          sellerID,
 		BuyerID:           buyerID,
 		CryptoCurrency:    listing.CryptoCurrency,
 		FiatCurrency:      listing.FiatCurrency,
-		CryptoAmount:      req.CryptoAmount,
+		CryptoAmount:      cryptoAmount,
 		Price:             listing.Price,
 		FiatAmount:        fiatAmount,
 		PlatformFeeBase:   listing.PlatformFeeBase,
@@ -163,32 +219,8 @@ func (s *orderService) Create(ctx context.Context, uid int64, req app_interface.
 		TotalAmount:       totalAmount,
 		PaymentMethodID:   paymentMethodID,
 		Status:            "matched",
-		PaymentDeadline:   paymentDeadline,
-	}
-
-	orderID, err := s.orderRepo.Create(ctx, order)
-	if err != nil {
-		return nil, apierrors.ErrInternal
-	}
-
-	_ = s.escrowRepo.Create(ctx, &escrowrepo.EscrowRecord{
-		OrderID:        orderID,
-		CryptoCurrency: listing.CryptoCurrency,
-		Amount:         req.CryptoAmount,
-		Action:         "lock",
-		Status:         "completed",
-	})
-
-	toStatus := "matched"
-	_ = s.statusLogRepo.Append(ctx, &orderstatuslogrepo.OrderStatusLog{
-		OrderID:      orderID,
-		ToStatus:     toStatus,
-		OperatorType: "system",
-	})
-
-	_ = s.orderRepo.DeductListingAmount(ctx, listing.ID, req.CryptoAmount)
-
-	return &app_interface.CreateOrderResponse{ID: orderID, OrderNo: orderNo}, nil
+		PaymentDeadline:   time.Now().Add(time.Duration(listing.PaymentTimeLimit) * time.Minute),
+	}, nil
 }
 
 func (s *orderService) List(ctx context.Context, uid int64, req app_interface.ListOrdersRequest) (*app_interface.ListOrdersResponse, error) {
@@ -424,6 +456,31 @@ func (s *orderService) publishOrderStatusChanged(order *entity.Order, status str
 // isPositiveFinite 回傳 v 是否為大於零的有限值（排除 NaN 與 ±Inf）。
 func isPositiveFinite(v float64) bool {
 	return !math.IsNaN(v) && !math.IsInf(v, 0) && v > 0
+}
+
+// formatCryptoAmount 把加密貨幣數量格式化為 18 位小數字串，與錢包 UnfreezeInTx / TransferInTx 內部格式一致。
+func formatCryptoAmount(v float64) string {
+	return fmt.Sprintf("%.18f", v)
+}
+
+// isStorableCryptoAmount 回傳 v 是否不小於 1e-18，且格式化為 18 位小數後再解析仍是同一個值。
+// 不符合時，寫入 NUMERIC(38, 18) 的訂單量、凍結量與後續釋放量會各自被捨入成不同的數值，
+// 或被捨入成 0 而形成「凍結 0、訂單非 0」的帳務落差。
+func isStorableCryptoAmount(v float64) bool {
+	if v < minCryptoAmount {
+		return false
+	}
+	parsed, err := strconv.ParseFloat(formatCryptoAmount(v), 64)
+	return err == nil && parsed == v
+}
+
+// toAppError 保留交易中回傳的 AppError；其餘（資料庫等）錯誤一律轉為 500，不把內部訊息回給使用者。
+func toAppError(err error) error {
+	var appErr *apierrors.AppError
+	if errors.As(err, &appErr) {
+		return appErr
+	}
+	return apierrors.ErrInternal
 }
 
 func toOrderItem(o *entity.Order) app_interface.OrderItem {
