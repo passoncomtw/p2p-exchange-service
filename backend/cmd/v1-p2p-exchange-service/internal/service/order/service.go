@@ -94,6 +94,13 @@ func (s *orderService) Create(ctx context.Context, uid int64, req app_interface.
 		return nil, apierrors.New(400, "cannot take own listing")
 	}
 
+	// 【臨時行為，H2 必須移除】買幣掛單建立時不會凍結任何資產，接單者（賣方）在建單時也不凍結，
+	// Confirm 卻從賣方的 frozen_balance 轉出，記帳不一致可被濫用。在 H2 修正買幣掛單的凍結流程之前，
+	// 暫時以 503 關閉對買幣掛單下單；H2 完成後必須刪除此段判斷與對應測試。
+	if listing.Type == "buy" {
+		return nil, apierrors.New(503, "buy listings are temporarily unavailable")
+	}
+
 	if listing.Status != "active" {
 		return nil, apierrors.New(400, "listing is not active")
 	}

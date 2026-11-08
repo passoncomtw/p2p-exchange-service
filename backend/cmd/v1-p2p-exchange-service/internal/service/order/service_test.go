@@ -240,6 +240,30 @@ func TestCreateOrderRejectsOwnListing(t *testing.T) {
 	}
 }
 
+// TestCreateOrderRejectsBuyListingTemporarily 驗證臨時開關：對買幣掛單下單一律回 503 且不建立訂單。
+// 此為臨時行為，H2 修正買幣掛單的凍結流程後必須連同 service.go 的判斷一併移除。
+func TestCreateOrderRejectsBuyListingTemporarily(t *testing.T) {
+	listing := activeSellListing()
+	listing.Type = "buy"
+	listing.UserID = testBuyerID
+	listing.PaymentMethodID = nil
+	d := newTestDeps(nil, listing, 1)
+
+	_, err := d.svc.Create(context.Background(), testSellerID, app_interface.CreateOrderRequest{
+		ListingID:    testListingID,
+		CryptoAmount: testCryptoValue,
+	})
+	if code := errCode(t, err); code != 503 {
+		t.Fatalf("expected 503, got %d (%v)", code, err)
+	}
+	if err.Error() != "buy listings are temporarily unavailable" {
+		t.Fatalf("unexpected message: %q", err.Error())
+	}
+	if d.orders.createCalls != 0 {
+		t.Fatalf("order must not be created, got %d", d.orders.createCalls)
+	}
+}
+
 // TestCreateOrderAcceptsValidInput 合法輸入：其他使用者以正數金額吃賣幣掛單，成功建立一筆訂單。
 func TestCreateOrderAcceptsValidInput(t *testing.T) {
 	d := newTestDeps(nil, activeSellListing(), 1)
