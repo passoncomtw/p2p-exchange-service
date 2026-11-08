@@ -1,120 +1,136 @@
 # P2P Exchange v1 啟動與驗收手冊
 
-本手冊說明如何在本機啟動 v1 原型(後端 + Web + App)並完成端到端驗收。
-沙箱環境無法連線 Neon DB、也無法編譯 Go,故以下步驟需在你的機器執行。
+本手冊說明如何在本機啟動 v1(後端 + 後台 Web + App)並完成基本驗收。
 
 ---
 
 ## 0. 前置需求
 
-- Node 22 LTS(專案已附 `.nvmrc`,可用 `nvm use`)
-- Go >= 1.23(後端)
-- 可連線的 PostgreSQL(既有 `backend/etc/config.yaml` 指向 Neon)
+- Node 22 LTS(`shared/`、`frontend/app/` 已附 `.nvmrc`,可用 `nvm use`)
+- Go >= 1.25(見 `backend/go.mod`)
+- Docker(啟動本機 Redis、NATS)
+- 可連線的 PostgreSQL(專案使用 Neon)
 
 ---
 
-## 1. 後端:套用 migration 與 seed
+## 1. 本機依賴:Redis 與 NATS
+
+```bash
+docker compose up -d     # Redis :6379、NATS :4222(JetStream,監控 :8222)
+```
+
+NATS 為選用:`NATS_URL` 留空時 NATS 功能關閉,服務仍可啟動。
+
+---
+
+## 2. 後端:套用 migration
+
+目前 migration 共 4 支,位於 `backend/migrations/`,需依序套用:
 
 ```bash
 cd backend
-
-# 套用既有與 v1 migration(擇一方式)
-# 方式 A:以 psql 逐一套用
 psql "<DATABASE_DSN>" -f migrations/001_init.sql
-psql "<DATABASE_DSN>" -f migrations/002_orders.sql
-psql "<DATABASE_DSN>" -f migrations/003_v1.sql
-
-# 植入 demo_user、trader_* 與樣本掛單(idempotent,可重複執行)
-go run cmd/seed/main.go -f etc/config.yaml
+psql "<DATABASE_DSN>" -f migrations/002_seeds.sql
+psql "<DATABASE_DSN>" -f migrations/003_push_token.sql
+psql "<DATABASE_DSN>" -f migrations/004_deposits_withdrawals.sql
 ```
 
-`003_v1.sql` 只新增 `listings.payment_method_label` 欄位。seed 會建立 `demo_user` 與三位 `trader_*`,並植入 4 筆他人掛單(open / completed / cancelled)。
+| 檔案 | 內容 |
+|------|------|
+| `001_init.sql` | 核心資料表(app_users、backend_users、currencies、payment_methods、listings、orders、escrow_records、wallets、wallet_ledgers、order_status_logs) |
+| `002_seeds.sql` | 開發/測試種子資料,冪等可重複執行 |
+| `003_push_token.sql` | `app_users.expo_push_token` |
+| `004_deposits_withdrawals.sql` | crypto_deposits、crypto_withdrawals、fiat_deposits、fiat_withdrawals |
+
+種子帳號(密碼皆為 `a12345678`):
+
+- 後台:`admin001`
+- App:`testdemo001`、`testdemo002`、`testdemo003`、`seller001`、`buyer001`
 
 ---
 
-## 2. 後端:啟動服務
+## 3. 後端:啟動服務
+
+必要環境變數(未設定會啟動失敗):`APP_JWT_ACCESS_SECRET`、`BACKEND_JWT_ACCESS_SECRET`、`DATABASE_DSN`、`REDIS_ADDR`。
+其他選用變數(Redis 密碼、NATS、Tron、ECPay)見 `backend/cmd/v1-p2p-exchange-service/internal/config/config.go`。
 
 ```bash
 cd backend
 go mod tidy
-make dev          # 等同 go run p2p.go -f etc/config.yaml,監聽 :8888
+cd cmd/v1-p2p-exchange-service
+go run main.go -f internal/constants/config.yaml     # REST :8888、WebSocket :8889
 ```
 
 冒煙測試:
 
 ```bash
-# 建立一筆掛單
-curl -X POST http://localhost:8888/v1/orders \
+# 健康檢查(檢查 DB;Redis/NATS 有設定時才納入)
+curl http://localhost:8888/healthz
+
+# 版本
+curl http://localhost:8888/api/v1/version
+
+# App 登入,取得 token
+curl -X POST http://localhost:8888/app/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"type":"buy","asset":"USDT","fiat":"TWD","price":32,"quantity":10,"paymentMethod":"bank_transfer"}'
+  -d '{"username":"testdemo001","password":"a12345678"}'
 
-# 我的掛單
-curl http://localhost:8888/v1/orders/mine
-
-# 後台全部掛單
-curl http://localhost:8888/v1/admin/orders
-
-# 後台標記完成(將 :id 換成實際 id)
-curl -X POST http://localhost:8888/v1/admin/orders/<id>/complete
+# 後台登入
+curl -X POST http://localhost:8888/backend/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin001","password":"a12345678"}'
 ```
 
-回傳格式為 `{ "code": 0, "message": "success", "data": ... }`。
+Swagger UI:`http://localhost:8888/swagger`。
+
+各 API 的完整路由與請求格式以 `backend/cmd/v1-p2p-exchange-service/swagger.api` 為準。API 分為 `/app/*`(App)與 `/backend/*`(後台),`/v1/*` legacy 路由已移除。
 
 ---
 
-## 3. Web
+## 4. 後台 Web
 
 ```bash
 cd frontend/web
-npm install
-npm run dev       # http://localhost:3000
+yarn install
+yarn dev          # http://localhost:3000
 ```
 
-`.env` 已設 `VITE_API_URL=http://localhost:8888`。
+`frontend/web/.env` 已設 `VITE_API_URL=http://localhost:8888`;`.env.production` 指向 `https://p2p-exchange-api.passon.tw`。
 
-- `/` 掛單頁、`/my-orders` 我的掛單、`/admin` 後台、`/admin/orders/:id` 詳情。
+頁面路由:`/login`、`/`(Dashboard)、`/members`、`/orders`、`/fiat-withdrawals`、`/platform-wallet`。
 
 ---
 
-## 4. App
+## 5. App
 
 ```bash
 cd frontend/app
-yarn install      # 或 npm install
-npx expo start
+yarn install
+yarn start        # 等同 expo start
 ```
 
-設定後端位址(擇一):
+設定後端位址:複製 `frontend/app/.env.example` 為 `.env`,修改 `EXPO_PUBLIC_API_BASE_URL`(擇一):
 
-- iOS 模擬器:`EXPO_PUBLIC_API_BASE_URL=http://localhost:8888`
-- Android 模擬器:`EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:8888`
-
-可建立 `frontend/app/.env`(參考 `.env.example`)。
-
----
-
-## 5. 端到端驗收
-
-### Web
-1. 於 `/` 選買/賣、填單價與數量、選付款方式,送出。空白或 ≤ 0 應顯示驗證錯誤。
-2. 成功後導向 `/my-orders`,該筆狀態為「待成交(open)」。
-3. 於「我的掛單」取消該筆,狀態變「已取消(cancelled)」。
-4. 於 `/admin` 應看到全部訂單(含 seed 他人訂單);點入詳情確認資訊與狀態,與使用者端一致。
-5. 對一筆 open 訂單按「標記完成」,狀態變「已完成(completed)」。
-
-### App
-1. 於「掛單」分頁建立訂單(同上驗證)。
-2. 切到「我的掛單」分頁,看到該筆 open;下拉可重新整理。
-3. 取消該筆 → cancelled。
-
-### 跨平台
-- App 建立的訂單,於 Web `/admin` 重新整理後應可見,且狀態正確。
+- iOS 模擬器:`http://localhost:8888`
+- Android 模擬器:`http://10.0.2.2:8888`
+- 實體裝置/正式:`https://p2p-exchange-api.passon.tw`
 
 ---
 
-## 6. 沙箱已完成的驗證
+## 6. 驗收
 
-- `shared`:`tsc --noEmit` 通過;API client / 驗證 / 狀態機以 mock 後端執行測試全數通過。
-- `frontend/web`:`vite build` 成功(含 shared TS 匯入)。
-- `frontend/app`:六個新檔以 esbuild 語法檢查通過(無法在沙箱跑 Expo bundling)。
-- 後端 Go 與實際 DB:沙箱無法連線/編譯,需依本手冊在本機驗證。
+驗收流程請對照 `docs/SPEC-v1.md` 與 `openspec/specs/` 各領域規格,至少涵蓋:
+
+1. 後台以 `admin001` 登入,可看到會員、訂單、法幣提領與平台錢包頁面。
+2. App 以 `seller001` / `buyer001` 登入,可建立掛單、下單、付款、確認放行。
+3. App 建立的訂單,於後台 `/orders` 重新整理後可見且狀態一致。
+4. 後台對會員入金(`POST /backend/members/:id/deposit`)後,App 錢包餘額更新。
+
+---
+
+## 7. CI/CD 注意事項
+
+- `db-migrate.yml` 在 `backend/migrations/**` 變更推送到 main 或手動觸發時,以 `backend/Dockerfile.migrate` 建置 `cmd/migrate`,並在 K8s 以 Job 執行(讀取 Secret `p2p-exchange-db` 的 `DATABASE_URL`)。已套用的檔案記錄在 `schema_migrations`,重複執行會略過。
+- `002_seeds.sql` 的預設帳號與密碼為刻意保留,migrate 會與其他檔案一起套用,包含正式環境。
+- 後端與 Web 映像由 `ci-build-push.yml` 建置並更新 gitops image tag。
+- iOS 發版由 `expo-ios-testflight.yml` 觸發,流程見根目錄 `README.md`。
