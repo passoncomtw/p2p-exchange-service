@@ -1,5 +1,5 @@
 // @p2p/shared — 共用核心匯出入口
-// 型別 / DTO、驗證、狀態機、API client 契約、i18n、設計 token
+// 型別 / DTO、驗證、狀態機、i18n、設計 token
 
 // 領域型別
 export * from './domain/order';
@@ -10,9 +10,6 @@ export * from './validation/order';
 
 // DTO
 export * from './dto/order';
-
-// API client
-export * from './api/client';
 
 // i18n
 export * from './i18n';
