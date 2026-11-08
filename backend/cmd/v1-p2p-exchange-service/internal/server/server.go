@@ -32,7 +32,6 @@ type Params struct {
 	ECPayWebhookHandler   *handlers.ECPayWebhookHandler
 	HealthzHandler        *handlers.HealthzHandler
 	BackendHandler        *handlers.BackendHandler
-	V1Handler             *handlers.V1Handler
 	WSHandler             *handlers.WSHandler
 	LC                    fx.Lifecycle
 }
@@ -277,40 +276,6 @@ func NewServer(p Params) *rest.Server {
 		},
 		rest.WithJwt(p.Config.Backend.AccessSecret),
 	)
-
-	// v1 legacy public routes
-	server.AddRoutes([]rest.Route{
-		{
-			Method:  http.MethodPost,
-			Path:    "/v1/orders",
-			Handler: p.V1Handler.CreateOrder,
-		},
-		{
-			Method:  http.MethodGet,
-			Path:    "/v1/orders/mine",
-			Handler: p.V1Handler.ListMyOrders,
-		},
-		{
-			Method:  http.MethodPost,
-			Path:    "/v1/orders/:id/cancel",
-			Handler: p.V1Handler.CancelOrder,
-		},
-		{
-			Method:  http.MethodGet,
-			Path:    "/v1/admin/orders",
-			Handler: p.V1Handler.AdminListOrders,
-		},
-		{
-			Method:  http.MethodGet,
-			Path:    "/v1/admin/orders/:id",
-			Handler: p.V1Handler.AdminGetOrder,
-		},
-		{
-			Method:  http.MethodPost,
-			Path:    "/v1/admin/orders/:id/complete",
-			Handler: p.V1Handler.AdminCompleteOrder,
-		},
-	})
 
 	// WebSocket routes
 	server.AddRoute(rest.Route{
