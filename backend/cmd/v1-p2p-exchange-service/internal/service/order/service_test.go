@@ -24,9 +24,10 @@ const (
 )
 
 type testDeps struct {
-	store   *fakeStore
-	svc     OrderService
-	expired ExpiredOrderConsumerDeps
+	store    *fakeStore
+	payments *fakePaymentRepo
+	svc      OrderService
+	expired  ExpiredOrderConsumerDeps
 }
 
 func newTestDeps(listing entity.Listing) *testDeps {
@@ -36,14 +37,16 @@ func newTestDeps(listing entity.Listing) *testDeps {
 	listings := &fakeListingRepo{store: st}
 	wallets := &fakeWalletRepo{store: st}
 	logs := &fakeStatusLogRepo{store: st}
+	payments := &fakePaymentRepo{store: st}
 	return &testDeps{
-		store: st,
+		store:    st,
+		payments: payments,
 		svc: New(Params{
 			DB:            conn,
 			MQPublisher:   fakePublisher{store: st},
 			OrderRepo:     orders,
 			ListingRepo:   listings,
-			PaymentRepo:   fakePaymentRepo{},
+			PaymentRepo:   payments,
 			WalletRepo:    wallets,
 			EscrowRepo:    &fakeEscrowRepo{store: st},
 			StatusLogRepo: logs,
@@ -299,6 +302,22 @@ func TestCreateOrderBuyListingFreezesTaker(t *testing.T) {
 	o := d.store.state.orders[testOrderID]
 	if o.SellerID != testSellerID || o.BuyerID != testBuyerID || o.ListingType != "buy" || o.PaymentMethodID != 9 {
 		t.Fatalf("unexpected order: %+v", o)
+	}
+}
+
+// TestCreateOrderBuyListingWithoutPaymentMethod 規格：吃 buy 掛單的賣方沒有有效收款帳戶回 400，
+// 不凍結、不建立訂單。收款帳戶在交易外查詢（fake 在交易內被呼叫會回錯誤）。
+func TestCreateOrderBuyListingWithoutPaymentMethod(t *testing.T) {
+	d := newBuyDeps()
+	d.payments.none = true
+	before := d.store.state.clone()
+
+	_, err := d.create(testSellerID, testCryptoValue)
+	if code := errCode(t, err); code != 400 || err.Error() != "seller has no active payment method" {
+		t.Fatalf("expected 400 seller has no active payment method, got %d %q", code, err.Error())
+	}
+	if d.store.hasCall("freeze") || !reflect.DeepEqual(d.store.state, before) {
+		t.Fatalf("must not freeze or change state, calls=%v", d.store.calls)
 	}
 }
 

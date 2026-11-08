@@ -393,11 +393,20 @@ func (r *fakeStatusLogRepo) AppendInTx(_ context.Context, session sqlx.Session, 
 	return nil
 }
 
+// fakePaymentRepo 走連線池（非交易 session）；在交易內被呼叫視為錯誤（會與交易搶連線池）。
 type fakePaymentRepo struct {
 	paymentrepo.PaymentMethodRepository
+	store *fakeStore
+	none  bool
 }
 
-func (fakePaymentRepo) FindByUserID(_ context.Context, userID int64) ([]*entity.PaymentMethod, error) {
+func (r *fakePaymentRepo) FindByUserID(_ context.Context, userID int64) ([]*entity.PaymentMethod, error) {
+	if r.store.inTx {
+		return nil, errors.New("payment method lookup must not run inside the transaction")
+	}
+	if r.none {
+		return nil, nil
+	}
 	return []*entity.PaymentMethod{{ID: 9, UserID: userID}}, nil
 }
 

@@ -89,6 +89,10 @@ func (s *orderService) Create(ctx context.Context, uid int64, req app_interface.
 		return nil, apierrors.New(400, "cryptoAmount must be a positive finite number")
 	}
 
+	// 收款帳戶查詢走連線池而非交易 session，必須在交易外完成：交易已持有一條連線時再向連線池要第二條，
+	// 並發量高時會耗盡連線池而互相等待。只有吃 buy 掛單（且掛單未指定收款帳戶）時才會用到結果。
+	takerPaymentMethods, takerPaymentErr := s.paymentRepo.FindByUserID(ctx, uid)
+
 	var order *entity.Order
 	// 依 p2p-order「建立訂單的鎖與原子性」：以掛單列的 FOR UPDATE 鎖序列化同一掛單的建單、
 	// 訂單釋放與掛單取消，並在同一交易內完成凍結、寫入訂單、扣量、託管紀錄與狀態日誌；
@@ -102,7 +106,7 @@ func (s *orderService) Create(ctx context.Context, uid int64, req app_interface.
 			return err
 		}
 
-		order, err = s.buildOrder(ctx, uid, listing, req.CryptoAmount)
+		order, err = buildOrder(uid, listing, req.CryptoAmount, takerPaymentMethods, takerPaymentErr)
 		if err != nil {
 			return err
 		}
@@ -153,7 +157,8 @@ func (s *orderService) Create(ctx context.Context, uid int64, req app_interface.
 }
 
 // buildOrder 以鎖內讀到的掛單再驗證吃單條件並組出訂單（尚未寫入）。
-func (s *orderService) buildOrder(ctx context.Context, uid int64, listing *entity.Listing, cryptoAmount float64) (*entity.Order, error) {
+// takerPaymentMethods / takerPaymentErr 為交易外查到的吃單者收款帳戶，只在 buy 掛單未指定收款帳戶時使用。
+func buildOrder(uid int64, listing *entity.Listing, cryptoAmount float64, takerPaymentMethods []*entity.PaymentMethod, takerPaymentErr error) (*entity.Order, error) {
 	// 買賣方為同一人沒有合法的交易意義，且屬於單一帳號自行造幣的路徑，一律拒絕。
 	if listing.UserID == uid {
 		return nil, apierrors.New(400, "cannot take own listing")
@@ -194,11 +199,10 @@ func (s *orderService) buildOrder(ctx context.Context, uid int64, listing *entit
 	if listing.PaymentMethodID != nil {
 		paymentMethodID = *listing.PaymentMethodID
 	} else if listing.Type == "buy" {
-		pms, err := s.paymentRepo.FindByUserID(ctx, uid)
-		if err != nil || len(pms) == 0 {
+		if takerPaymentErr != nil || len(takerPaymentMethods) == 0 {
 			return nil, apierrors.New(400, "seller has no active payment method")
 		}
-		paymentMethodID = pms[0].ID
+		paymentMethodID = takerPaymentMethods[0].ID
 	}
 
 	return &entity.Order{
