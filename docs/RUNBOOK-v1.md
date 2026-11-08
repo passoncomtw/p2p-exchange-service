@@ -42,7 +42,7 @@ psql "<DATABASE_DSN>" -f migrations/004_deposits_withdrawals.sql
 | `003_push_token.sql` | `app_users.expo_push_token` |
 | `004_deposits_withdrawals.sql` | crypto_deposits、crypto_withdrawals、fiat_deposits、fiat_withdrawals |
 
-種子帳號(密碼皆為 `a12345678`):
+種子帳號(註解所寫密碼為 `a12345678`,但 `admin001` 的雜湊不符,見 6.1):
 
 - 後台:`admin001`
 - App:`testdemo001`、`testdemo002`、`testdemo003`、`seller001`、`buyer001`
@@ -119,12 +119,74 @@ yarn start        # 等同 expo start
 
 ## 6. 驗收
 
-驗收流程請對照 `docs/SPEC-v1.md` 與 `openspec/specs/` 各領域規格,至少涵蓋:
+以下以 curl 驗證主流程,路由與欄位以 `swagger.api` 為準。`<...>` 為前一步回應中的值。
 
-1. 後台以 `admin001` 登入,可看到會員、訂單、法幣提領與平台錢包頁面。
-2. App 以 `seller001` / `buyer001` 登入,可建立掛單、下單、付款、確認放行。
-3. App 建立的訂單,於後台 `/orders` 重新整理後可見且狀態一致。
-4. 後台對會員入金(`POST /backend/members/:id/deposit`)後,App 錢包餘額更新。
+```bash
+B=http://localhost:8888
+J='Content-Type: application/json'
+```
+
+### 6.1 登入
+
+```bash
+# 後台:回應的 token 在 data.token
+curl -s -X POST $B/backend/auth/login -H "$J" -d '{"username":"admin001","password":"a12345678"}'
+
+# App:回應的 token 在 data.access_token
+curl -s -X POST $B/app/auth/login -H "$J" -d '{"username":"seller001","password":"a12345678"}'
+curl -s -X POST $B/app/auth/login -H "$J" -d '{"username":"buyer001","password":"a12345678"}'
+```
+
+之後的請求帶 `-H "Authorization: Bearer <token>"`,分別記為 `ADMIN`、`SELLER`、`BUYER`。
+
+注意:`002_seeds.sql` 內 `admin001` 的雜湊與註解所寫的 `a12345678` 不符,後台登入會回 401(App 種子帳號正常)。本機驗證時可先重設:
+
+```bash
+psql "<DATABASE_DSN>" -c "create extension if not exists pgcrypto; update backend_users set password_hash=crypt('a12345678',gen_salt('bf',10)) where username='admin001';"
+```
+
+### 6.2 賣方建立收款方式與掛單
+
+```bash
+curl -s -X POST $B/app/payment-methods -H "$J" -H "Authorization: Bearer $SELLER" \
+  -d '{"type":"bank_transfer","bankName":"Test Bank","accountName":"seller","accountNumber":"1234567890"}'
+# 取得 data.id 為 <paymentMethodId>
+
+curl -s -X POST $B/app/listings -H "$J" -H "Authorization: Bearer $SELLER" \
+  -d '{"type":"sell","cryptoCurrency":"USDT","fiatCurrency":"TWD","totalAmount":100,"price":32,"minOrderFiat":100,"maxOrderFiat":3200,"paymentTimeLimit":15,"paymentMethodId":<paymentMethodId>}'
+# 取得 data.id 為 <listingId>
+```
+
+預期:`code` 為 0;`GET /app/wallets` 顯示賣方 USDT 的凍結餘額增加 100。
+
+### 6.3 買方下單、付款,賣方確認放行
+
+```bash
+curl -s -X POST $B/app/orders -H "$J" -H "Authorization: Bearer $BUYER" -d '{"listingId":<listingId>,"cryptoAmount":10}'
+# 取得 data.id 為 <orderId>
+
+curl -s -X PUT $B/app/orders/<orderId>/pay     -H "Authorization: Bearer $BUYER"
+curl -s -X PUT $B/app/orders/<orderId>/confirm -H "Authorization: Bearer $SELLER"
+curl -s $B/app/orders/<orderId> -H "Authorization: Bearer $BUYER"
+```
+
+預期:訂單 `status` 為 `completed`;買方 USDT 可用餘額增加 10,賣方凍結餘額減少 10。
+
+### 6.4 後台檢視與入金
+
+```bash
+curl -s "$B/backend/orders" -H "Authorization: Bearer $ADMIN"                 # 看得到上述訂單
+curl -s "$B/backend/members?keyword=buyer001" -H "Authorization: Bearer $ADMIN"   # 取得會員 <memberId>
+curl -s -X POST $B/backend/members/<memberId>/deposit -H "$J" -H "Authorization: Bearer $ADMIN" \
+  -d '{"currency":"USDT","amount":"50"}'
+```
+
+預期:訂單列表含該筆訂單且狀態一致;入金回應的 `available_balance` 增加 50。
+
+### 6.5 介面對照
+
+- 後台 Web(`http://localhost:3000`)以 `admin001` 登入後,Dashboard、`/members`、`/orders` 可看到上述資料。
+- App 以 `seller001` / `buyer001` 登入後,可看到相同的掛單、訂單與錢包餘額。
 
 ---
 
