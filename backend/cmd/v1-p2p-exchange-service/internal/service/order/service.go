@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/rand"
 	"strconv"
 	"time"
@@ -23,6 +24,10 @@ import (
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"go.uber.org/fx"
 )
+
+// errOrderStatusChanged 條件式狀態轉換影響 0 列：訂單在讀取後已被其他請求改變狀態，
+// 本次請求不得再執行任何錢包操作。
+var errOrderStatusChanged = apierrors.New(409, "order status changed")
 
 type OrderService interface {
 	Create(ctx context.Context, uid int64, req app_interface.CreateOrderRequest) (*app_interface.CreateOrderResponse, error)
@@ -72,12 +77,28 @@ func New(p Params) OrderService {
 }
 
 func (s *orderService) Create(ctx context.Context, uid int64, req app_interface.CreateOrderRequest) (*app_interface.CreateOrderResponse, error) {
+	if !isPositiveFinite(req.CryptoAmount) {
+		return nil, apierrors.New(400, "cryptoAmount must be a positive finite number")
+	}
+
 	listing, err := s.listingRepo.FindByID(ctx, req.ListingID)
 	if err != nil {
 		if err == sqlx.ErrNotFound {
 			return nil, apierrors.ErrNotFound
 		}
 		return nil, apierrors.ErrInternal
+	}
+
+	// 買賣方為同一人沒有合法的交易意義，且屬於單一帳號自行造幣的路徑，一律拒絕。
+	if listing.UserID == uid {
+		return nil, apierrors.New(400, "cannot take own listing")
+	}
+
+	// 【臨時行為，H2 必須移除】買幣掛單建立時不會凍結任何資產，接單者（賣方）在建單時也不凍結，
+	// Confirm 卻從賣方的 frozen_balance 轉出，記帳不一致可被濫用。在 H2 修正買幣掛單的凍結流程之前，
+	// 暫時以 503 關閉對買幣掛單下單；H2 完成後必須刪除此段判斷與對應測試。
+	if listing.Type == "buy" {
+		return nil, apierrors.New(503, "buy listings are temporarily unavailable")
 	}
 
 	if listing.Status != "active" {
@@ -209,12 +230,16 @@ func (s *orderService) Pay(ctx context.Context, uid, id int64) error {
 		return apierrors.New(400, "order is not in matched status")
 	}
 
+	fromStatus := "matched"
 	now := time.Now()
-	if err := s.orderRepo.UpdateStatus(ctx, id, "paid", map[string]interface{}{"paid_at": now}); err != nil {
+	n, err := s.orderRepo.UpdateStatus(ctx, id, fromStatus, "paid", map[string]interface{}{"paid_at": now})
+	if err != nil {
 		return apierrors.ErrInternal
 	}
+	if n == 0 {
+		return errOrderStatusChanged
+	}
 
-	fromStatus := "matched"
 	_ = s.statusLogRepo.Append(ctx, &orderstatuslogrepo.OrderStatusLog{
 		OrderID:      id,
 		FromStatus:   &fromStatus,
@@ -249,8 +274,9 @@ func (s *orderService) Confirm(ctx context.Context, uid, id int64) error {
 	}
 	defer unlock()
 
+	fromStatus := "paid"
 	if err := s.db.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
-		n, err := s.orderRepo.UpdateStatusInTx(ctx, session, id, "completed", map[string]interface{}{
+		n, err := s.orderRepo.UpdateStatusInTx(ctx, session, id, fromStatus, "completed", map[string]interface{}{
 			"confirmed_at": now,
 			"completed_at": now,
 		})
@@ -258,14 +284,13 @@ func (s *orderService) Confirm(ctx context.Context, uid, id int64) error {
 			return err
 		}
 		if n == 0 {
-			return apierrors.New(400, "order cannot be completed")
+			return errOrderStatusChanged
 		}
 		return s.walletRepo.TransferInTx(ctx, session, order.SellerID, order.BuyerID, order.CryptoCurrency, order.CryptoAmount, order.OrderNo)
 	}); err != nil {
 		return err
 	}
 
-	fromStatus := "paid"
 	_ = s.statusLogRepo.Append(ctx, &orderstatuslogrepo.OrderStatusLog{
 		OrderID:      id,
 		FromStatus:   &fromStatus,
@@ -302,8 +327,9 @@ func (s *orderService) Cancel(ctx context.Context, uid int64, req app_interface.
 	}
 	defer unlock()
 
+	fromStatus := "matched"
 	if err := s.db.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
-		n, err := s.orderRepo.UpdateStatusInTx(ctx, session, req.ID, "cancelled", map[string]interface{}{
+		n, err := s.orderRepo.UpdateStatusInTx(ctx, session, req.ID, fromStatus, "cancelled", map[string]interface{}{
 			"cancelled_at":  now,
 			"cancel_reason": reason,
 		})
@@ -311,7 +337,7 @@ func (s *orderService) Cancel(ctx context.Context, uid int64, req app_interface.
 			return err
 		}
 		if n == 0 {
-			return apierrors.New(400, "order cannot be cancelled")
+			return errOrderStatusChanged
 		}
 		return s.walletRepo.UnfreezeInTx(ctx, session, order.SellerID, order.CryptoCurrency, order.CryptoAmount)
 	}); err != nil {
@@ -322,7 +348,6 @@ func (s *orderService) Cancel(ctx context.Context, uid int64, req app_interface.
 	if uid == order.SellerID {
 		operatorType = "seller"
 	}
-	fromStatus := "matched"
 	_ = s.statusLogRepo.Append(ctx, &orderstatuslogrepo.OrderStatusLog{
 		OrderID:      req.ID,
 		FromStatus:   &fromStatus,
@@ -351,15 +376,19 @@ func (s *orderService) Dispute(ctx context.Context, uid int64, req app_interface
 		return apierrors.New(400, "order can only be disputed in paid status")
 	}
 
-	if err := s.orderRepo.UpdateStatus(ctx, req.ID, "disputed", nil); err != nil {
+	fromStatus := "paid"
+	n, err := s.orderRepo.UpdateStatus(ctx, req.ID, fromStatus, "disputed", nil)
+	if err != nil {
 		return apierrors.ErrInternal
+	}
+	if n == 0 {
+		return errOrderStatusChanged
 	}
 
 	operatorType := "buyer"
 	if uid == order.SellerID {
 		operatorType = "seller"
 	}
-	fromStatus := "paid"
 	remark := req.Reason
 	_ = s.statusLogRepo.Append(ctx, &orderstatuslogrepo.OrderStatusLog{
 		OrderID:      req.ID,
@@ -390,6 +419,11 @@ func (s *orderService) publishOrderStatusChanged(order *entity.Order, status str
 	s.mqPublisher.PublishAsync(pkgws.SubjectNotifyAdmin, data)
 	s.mqPublisher.PublishAsync(pkgws.SubjectNotifyBuyerPrefix+strconv.FormatInt(order.BuyerID, 10), data)
 	s.mqPublisher.PublishAsync(pkgws.SubjectNotifySellerPrefix+strconv.FormatInt(order.SellerID, 10), data)
+}
+
+// isPositiveFinite 回傳 v 是否為大於零的有限值（排除 NaN 與 ±Inf）。
+func isPositiveFinite(v float64) bool {
+	return !math.IsNaN(v) && !math.IsInf(v, 0) && v > 0
 }
 
 func toOrderItem(o *entity.Order) app_interface.OrderItem {

@@ -18,6 +18,10 @@ import (
 	apierrors "p2p-exchange/internal/errors"
 )
 
+// errOrderStatusChanged 條件式狀態轉換影響 0 列：爭議訂單在讀取後已被其他請求處理，
+// 本次裁決不得再執行任何錢包操作。
+var errOrderStatusChanged = apierrors.New(409, "order status changed")
+
 type BackendAdminService interface {
 	ListListings(ctx context.Context, req backend_interface.BackendListListingsRequest) (*app_interface.ListListingsResponse, error)
 	ListOrders(ctx context.Context, req backend_interface.BackendListOrdersRequest) (*app_interface.ListOrdersResponse, error)
@@ -103,7 +107,8 @@ func (s *backendAdminService) ResolveOrder(ctx context.Context, req backend_inte
 		return apierrors.ErrInternal
 	}
 
-	if order.Status != "disputed" {
+	const fromStatus = "disputed"
+	if order.Status != fromStatus {
 		return apierrors.New(400, "order is not in disputed status")
 	}
 
@@ -116,10 +121,14 @@ func (s *backendAdminService) ResolveOrder(ctx context.Context, req backend_inte
 		defer unlock()
 
 		return s.db.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
-			if _, err := s.orderRepo.UpdateStatusInTx(ctx, session, order.ID, "completed", map[string]interface{}{
+			n, err := s.orderRepo.UpdateStatusInTx(ctx, session, order.ID, fromStatus, "completed", map[string]interface{}{
 				"completed_at": "NOW()",
-			}); err != nil {
+			})
+			if err != nil {
 				return err
+			}
+			if n == 0 {
+				return errOrderStatusChanged
 			}
 			return s.walletRepo.TransferInTx(ctx, session, order.SellerID, order.BuyerID, order.CryptoCurrency, order.CryptoAmount, order.OrderNo)
 		})
@@ -132,10 +141,14 @@ func (s *backendAdminService) ResolveOrder(ctx context.Context, req backend_inte
 		defer unlock()
 
 		return s.db.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
-			if _, err := s.orderRepo.UpdateStatusInTx(ctx, session, order.ID, "refunded", map[string]interface{}{
+			n, err := s.orderRepo.UpdateStatusInTx(ctx, session, order.ID, fromStatus, "refunded", map[string]interface{}{
 				"cancel_reason": req.Reason,
-			}); err != nil {
+			})
+			if err != nil {
 				return err
+			}
+			if n == 0 {
+				return errOrderStatusChanged
 			}
 			if err := s.walletRepo.UnfreezeInTx(ctx, session, order.SellerID, order.CryptoCurrency, order.CryptoAmount); err != nil {
 				return err

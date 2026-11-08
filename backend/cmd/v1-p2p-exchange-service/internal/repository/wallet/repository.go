@@ -100,6 +100,12 @@ func walletLockKey(userID int64, currency string) string {
 }
 
 func (r *walletRepository) Freeze(ctx context.Context, userID int64, currency string, amount float64) error {
+	// 比照 FreezeInTx：轉成字串後先驗證為正數，負數、零、NaN、Inf 一律在取鎖與送出 SQL 之前拒絕。
+	amountStr := fmt.Sprintf("%.18f", amount)
+	if err := validateAmount(amountStr); err != nil {
+		return err
+	}
+
 	if r.rdb != nil {
 		unlock, err := r.rdb.AcquireLock(ctx, walletLockKey(userID, currency), walletLockTTL*1e9)
 		if err != nil {
@@ -108,7 +114,6 @@ func (r *walletRepository) Freeze(ctx context.Context, userID int64, currency st
 		defer unlock()
 	}
 
-	amountStr := fmt.Sprintf("%.18f", amount)
 	return r.db.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
 		return freezeInTx(ctx, session, userID, currency, amountStr)
 	})
