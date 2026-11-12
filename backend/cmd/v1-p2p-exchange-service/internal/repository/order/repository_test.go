@@ -3,6 +3,7 @@ package orderrepo
 import (
 	"context"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"regexp"
 	"strings"
 	"testing"
@@ -60,7 +61,7 @@ func TestHasActiveOrdersByListingInTxIsPlainSelect(t *testing.T) {
 // TestCreateInTxUsesSession 驗證建單寫入走呼叫端的交易 session（而非連線池），才能與凍結、扣量一起回滾。
 func TestCreateInTxUsesSession(t *testing.T) {
 	s := &recordingSession{}
-	o := &entity.Order{OrderNo: "P2P1", ListingID: 10, CryptoAmount: 1.5, Status: "matched"}
+	o := &entity.Order{OrderNo: "P2P1", ListingID: 10, CryptoAmount: decimal.RequireFromString("1.5"), Status: "matched"}
 	if _, err := New(nil).CreateInTx(context.Background(), s, o); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -70,7 +71,7 @@ func TestCreateInTxUsesSession(t *testing.T) {
 	if got := len(s.args[0]); got != 19 {
 		t.Fatalf("expected 19 args, got %d", got)
 	}
-	if s.args[0][0] != "P2P1" || s.args[0][1] != int64(10) || s.args[0][7] != 1.5 || s.args[0][17] != "matched" {
+	if s.args[0][0] != "P2P1" || s.args[0][1] != int64(10) || !decimal.RequireFromString("1.5").Equal(s.args[0][7].(decimal.Decimal)) || s.args[0][17] != "matched" {
 		t.Fatalf("unexpected args: %v", s.args[0])
 	}
 }

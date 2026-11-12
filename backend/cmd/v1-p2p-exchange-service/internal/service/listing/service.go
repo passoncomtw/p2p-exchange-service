@@ -3,9 +3,9 @@ package listing_service
 import (
 	"context"
 	"fmt"
-	"math"
 	"time"
 
+	"github.com/shopspring/decimal"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	app_interface "p2p-exchange/cmd/v1-p2p-exchange-service/internal/interfaces/app"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/model/entity"
@@ -49,7 +49,7 @@ func (s *listingService) Create(ctx context.Context, uid int64, req app_interfac
 	}
 
 	if req.Type == "sell" {
-		if err := s.walletRepo.Freeze(ctx, uid, req.CryptoCurrency, req.TotalAmount); err != nil {
+		if err := s.walletRepo.Freeze(ctx, uid, req.CryptoCurrency, req.TotalAmount.Decimal); err != nil {
 			return nil, err
 		}
 	}
@@ -59,15 +59,15 @@ func (s *listingService) Create(ctx context.Context, uid int64, req app_interfac
 		Type:             req.Type,
 		CryptoCurrency:   req.CryptoCurrency,
 		FiatCurrency:     req.FiatCurrency,
-		TotalAmount:      req.TotalAmount,
-		RemainingAmount:  req.TotalAmount,
-		Price:            req.Price,
-		MinOrderFiat:     req.MinOrderFiat,
-		MaxOrderFiat:     req.MaxOrderFiat,
-		PlatformFeeBase:  0,
-		PlatformFeeRate:  0,
-		PaymentFeeBase:   0,
-		PaymentFeeRate:   0,
+		TotalAmount:      req.TotalAmount.Decimal,
+		RemainingAmount:  req.TotalAmount.Decimal,
+		Price:            req.Price.Decimal,
+		MinOrderFiat:     req.MinOrderFiat.Decimal,
+		MaxOrderFiat:     req.MaxOrderFiat.Decimal,
+		PlatformFeeBase:  decimal.Zero,
+		PlatformFeeRate:  decimal.Zero,
+		PaymentFeeBase:   decimal.Zero,
+		PaymentFeeRate:   decimal.Zero,
 		PaymentTimeLimit: req.PaymentTimeLimit,
 		PaymentMethodID:  req.PaymentMethodID,
 		Status:           "active",
@@ -174,7 +174,7 @@ func (s *listingService) Cancel(ctx context.Context, uid, id int64) error {
 			return apierrors.New(409, "listing status changed")
 		}
 
-		if locked.Type == "sell" && locked.RemainingAmount > 0 {
+		if locked.Type == "sell" && locked.RemainingAmount.IsPositive() {
 			if err := s.walletRepo.UnfreezeInTx(ctx, session, uid, locked.CryptoCurrency, locked.RemainingAmount); err != nil {
 				return err
 			}
@@ -185,23 +185,19 @@ func (s *listingService) Cancel(ctx context.Context, uid, id int64) error {
 }
 
 // validateCreateListingRequest 驗證掛單的數值欄位，必須在凍結餘額之前執行：
-// 負數或非有限的 totalAmount 會讓 Freeze 反向增加可用餘額，等同憑空造幣。
+// 負數的 totalAmount 會讓 Freeze 反向增加可用餘額，等同憑空造幣；
+// 金額字串的格式、小數位數與範圍已由 money.Amount 在反序列化時驗證。
 func validateCreateListingRequest(req app_interface.CreateListingRequest) error {
-	for _, v := range []float64{req.TotalAmount, req.Price, req.MinOrderFiat, req.MaxOrderFiat} {
-		if math.IsNaN(v) || math.IsInf(v, 0) {
-			return apierrors.New(400, "amount fields must be finite numbers")
-		}
-	}
-	if req.TotalAmount <= 0 {
+	if !req.TotalAmount.IsPositive() {
 		return apierrors.New(400, "totalAmount must be greater than 0")
 	}
-	if req.Price <= 0 {
+	if !req.Price.IsPositive() {
 		return apierrors.New(400, "price must be greater than 0")
 	}
-	if req.MinOrderFiat < 0 {
+	if req.MinOrderFiat.IsNegative() {
 		return apierrors.New(400, "minOrderFiat must not be negative")
 	}
-	if req.MaxOrderFiat < req.MinOrderFiat {
+	if req.MaxOrderFiat.LessThan(req.MinOrderFiat.Decimal) {
 		return apierrors.New(400, "maxOrderFiat must not be less than minOrderFiat")
 	}
 	if req.PaymentTimeLimit <= 0 {

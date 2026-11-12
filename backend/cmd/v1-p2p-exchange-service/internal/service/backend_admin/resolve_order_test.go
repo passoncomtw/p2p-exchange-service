@@ -2,6 +2,7 @@ package backend_admin_service
 
 import (
 	"context"
+	"github.com/shopspring/decimal"
 	"reflect"
 	"testing"
 
@@ -19,14 +20,14 @@ const (
 	testResolveListing  int64 = 10
 	testResolveSeller   int64 = 1001
 	testResolveBuyer    int64 = 2002
-	testResolveAmount         = 10.0
+	testResolveAmount         = "10"
 )
 
 // resolveCall 記錄一次會影響帳務或鎖的呼叫，用來驗證動作與順序。
 type resolveCall struct {
 	op     string
 	userID int64
-	amount float64
+	amount string
 }
 
 // resolveOrderRepo 以 rowsAffected 模擬條件式 UPDATE 的結果：0 代表爭議訂單已被其他請求裁決。
@@ -49,7 +50,7 @@ func (r *resolveOrderRepo) FindByID(_ context.Context, id int64) (*entity.Order,
 		SellerID:       testResolveSeller,
 		BuyerID:        testResolveBuyer,
 		CryptoCurrency: "USDT",
-		CryptoAmount:   testResolveAmount,
+		CryptoAmount:   decimal.RequireFromString(testResolveAmount),
 		Status:         "disputed",
 	}, nil
 }
@@ -71,13 +72,13 @@ func (r *resolveWalletRepo) AcquireLocks(_ context.Context, _ []int64, _ string)
 	return func() {}, nil
 }
 
-func (r *resolveWalletRepo) TransferInTx(_ context.Context, _ sqlx.Session, sellerID, _ int64, _ string, amount float64, _ string) error {
-	*r.calls = append(*r.calls, resolveCall{op: "transfer", userID: sellerID, amount: amount})
+func (r *resolveWalletRepo) TransferInTx(_ context.Context, _ sqlx.Session, sellerID, _ int64, _ string, amount decimal.Decimal, _ string) error {
+	*r.calls = append(*r.calls, resolveCall{op: "transfer", userID: sellerID, amount: amount.String()})
 	return nil
 }
 
-func (r *resolveWalletRepo) UnfreezeInTx(_ context.Context, _ sqlx.Session, userID int64, _ string, amount float64) error {
-	*r.calls = append(*r.calls, resolveCall{op: "unfreeze", userID: userID, amount: amount})
+func (r *resolveWalletRepo) UnfreezeInTx(_ context.Context, _ sqlx.Session, userID int64, _ string, amount decimal.Decimal) error {
+	*r.calls = append(*r.calls, resolveCall{op: "unfreeze", userID: userID, amount: amount.String()})
 	return nil
 }
 
@@ -94,8 +95,8 @@ func (r *resolveListingRepo) FindByIDForUpdateInTx(_ context.Context, _ sqlx.Ses
 	return &l, nil
 }
 
-func (r *resolveListingRepo) RestoreAmountInTx(_ context.Context, _ sqlx.Session, _ int64, amount float64) error {
-	*r.calls = append(*r.calls, resolveCall{op: "restoreListing", amount: amount})
+func (r *resolveListingRepo) RestoreAmountInTx(_ context.Context, _ sqlx.Session, _ int64, amount decimal.Decimal) error {
+	*r.calls = append(*r.calls, resolveCall{op: "restoreListing", amount: amount.String()})
 	return nil
 }
 

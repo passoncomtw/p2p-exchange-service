@@ -3,13 +3,14 @@ package escrowrepo
 import (
 	"context"
 
+	"github.com/shopspring/decimal"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
 type EscrowRecord struct {
 	OrderID        int64
 	CryptoCurrency string
-	Amount         float64
+	Amount         decimal.Decimal
 	Action         string
 	Status         string
 }

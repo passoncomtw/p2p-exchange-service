@@ -3,6 +3,7 @@ package orderallocation
 import (
 	"context"
 	"errors"
+	"github.com/shopspring/decimal"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -23,13 +24,13 @@ const (
 	testOrderID   int64 = 20
 	testSellerID  int64 = 1001
 	testBuyerID   int64 = 2002
-	testAmount          = 10.0
+	testAmount          = "10"
 )
 
 type movement struct {
 	op     string
 	userID int64
-	amount float64
+	amount string
 }
 
 // fakeListingRepo 刻意不實作 FindByID：釋放若改用不加鎖的讀取會直接 panic。
@@ -48,8 +49,8 @@ func (r *fakeListingRepo) FindByIDForUpdateInTx(_ context.Context, _ sqlx.Sessio
 	return &l, nil
 }
 
-func (r *fakeListingRepo) RestoreAmountInTx(_ context.Context, _ sqlx.Session, _ int64, amount float64) error {
-	*r.log = append(*r.log, movement{op: "restoreListing", amount: amount})
+func (r *fakeListingRepo) RestoreAmountInTx(_ context.Context, _ sqlx.Session, _ int64, amount decimal.Decimal) error {
+	*r.log = append(*r.log, movement{op: "restoreListing", amount: amount.String()})
 	return nil
 }
 
@@ -58,8 +59,8 @@ type fakeWalletRepo struct {
 	log *[]movement
 }
 
-func (r *fakeWalletRepo) UnfreezeInTx(_ context.Context, _ sqlx.Session, userID int64, _ string, amount float64) error {
-	*r.log = append(*r.log, movement{op: "unfreeze", userID: userID, amount: amount})
+func (r *fakeWalletRepo) UnfreezeInTx(_ context.Context, _ sqlx.Session, userID int64, _ string, amount decimal.Decimal) error {
+	*r.log = append(*r.log, movement{op: "unfreeze", userID: userID, amount: amount.String()})
 	return nil
 }
 
@@ -75,7 +76,7 @@ func orderFor(listingType string) *entity.Order {
 		SellerID:       testSellerID,
 		BuyerID:        testBuyerID,
 		CryptoCurrency: "USDT",
-		CryptoAmount:   testAmount,
+		CryptoAmount:   decimal.RequireFromString(testAmount),
 	}
 }
 

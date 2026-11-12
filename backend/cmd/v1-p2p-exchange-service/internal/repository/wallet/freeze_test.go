@@ -3,9 +3,9 @@ package walletrepo
 import (
 	"context"
 	"errors"
-	"math"
 	"testing"
 
+	"github.com/shopspring/decimal"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	apierrors "p2p-exchange/internal/errors"
 )
@@ -41,23 +41,24 @@ type noSQLConn struct {
 	sqlx.SqlConn
 }
 
-// TestFreezeRejectsNonPositiveAmount 迴歸測試：float64 版 Freeze 必須比照 FreezeInTx 拒絕非正數。
+// TestFreezeRejectsNonPositiveAmount 迴歸測試：decimal 版 Freeze 必須比照 FreezeInTx 拒絕非正數。
 // 掛單建立時直接以請求的 totalAmount 呼叫 Freeze；若少了驗證，負數金額會讓
 // `available_balance - $amount` 反向增加可用餘額，等同憑空造幣。
-// NaN / Inf 經 %.18f 格式化後為 "NaN" / "+Inf"，極小值會被四捨五入成 0，同樣必須被拒絕。
+// 超過 18 位小數的極小值會被四捨五入成 0 或改變數值，同樣必須被拒絕。
 func TestFreezeRejectsNonPositiveAmount(t *testing.T) {
 	r := noDBWalletRepository()
 	ctx := context.Background()
 
-	for _, amount := range []float64{-1, -0.000001, 0, math.Copysign(0, -1), 1e-19, math.NaN(), math.Inf(1), math.Inf(-1)} {
+	for _, input := range []string{"-1", "-0.000001", "0", "-0", "0.0000000000000000001", "123456789012345678901"} {
+		amount := decimal.RequireFromString(input)
 		err := r.Freeze(ctx, 1, "USDT", amount)
 		if err == nil {
-			t.Errorf("Freeze(amount=%v) = nil, want error", amount)
+			t.Errorf("Freeze(amount=%s) = nil, want error", input)
 			continue
 		}
 		var appErr *apierrors.AppError
 		if !errors.As(err, &appErr) || appErr.Code != 400 {
-			t.Errorf("Freeze(amount=%v) = %v, want 400 AppError", amount, err)
+			t.Errorf("Freeze(amount=%s) = %v, want 400 AppError", input, err)
 		}
 	}
 }

@@ -1,15 +1,17 @@
 package app_interface
 
+import "p2p-exchange/internal/money"
+
 type CreateListingRequest struct {
-	Type             string  `json:"type"`
-	CryptoCurrency   string  `json:"cryptoCurrency"`
-	FiatCurrency     string  `json:"fiatCurrency"`
-	TotalAmount      float64 `json:"totalAmount"`
-	Price            float64 `json:"price"`
-	MinOrderFiat     float64 `json:"minOrderFiat"`
-	MaxOrderFiat     float64 `json:"maxOrderFiat"`
-	PaymentTimeLimit int64  `json:"paymentTimeLimit"`
-	PaymentMethodID  *int64 `json:"paymentMethodId,omitempty"`
+	Type             string       `json:"type"`
+	CryptoCurrency   string       `json:"cryptoCurrency"`
+	FiatCurrency     string       `json:"fiatCurrency"`
+	TotalAmount      money.Amount `json:"totalAmount"`
+	Price            money.Amount `json:"price"`
+	MinOrderFiat     money.Amount `json:"minOrderFiat"`
+	MaxOrderFiat     money.Amount `json:"maxOrderFiat"`
+	PaymentTimeLimit int64        `json:"paymentTimeLimit"`
+	PaymentMethodID  *int64       `json:"paymentMethodId,omitempty"`
 }
 
 type ListListingsRequest struct {

@@ -1,8 +1,10 @@
 package app_interface
 
+import "p2p-exchange/internal/money"
+
 type CreateOrderRequest struct {
-	ListingID   int64   `json:"listingId"`
-	CryptoAmount float64 `json:"cryptoAmount"`
+	ListingID    int64        `json:"listingId"`
+	CryptoAmount money.Amount `json:"cryptoAmount"`
 }
 
 type GetOrderRequest struct {

@@ -2,13 +2,13 @@ package backend_admin_service
 
 import (
 	"context"
-	"math/big"
 	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	backend_interface "p2p-exchange/cmd/v1-p2p-exchange-service/internal/interfaces/backend"
 	apierrors "p2p-exchange/internal/errors"
+	"p2p-exchange/internal/money"
 )
 
 func (s *backendAdminService) ListMembers(ctx context.Context, keyword string, limit, offset int64) (*backend_interface.BackendListMembersResponse, error) {
@@ -47,8 +47,8 @@ func (s *backendAdminService) ListMembers(ctx context.Context, keyword string, l
 // 不接受任何來自 request body 的操作人資訊。
 func (s *backendAdminService) DepositToMember(ctx context.Context, adminUID int64, id int64, currency string, amount string) (*backend_interface.BackendDepositResponse, error) {
 	// 金額必須是正數：負數會讓入金變成扣款。
-	amt, ok := new(big.Float).SetString(amount)
-	if !ok || amt.Sign() <= 0 {
+	amt, err := money.Parse(amount)
+	if err != nil || !amt.IsPositive() {
 		return nil, apierrors.New(400, "amount must be a positive number")
 	}
 

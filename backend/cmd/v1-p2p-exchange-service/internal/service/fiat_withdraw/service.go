@@ -5,27 +5,30 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 
+	"github.com/shopspring/decimal"
 	app_interface "p2p-exchange/cmd/v1-p2p-exchange-service/internal/interfaces/app"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/model/entity"
 	fiatwithdrawrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/fiat_withdraw"
 	walletrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/wallet"
 	apierrors "p2p-exchange/internal/errors"
+	"p2p-exchange/internal/money"
 	"p2p-exchange/pkg/mq"
 	pkgws "p2p-exchange/pkg/ws"
 )
 
-const (
-	// 單筆提領金額上下限（TWD），與 legacy 一致。
-	minFiatWithdraw = 100
-	maxFiatWithdraw = 100000
+// 單筆提領金額上下限（TWD），與 legacy 一致。
+var (
+	minFiatWithdraw = decimal.NewFromInt(100)
+	maxFiatWithdraw = decimal.NewFromInt(100000)
+)
 
+const (
 	// 預設分頁筆數與上限，與 legacy 一致（超出上限一律退回預設值）。
 	defaultWithdrawPageSize = 20
 	maxWithdrawPageSize     = 100
@@ -68,12 +71,12 @@ func (s *fiatWithdrawService) RequestWithdraw(ctx context.Context, uid int64, am
 		return nil, apierrors.New(400, "amount / bankCode / bankAccount / accountName 為必填")
 	}
 
-	parsed, err := strconv.ParseFloat(amount, 64)
-	if err != nil || parsed <= 0 {
+	parsed, err := money.Parse(amount)
+	if err != nil || !parsed.IsPositive() {
 		return nil, apierrors.New(400, "無效的提領金額")
 	}
-	if parsed < minFiatWithdraw || parsed > maxFiatWithdraw {
-		return nil, apierrors.New(400, fmt.Sprintf("提領金額須在 %d ~ %d TWD 之間", minFiatWithdraw, maxFiatWithdraw))
+	if parsed.LessThan(minFiatWithdraw) || parsed.GreaterThan(maxFiatWithdraw) {
+		return nil, apierrors.New(400, fmt.Sprintf("提領金額須在 %s ~ %s TWD 之間", minFiatWithdraw, maxFiatWithdraw))
 	}
 	if !bankCodeRe.MatchString(bankCode) {
 		return nil, apierrors.New(400, "銀行代碼格式錯誤（應為 3 位數字）")
@@ -82,9 +85,9 @@ func (s *fiatWithdrawService) RequestWithdraw(ctx context.Context, uid int64, am
 		return nil, apierrors.New(400, "銀行帳號格式錯誤（6~20 位數字）")
 	}
 
-	// 統一格式化為兩位小數：與 fiat_withdrawals.amount NUMERIC(18,2) 一致，
+	// 統一格式化為固定 18 位小數：與 fiat_withdrawals.amount NUMERIC(38,18) 一致，
 	// 且凍結金額與單據金額必定是同一個字串，不會有四捨五入落差。
-	amountStr := fmt.Sprintf("%.2f", parsed)
+	amountStr := parsed.StringFixed(money.Scale)
 
 	var withdrawID int64
 	if err := s.db.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {

@@ -17,6 +17,7 @@ import (
 	userrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/user"
 	walletrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/wallet"
 	"p2p-exchange/internal/infra/rdb"
+	"p2p-exchange/internal/money"
 	"p2p-exchange/pkg/tron"
 )
 
@@ -144,16 +145,16 @@ func (r *TronScannerRunner) processTransfer(ctx context.Context, client *tron.Cl
 		return nil
 	}
 
-	amountFloat, ok := tron.USDTAmountFromSun(tx.Value)
+	usdtAmount, ok := tron.USDTAmountFromSun(tx.Value)
 	if !ok {
 		logx.Errorf("[tron-scanner] invalid value %s in tx %s", tx.Value, tx.TransactionID)
 		return nil
 	}
-	if amountFloat.Sign() <= 0 {
+	if !usdtAmount.IsPositive() {
 		logx.Errorf("[tron-scanner] non-positive value %s in tx %s", tx.Value, tx.TransactionID)
 		return nil
 	}
-	amountStr := amountFloat.Text('f', 18)
+	amountStr := usdtAmount.StringFixed(money.Scale)
 
 	blockNumber, memo, err := client.GetTransactionDetail(ctx, tx.TransactionID)
 	if err != nil {

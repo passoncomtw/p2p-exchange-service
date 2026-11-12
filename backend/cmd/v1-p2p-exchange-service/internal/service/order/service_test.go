@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
+	"github.com/shopspring/decimal"
+	"p2p-exchange/internal/money"
 	"reflect"
 	"testing"
 	"time"
@@ -68,11 +69,11 @@ func baseListing(listingType string, ownerID int64) entity.Listing {
 		Type:             listingType,
 		CryptoCurrency:   "USDT",
 		FiatCurrency:     "TWD",
-		TotalAmount:      testListingSize,
-		RemainingAmount:  testListingSize,
-		Price:            32,
-		MinOrderFiat:     0,
-		MaxOrderFiat:     100000,
+		TotalAmount:      toDecimal(testListingSize),
+		RemainingAmount:  toDecimal(testListingSize),
+		Price:            decimal.NewFromInt(32),
+		MinOrderFiat:     decimal.Zero,
+		MaxOrderFiat:     decimal.NewFromInt(100000),
 		PaymentTimeLimit: 15,
 		Status:           "active",
 	}
@@ -115,7 +116,7 @@ func takerOf(listingType string) int64 {
 func (d *testDeps) create(uid int64, amount float64) (*app_interface.CreateOrderResponse, error) {
 	return d.svc.Create(context.Background(), uid, app_interface.CreateOrderRequest{
 		ListingID:    testListingID,
-		CryptoAmount: amount,
+		CryptoAmount: money.Amount{Decimal: toDecimal(amount)},
 	})
 }
 
@@ -130,23 +131,23 @@ func errCode(t *testing.T, err error) int {
 
 func assertWallet(t *testing.T, d *testDeps, userID int64, available, frozen float64) {
 	t.Helper()
-	if got := d.store.wallet(userID); got != (balance{available: available, frozen: frozen}) {
+	if got := d.store.wallet(userID); !got.equals(balance{available: toDecimal(available), frozen: toDecimal(frozen)}) {
 		t.Fatalf("wallet of %d = %+v, want available=%v frozen=%v", userID, got, available, frozen)
 	}
 }
 
 func assertRemaining(t *testing.T, d *testDeps, want float64) {
 	t.Helper()
-	if got := d.store.state.listing.RemainingAmount; got != want {
+	if got := d.store.state.listing.RemainingAmount; !got.Equal(toDecimal(want)) {
 		t.Fatalf("listing remaining = %v, want %v", got, want)
 	}
 }
 
-// TestCreateOrderRejectsInvalidCryptoAmount 迴歸測試：cryptoAmount 必須是大於零的有限值。
+// TestCreateOrderRejectsInvalidCryptoAmount 迴歸測試：cryptoAmount 必須是大於零的數值。
 // 負數 cryptoAmount 會讓 `remaining_amount < cryptoAmount` 的檢查形同虛設，
-// 扣量反而增加掛單剩餘量；NaN 會讓所有比較皆為 false 而通過上下限檢查。
+// 扣量反而增加掛單剩餘量。（NaN / Inf 在 API 字串解析階段已被 money.Amount 拒絕。）
 func TestCreateOrderRejectsInvalidCryptoAmount(t *testing.T) {
-	for _, amount := range []float64{-1, -0.000001, 0, math.NaN(), math.Inf(1), math.Inf(-1)} {
+	for _, amount := range []float64{-1, -0.000001, 0} {
 		d := newSellDeps()
 
 		_, err := d.create(testBuyerID, amount)
@@ -214,9 +215,9 @@ func TestCreateOrderRevalidatesInsideLock(t *testing.T) {
 	}{
 		{name: "cancelled listing", mutate: func(l *entity.Listing) { l.Status = "cancelled" }, wantMsg: "listing is not active"},
 		{name: "paused listing", mutate: func(l *entity.Listing) { l.Status = "paused" }, wantMsg: "listing is not active"},
-		{name: "insufficient remaining", mutate: func(l *entity.Listing) { l.RemainingAmount = 5 }, wantMsg: "insufficient remaining amount in listing"},
-		{name: "below minimum", mutate: func(l *entity.Listing) { l.MinOrderFiat = 1000 }, wantMsg: "order amount below minimum"},
-		{name: "above maximum", mutate: func(l *entity.Listing) { l.MaxOrderFiat = 100 }, wantMsg: "order amount above maximum"},
+		{name: "insufficient remaining", mutate: func(l *entity.Listing) { l.RemainingAmount = decimal.NewFromInt(5) }, wantMsg: "insufficient remaining amount in listing"},
+		{name: "below minimum", mutate: func(l *entity.Listing) { l.MinOrderFiat = decimal.NewFromInt(1000) }, wantMsg: "order amount below minimum"},
+		{name: "above maximum", mutate: func(l *entity.Listing) { l.MaxOrderFiat = decimal.NewFromInt(100) }, wantMsg: "order amount above maximum"},
 	}
 	for _, listingType := range []string{"sell", "buy"} {
 		for _, tc := range cases {
@@ -264,7 +265,7 @@ func TestCreateOrderSellListingDoesNotFreeze(t *testing.T) {
 	if o.SellerID != testSellerID || o.BuyerID != testBuyerID || o.ListingType != "sell" || o.Status != "matched" || o.PaymentMethodID != 5 {
 		t.Fatalf("unexpected order: %+v", o)
 	}
-	if len(d.store.state.escrows) != 1 || d.store.state.escrows[0].Action != "lock" || d.store.state.escrows[0].Amount != testCryptoValue {
+	if len(d.store.state.escrows) != 1 || d.store.state.escrows[0].Action != "lock" || d.store.state.escrows[0].Amount.Equal(toDecimal(testCryptoValue)) == false {
 		t.Fatalf("expected one escrow lock record, got %+v", d.store.state.escrows)
 	}
 	if len(d.store.state.logs) != 1 || d.store.state.logs[0].ToStatus != "matched" {
@@ -400,7 +401,7 @@ func TestCreateOrderDeductZeroRowsRollsBack(t *testing.T) {
 // TestCreateOrderNotFound 掛單不存在回 404。
 func TestCreateOrderNotFound(t *testing.T) {
 	d := newSellDeps()
-	_, err := d.svc.Create(context.Background(), testBuyerID, app_interface.CreateOrderRequest{ListingID: 999, CryptoAmount: 1})
+	_, err := d.svc.Create(context.Background(), testBuyerID, app_interface.CreateOrderRequest{ListingID: 999, CryptoAmount: money.Amount{Decimal: decimal.NewFromInt(1)}})
 	if code := errCode(t, err); code != 404 {
 		t.Fatalf("expected 404, got %d (%v)", code, err)
 	}
@@ -416,7 +417,7 @@ func seedOrder(d *testDeps, status string) {
 		SellerID:        testSellerID,
 		BuyerID:         testBuyerID,
 		CryptoCurrency:  "USDT",
-		CryptoAmount:    testCryptoValue,
+		CryptoAmount:    toDecimal(testCryptoValue),
 		Status:          status,
 		PaymentDeadline: time.Now().Add(15 * time.Minute),
 	}
@@ -514,7 +515,7 @@ func TestStatusTransitionSucceedsWhenRowUpdated(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			d := newSellDeps()
 			seedOrder(d, tc.fromStatus)
-			d.store.state.listing.RemainingAmount = testListingSize - testCryptoValue
+			d.store.state.listing.RemainingAmount = toDecimal(testListingSize - testCryptoValue)
 
 			if err := tc.run(d.svc); err != nil {
 				t.Fatalf("expected success, got %v", err)
@@ -530,8 +531,8 @@ func TestStatusTransitionSucceedsWhenRowUpdated(t *testing.T) {
 }
 
 // formatAmount 與錢包 repository 內部的金額格式相同。
-func formatAmount(v float64) string {
-	return fmt.Sprintf("%.18f", v)
+func formatAmount(v decimal.Decimal) string {
+	return v.StringFixed(money.Scale)
 }
 
 func (d *testDeps) cancel(uid int64) error {
@@ -627,7 +628,7 @@ func TestAccountingPaths(t *testing.T) {
 				assertWallet(t, d, testSellerID, w.sellerAvailable, w.sellerFrozen)
 				assertWallet(t, d, testBuyerID, w.buyerAvailable, w.buyerFrozen)
 				assertRemaining(t, d, w.remaining)
-				if got := d.store.totalUSDT(); got != total {
+				if got := d.store.totalUSDT(); !got.Equal(total) {
 					t.Fatalf("total balance changed from %v to %v", total, got)
 				}
 			})
@@ -662,7 +663,7 @@ func TestRepeatedSellCancelThenListingCancelNeverNegative(t *testing.T) {
 	}
 
 	// 取消掛單在 listing service 驗證；這裡只確認凍結額度與 remaining 一致，解凍 remaining 後恰好歸零。
-	if got := d.store.wallet(testSellerID).frozen - d.store.state.listing.RemainingAmount; got != 0 {
+	if got := d.store.wallet(testSellerID).frozen.Sub(d.store.state.listing.RemainingAmount); !got.IsZero() {
 		t.Fatalf("seller frozen must equal listing remaining before listing cancel, diff=%v", got)
 	}
 }
@@ -675,7 +676,7 @@ func TestReleaseAfterSellListingCancelled(t *testing.T) {
 		t.Run(path, func(t *testing.T) {
 			d := newSellDeps()
 			d.store.state.listing.Status = "cancelled"
-			d.store.state.listing.RemainingAmount = 0
+			d.store.state.listing.RemainingAmount = decimal.Zero
 			d.store.setWallet(testSellerID, 90, testCryptoValue)
 			seedOrder(d, "matched")
 
@@ -809,13 +810,13 @@ func TestFreezeAndReleaseAmountFormatConsistent(t *testing.T) {
 					t.Fatalf("expected one freeze and one unfreeze, got %v / %v", d.store.freezeAmounts, d.store.unfreezeAmounts)
 				}
 				frozen := d.store.freezeAmounts[0]
-				if frozen != formatAmount(amount) {
-					t.Fatalf("freeze amount %q, want %q", frozen, formatAmount(amount))
+				if frozen != formatAmount(toDecimal(amount)) {
+					t.Fatalf("freeze amount %q, want %q", frozen, formatAmount(toDecimal(amount)))
 				}
 				if released := formatAmount(d.store.unfreezeAmounts[0]); released != frozen {
 					t.Fatalf("release amount %q differs from frozen amount %q", released, frozen)
 				}
-				if got := d.store.wallet(testSellerID).frozen; got != 0 {
+				if got := d.store.wallet(testSellerID).frozen; !got.IsZero() {
 					t.Fatalf("seller frozen must return to 0, got %v", got)
 				}
 			})

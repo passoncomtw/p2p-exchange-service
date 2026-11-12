@@ -10,6 +10,8 @@ import (
 	"math/big"
 	"net/http"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 // Client wraps TronGrid HTTP API calls.
@@ -31,8 +33,8 @@ func NewClient(baseURL, apiKey string) *Client {
 
 // TRC20Transfer is one item from the TronGrid TRC-20 transfer list.
 type TRC20Transfer struct {
-	TransactionID  string `json:"transaction_id"`
-	TokenInfo      struct {
+	TransactionID string `json:"transaction_id"`
+	TokenInfo     struct {
 		Symbol   string `json:"symbol"`
 		Decimals int    `json:"decimals"`
 		Address  string `json:"address"`
@@ -266,29 +268,27 @@ func (c *Client) BroadcastTransaction(ctx context.Context, txJSON json.RawMessag
 	return nil
 }
 
+// usdtDecimals 為 Tron 上 TRC-20 USDT 的小數位數。
+const usdtDecimals = 6
+
 // USDTAmountFromSun converts TRC-20 USDT value (6-decimal sun units) to a display string.
-func USDTAmountFromSun(sun string) (*big.Float, bool) {
+func USDTAmountFromSun(sun string) (decimal.Decimal, bool) {
 	sunInt, ok := new(big.Int).SetString(sun, 10)
 	if !ok {
-		return nil, false
+		return decimal.Decimal{}, false
 	}
 	// USDT on Tron uses 6 decimal places
-	divisor := new(big.Float).SetInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(6), nil))
-	result := new(big.Float).Quo(new(big.Float).SetInt(sunInt), divisor)
-	return result, true
+	return decimal.NewFromBigInt(sunInt, -usdtDecimals), true
 }
 
 // USDTToSun converts a USDT amount string to sun (6 decimal places).
 func USDTToSun(amount string) (*big.Int, error) {
-	f, _, err := new(big.Float).Parse(amount, 10)
+	d, err := decimal.NewFromString(amount)
 	if err != nil {
 		return nil, fmt.Errorf("invalid amount: %s", amount)
 	}
-	// multiply by 10^6
-	multiplier := new(big.Float).SetInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(6), nil))
-	sunFloat := new(big.Float).Mul(f, multiplier)
-	sunInt, _ := sunFloat.Int(nil)
-	return sunInt, nil
+	// multiply by 10^6，超過 6 位的小數截斷
+	return d.Shift(usdtDecimals).Truncate(0).BigInt(), nil
 }
 
 // GetTRC20Balance queries the TRC-20 token balance for the given wallet address
@@ -323,7 +323,7 @@ func (c *Client) GetTRC20Balance(ctx context.Context, address, contractAddress s
 	for _, tokenMap := range result.Data[0].TRC20 {
 		if sunStr, ok := tokenMap[contractAddress]; ok {
 			if bal, ok := USDTAmountFromSun(sunStr); ok {
-				return bal.Text('f', 6), nil
+				return bal.StringFixed(usdtDecimals), nil
 			}
 		}
 	}

@@ -1,8 +1,8 @@
 package app_interface
 
-// FiatDepositRequest 建立 TWD 入金訂單的請求（金額以整數元計）。
+// FiatDepositRequest 建立 TWD 入金訂單的請求（金額為十進位字串；ECPay 僅接受整數元，非整數會被拒絕）。
 type FiatDepositRequest struct {
-	Amount int `json:"amount"`
+	Amount string `json:"amount"`
 }
 
 // FiatDepositResponse ECPay AioCheckOut 導轉資訊。
