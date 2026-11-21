@@ -1,28 +1,28 @@
 package app_interface
 
 type CreateListingRequest struct {
-	Type             string  `json:"type"`
-	CryptoCurrency   string  `json:"cryptoCurrency"`
-	FiatCurrency     string  `json:"fiatCurrency"`
-	TotalAmount      float64 `json:"totalAmount"`
-	Price            float64 `json:"price"`
-	MinOrderFiat     float64 `json:"minOrderFiat"`
-	MaxOrderFiat     float64 `json:"maxOrderFiat"`
-	PaymentTimeLimit int64  `json:"paymentTimeLimit"`
-	PaymentMethodID  *int64 `json:"paymentMethodId,omitempty"`
+	Type             string  `json:"type" enums:"buy,sell" example:"sell"` // buy / sell；sell 必須帶 paymentMethodId，且會凍結 totalAmount
+	CryptoCurrency   string  `json:"cryptoCurrency" example:"USDT"`
+	FiatCurrency     string  `json:"fiatCurrency" example:"TWD"`
+	TotalAmount      float64 `json:"totalAmount" example:"500"`     // 必須大於 0
+	Price            float64 `json:"price" example:"32.5"`          // 必須大於 0
+	MinOrderFiat     float64 `json:"minOrderFiat" example:"100"`    // 不可為負
+	MaxOrderFiat     float64 `json:"maxOrderFiat" example:"10000"`  // 不可小於 minOrderFiat
+	PaymentTimeLimit int64   `json:"paymentTimeLimit" example:"15"` // 付款時限（分鐘），必須大於 0
+	PaymentMethodID  *int64  `json:"paymentMethodId,omitempty" example:"1"`
 }
 
 type ListListingsRequest struct {
-	Type   string `form:"type,optional"`
-	Status string `form:"status,optional"`
-	Limit  int64  `form:"limit,optional,default=20"`
-	Offset int64  `form:"offset,optional,default=0"`
+	Type   string `form:"type,optional" example:"sell" enums:"buy,sell"`
+	Status string `form:"status,optional" example:"active" enums:"active,paused,completed,cancelled"`
+	Limit  int64  `form:"limit,optional,default=20" default:"20" example:"20"`
+	Offset int64  `form:"offset,optional,default=0" default:"0" example:"0"`
 }
 
 type GetListingRequest struct {
-	ID int64 `path:"id"`
+	ID int64 `path:"id" swaggerignore:"true"`
 }
 
 type CancelListingRequest struct {
-	ID int64 `path:"id"`
+	ID int64 `path:"id" swaggerignore:"true"`
 }

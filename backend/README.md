@@ -24,8 +24,8 @@
 | 路徑 | 說明 |
 |------|------|
 | `cmd/v1-p2p-exchange-service/main.go` | 程式進入點（main，`uber-fx` 依賴注入啟動） |
-| `cmd/v1-p2p-exchange-service/swagger.api` | API 定義檔（go-zero DSL，僅用於產生 Swagger 文件） |
-| `cmd/v1-p2p-exchange-service/Makefile` | Swagger 產生指令 |
+| `cmd/v1-p2p-exchange-service/internal/swagger/dist/swagger.json` | 由 handler 註解產生的 Swagger spec（`make swagger`） |
+| `cmd/v1-p2p-exchange-service/Makefile` | Swagger 產生指令（swaggo/swag） |
 | `cmd/v1-p2p-exchange-service/internal/constants/config.yaml` | 服務設定範本（機敏欄位由環境變數注入） |
 | `cmd/v1-p2p-exchange-service/internal/config/` | 設定結構定義 |
 | `cmd/v1-p2p-exchange-service/internal/model/entity/` | 資料表對應的 entity |
@@ -46,8 +46,7 @@
 | 工具 | 版本 | 安裝方式 |
 |------|------|----------|
 | Go | >= 1.23 | https://go.dev/dl |
-| goctl | >= 1.10 | `go install github.com/zeromicro/go-zero/tools/goctl@latest` |
-| goctl-swagger | 最新 | `go install github.com/zeromicro/goctl-swagger@latest` |
+| swag | >= 1.16 | `go install github.com/swaggo/swag/cmd/swag@latest` |
 
 ---
 
@@ -90,10 +89,11 @@ HTTP 層：解析請求、呼叫 service、組裝回應。不含商業邏輯。
 服務啟動後，瀏覽器開啟 `http://localhost:8888/swagger`。
 
 新增 API 時：
-1. 在 `cmd/v1-p2p-exchange-service/swagger.api` 補上對應的 type 與 route 定義
-2. 執行 `cd cmd/v1-p2p-exchange-service && make swagger` 重新產生 `internal/swagger/dist/spec.json`
+1. 在 `interfaces/` 的 struct 欄位加上 `example`、`enums` 等 tag
+2. 在 handler 上方加 swag 註解（`@Summary`、`@Param`、`@Success`、`@Failure`、`@Router`，可參考 `internal/server/handlers/order.go`）
+3. 執行 `cd cmd/v1-p2p-exchange-service && make swagger` 重新產生 `internal/swagger/dist/swagger.json`，並一併提交
 
-> `swagger.api` 僅用於產生文件，不用於程式碼生成；handler/service/repository 皆為手動維護。
+> spec 完全由程式碼產生，不需另外維護 API 定義檔；成功回應統一寫成 `response.Body{data=<型別>}`，失敗回應用 `response.ErrorBody`。
 
 ---
 

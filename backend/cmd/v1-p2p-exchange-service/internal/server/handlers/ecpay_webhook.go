@@ -20,6 +20,20 @@ func NewECPayWebhookHandler(svc ecpaywebhook_service.ECPayWebhookService) *ECPay
 	return &ECPayWebhookHandler{svc: svc}
 }
 
+// Notify 接收 ECPay 付款結果通知。
+//
+//	@Summary		ECPay 付款結果通知
+//	@Description	由 ECPay 以 form-urlencoded 呼叫，不含 JWT。所有 form 欄位皆納入 CheckMacValue 驗簽。回應為純文字：成功 1|OK，失敗 0|錯誤訊息，HTTP 狀態碼一律 200。
+//	@Tags			ecpay-webhook
+//	@Accept			x-www-form-urlencoded
+//	@Produce		plain
+//	@Param			MerchantTradeNo	formData	string	true	"對應 fiat_deposits.merchant_trade_no"	Example(P178495360000000)
+//	@Param			RtnCode			formData	string	true	"1 為付款成功，其餘視為失敗"	Example(1)
+//	@Param			TradeNo			formData	string	false	"ECPay 交易編號"	Example(2611211230001234)
+//	@Param			PaymentType		formData	string	false	"付款方式"	Example(Credit_CreditCard)
+//	@Param			CheckMacValue	formData	string	true	"ECPay 簽章"
+//	@Success		200				{string}	string	"1|OK"
+//	@Router			/webhook/ecpay/notify [post]
 func (h *ECPayWebhookHandler) Notify(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		logx.WithContext(r.Context()).Errorf("[ecpay-webhook] ParseForm: %v", err)

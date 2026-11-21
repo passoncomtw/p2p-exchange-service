@@ -18,17 +18,23 @@ import (
 	"go.uber.org/fx"
 )
 
+// @title						P2P Exchange API v1
+// @version					1.0.0
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						Authorization
+// @description				輸入 JWT 本身（不含 Bearer 前綴）
 func main() {
 	flag.Parse()
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("error: .env file not found: %v", err)
+	}
 
 	fx.New(
 		config.Module,
 		databaseModule.Module,
 		mq.Module,
 		repository.Module,
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("error: .env file not found: %v", err)
-	}
 		service.Module,
 		server.Module,
 		wsserver.Module,

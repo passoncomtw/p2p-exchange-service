@@ -22,6 +22,15 @@ func NewHealthzHandler(db sqlx.SqlConn, rdbClient *rdb.Client, mqClient *mq.Clie
 	return &HealthzHandler{db: db, rdb: rdbClient, mq: mqClient}
 }
 
+// Handle 健康檢查。
+//
+//	@Summary		健康檢查
+//	@Description	回傳各依賴狀態，例如 {"database":"ok","redis":"ok"}，不含 {code,message,data} 包裝；DB 不通回 503。
+//	@Tags			system
+//	@Produce		json
+//	@Success		200	{object}	map[string]string
+//	@Failure		503	{object}	map[string]string	"依賴不健康"
+//	@Router			/healthz [get]
 func (h *HealthzHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	checks := map[string]string{}
 	httpStatus := http.StatusOK
