@@ -7,6 +7,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/gorilla/websocket v1.5.3
 	github.com/jackc/pgx/v5 v5.8.0
+	github.com/joho/godotenv v1.5.1
 	github.com/nats-io/nats.go v1.52.0
 	github.com/redis/go-redis/v9 v9.21.0
 	github.com/zeromicro/go-zero v1.10.1

@@ -2,7 +2,10 @@ package main
 
 import (
 	"flag"
+	"log"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/config"
+
+	"github.com/joho/godotenv"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/server"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/service"
@@ -23,6 +26,9 @@ func main() {
 		databaseModule.Module,
 		mq.Module,
 		repository.Module,
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("error: .env file not found: %v", err)
+	}
 		service.Module,
 		server.Module,
 		wsserver.Module,

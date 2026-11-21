@@ -15,6 +15,7 @@
 - [架構說明](#架構說明)
 - [Swagger UI](#swagger-ui)
 - [設定檔說明](#設定檔說明)
+- [ECPay 測試環境](#ecpay-測試環境)
 
 ---
 
@@ -99,3 +100,21 @@ HTTP 層：解析請求、呼叫 service、組裝回應。不含商業邏輯。
 ## 設定檔說明
 
 設定檔位於 `cmd/v1-p2p-exchange-service/internal/constants/config.yaml`，機敏欄位（JWT Secret、DB DSN、Redis、NATS、Tron、ECPay 憑證）一律透過環境變數注入，不寫入設定檔。詳細環境變數清單見 `internal/config/config.go` 的欄位標籤。
+
+---
+
+## ECPay 測試環境
+
+API 網址：`https://payment-stage.ecpay.com.tw`（設定檔預設值）
+
+| 類型 | MerchantID | HashKey | HashIV |
+|------|-----------|---------|--------|
+| 一般特店（模擬 3D 驗證） | 3002607 | pwFHCqoQZGmho4w6 | EkRm7iFT261dpevs |
+| 一般特店（模擬無 3D 驗證） | 2000132 | 5294y06JbISpM5x9 | v77hoKGq4kWxNNIS |
+| 平台商 | 3003008 | FCnGLNS7P3xQ2q3E | awL5GRWRhyaybq13 |
+
+> 設定檔 `MerchantID` 預設為 `2000132`（無 3D 驗證），`.env` 中的 `ECPAY_HASH_KEY` / `ECPAY_HASH_IV` 需與 MerchantID 對應。
+
+測試廠商後台：`https://vendor-stage.ecpay.com.tw`（商店代號 3002607，帳號 stagetest3 / 密碼 test1234）
+
+API 線上模擬：`https://developersmock.ecpay.com.tw`
