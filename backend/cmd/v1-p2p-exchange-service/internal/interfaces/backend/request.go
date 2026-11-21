@@ -53,5 +53,5 @@ type BackendListFiatWithdrawalsRequest struct {
 type BackendReviewFiatWithdrawalRequest struct {
 	ID     int64  `path:"id" swaggerignore:"true"`
 	Action string `json:"action" example:"approve" enums:"approve,reject"` // approve | reject
-	Reason string `json:"reason,optional" example:"帳戶名稱與會員不符"`                                 // action 為 reject 時必填
+	Reason string `json:"reason,optional" example:"帳戶名稱與會員不符"`             // action 為 reject 時必填
 }
