@@ -8,23 +8,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// stubConn wraps a channel to record sent bytes, simulating a *websocket.Conn send path.
-type stubConn struct {
-	sent chan []byte
-}
-
-func newStubConn(buf int) *Conn {
-	hub := NewHub()
-	sc := &Conn{
-		UserID:   0,
-		Platform: "app",
-		conn:     nil, // not needed for hub unit tests
-		send:     make(chan []byte, buf),
-		hub:      hub,
-	}
-	return sc
-}
-
 func makeConn(hub *Hub, userID int64, platform string) *Conn {
 	return &Conn{
 		UserID:   userID,

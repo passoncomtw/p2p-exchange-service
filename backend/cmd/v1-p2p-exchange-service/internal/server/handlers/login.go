@@ -17,6 +17,18 @@ func NewLoginHandler(authSvc auth_service.AuthService) *LoginHandler {
 	return &LoginHandler{authSvc: authSvc}
 }
 
+// Handle 處理 App 使用者登入。
+//
+//	@Summary		App 使用者登入
+//	@Description	以帳號密碼登入，成功回傳 JWT 與使用者資訊。
+//	@Tags			app-auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		app_interface.LoginRequest	true	"登入資訊"
+//	@Success		200		{object}	response.Body{data=app_interface.AppLoginResponse}
+//	@Failure		400		{object}	response.ErrorBody	"請求格式錯誤"
+//	@Failure		401		{object}	response.ErrorBody	"帳號或密碼錯誤"
+//	@Router			/app/auth/login [post]
 func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	var req app_interface.LoginRequest
 	if err := httpx.Parse(r, &req); err != nil {

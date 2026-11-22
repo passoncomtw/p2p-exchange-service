@@ -2,7 +2,10 @@ package main
 
 import (
 	"flag"
+	"log"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/config"
+
+	"github.com/joho/godotenv"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/server"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/service"
@@ -15,8 +18,17 @@ import (
 	"go.uber.org/fx"
 )
 
+// @title						P2P Exchange API v1
+// @version					1.0.0
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						Authorization
+// @description				輸入 JWT 本身（不含 Bearer 前綴）
 func main() {
 	flag.Parse()
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("error: .env file not found: %v", err)
+	}
 
 	fx.New(
 		config.Module,

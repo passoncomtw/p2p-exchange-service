@@ -19,6 +19,16 @@ func NewProfileHandler(userRepo userrepo.UserRepository) *ProfileHandler {
 	return &ProfileHandler{userRepo: userRepo}
 }
 
+// Handle 取得使用者資料。
+//
+//	@Summary		取得使用者資料
+//	@Tags			app-profile
+//	@Security		ApiKeyAuth
+//	@Produce		json
+//	@Success		200	{object}	response.Body{data=app_interface.ProfileResponse}
+//	@Failure		400	{object}	response.ErrorBody	"請求格式錯誤或驗證失敗"
+//	@Failure		500	{object}	response.ErrorBody	"內部錯誤"
+//	@Router			/app/profile [get]
 func (h *ProfileHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	// go-zero 的 JWT middleware 把每個 claim 個別以 context.WithValue(ctx, k, v) 寫入
 	// context（沒有 "payload" 包裝層），username claim 在簽發時就是字串型別。
@@ -32,6 +42,18 @@ func (h *ProfileHandler) Handle(w http.ResponseWriter, r *http.Request) {
 // UpdatePushToken 處理 PUT /app/profile/push-token。
 // 更新對象一律取自 JWT context 的 uid，不接受 body 指定使用者。
 // token 為空字串時直接回成功且不寫入 DB（維持 legacy 行為：清空 token 的情境尚未支援）。
+//
+//	@Summary		更新 Expo 推播 token
+//	@Description	token 為空字串時直接回成功且不寫入。
+//	@Tags			app-profile
+//	@Security		ApiKeyAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body	app_interface.RegisterPushTokenRequest	true	"請求內容"
+//	@Success		200	{object}	response.Body
+//	@Failure		400	{object}	response.ErrorBody	"請求格式錯誤或驗證失敗"
+//	@Failure		500	{object}	response.ErrorBody	"內部錯誤"
+//	@Router			/app/profile/push-token [put]
 func (h *ProfileHandler) UpdatePushToken(w http.ResponseWriter, r *http.Request) {
 	var req app_interface.RegisterPushTokenRequest
 	if err := httpx.Parse(r, &req); err != nil {
