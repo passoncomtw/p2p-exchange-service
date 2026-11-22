@@ -10,7 +10,7 @@
 -- ============================================================
 
 INSERT INTO backend_users (username, password_hash, email, role)
-VALUES ('admin001', '$2a$10$9D/Tw7aaSWESQuHvN2xk6uLnUcLq.3YrAuK7tOfh.egmY9MOFSov.', 'admin001@example.com', 'admin')
+VALUES ('admin001', '$2a$10$.Zx8F47CI7bDYThzHy4NeuOUz.WLLZ/lFoxkpNRe7uVxJht5cSJM6', 'admin001@example.com', 'admin')
 ON CONFLICT (username) DO NOTHING;
 
 -- ============================================================
