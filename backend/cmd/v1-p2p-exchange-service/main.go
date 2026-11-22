@@ -1,8 +1,10 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"log"
+	"os"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/config"
 
 	"github.com/joho/godotenv"
@@ -26,8 +28,8 @@ import (
 // @description				輸入 JWT 本身（不含 Bearer 前綴）
 func main() {
 	flag.Parse()
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("error: .env file not found: %v", err)
+	if err := godotenv.Load(); err != nil && !errors.Is(err, os.ErrNotExist) {
+		log.Fatalf("error loading .env: %v", err)
 	}
 
 	fx.New(
