@@ -18,7 +18,8 @@ func NewConsumer(c *Client) *Consumer {
 	return &Consumer{client: c}
 }
 
-// Subscribe 建立 Durable Consumer 訂閱 subject。
+// Subscribe 建立 Durable Consumer 訂閱 subject，僅處理訂閱後的新訊息（DeliverNew）。
+// 若既有 consumer 設定與目前不符（例如舊版使用 DeliverAll），自動刪除並重建。
 // handler 回 nil → Ack；回 error → Nak（JetStream 自動重試）。
 // 內建 panic recover，防止 handler panic 中斷整個 consumer。
 func (c *Consumer) Subscribe(subject string, handler MsgHandler) error {
@@ -26,7 +27,32 @@ func (c *Consumer) Subscribe(subject string, handler MsgHandler) error {
 		return nil
 	}
 	consumerName := buildConsumerName(c.client.consumerName, subject)
-	_, err := c.client.js.Subscribe(subject, func(msg *nats.Msg) {
+	wrap := c.buildHandler(subject, handler)
+
+	_, err := c.client.js.Subscribe(subject, wrap,
+		nats.Durable(consumerName),
+		nats.ManualAck(),
+		nats.DeliverNew(),
+	)
+	if err != nil && strings.Contains(err.Error(), "configuration comparisons mismatch") {
+		logx.Infof("subscriber %s: consumer config changed, recreating with DeliverNew", subject)
+		if delErr := c.client.js.DeleteConsumer(c.client.streamName, consumerName); delErr != nil {
+			return fmt.Errorf("delete stale consumer %s: %w", consumerName, delErr)
+		}
+		_, err = c.client.js.Subscribe(subject, wrap,
+			nats.Durable(consumerName),
+			nats.ManualAck(),
+			nats.DeliverNew(),
+		)
+	}
+	if err != nil {
+		return fmt.Errorf("subscribe %s: %w", subject, err)
+	}
+	return nil
+}
+
+func (c *Consumer) buildHandler(subject string, handler MsgHandler) nats.MsgHandler {
+	return func(msg *nats.Msg) {
 		defer func() {
 			if r := recover(); r != nil {
 				logx.Errorf("subscriber panic on %s: %v", subject, r)
@@ -39,11 +65,7 @@ func (c *Consumer) Subscribe(subject string, handler MsgHandler) error {
 			return
 		}
 		_ = msg.Ack()
-	}, nats.Durable(consumerName), nats.ManualAck())
-	if err != nil {
-		return fmt.Errorf("subscribe %s: %w", subject, err)
 	}
-	return nil
 }
 
 // buildConsumerName 將 subject 轉為合法的 NATS durable consumer name。
