@@ -83,7 +83,7 @@ curl -X POST http://localhost:8888/backend/auth/login \
 
 Swagger UI:`http://localhost:8888/swagger`。
 
-各 API 的完整路由與請求格式以 `backend/cmd/v1-p2p-exchange-service/swagger.api` 為準。API 分為 `/app/*`(App)與 `/backend/*`(後台),`/v1/*` legacy 路由已移除。
+各 API 的完整路由與請求格式以 Swagger UI（由 handler 註解與 `interfaces/` 的 struct tag 產生）為準。API 分為 `/app/*`(App)與 `/backend/*`(後台),`/v1/*` legacy 路由已移除。
 
 ---
 
@@ -119,7 +119,7 @@ yarn start        # 等同 expo start
 
 ## 6. 驗收
 
-以下以 curl 驗證主流程,路由與欄位以 `swagger.api` 為準。`<...>` 為前一步回應中的值。
+以下以 curl 驗證主流程,路由與欄位以 Swagger UI 為準。`<...>` 為前一步回應中的值。
 
 ```bash
 B=http://localhost:8888

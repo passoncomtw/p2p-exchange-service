@@ -459,21 +459,6 @@ func statusTransitionCases() []statusTransitionCase {
 	}
 }
 
-// accountingCalls 為所有會異動錢包或掛單剩餘量（或為此鎖住掛單）的呼叫。
-var accountingCalls = []string{"lockListing", "freeze", "unfreeze", "transfer", "restoreListing", "deductListing"}
-
-func accountingCallsOf(st *fakeStore) []string {
-	var out []string
-	for _, c := range st.calls {
-		for _, a := range accountingCalls {
-			if c == a {
-				out = append(out, c)
-			}
-		}
-	}
-	return out
-}
-
 // TestStatusTransitionConflictSkipsWalletOps 迴歸測試：條件式狀態轉換影響 0 列時必須回 409，
 // 且不得執行任何錢包或掛單剩餘量操作（也不得鎖掛單）、不得寫狀態紀錄。
 //

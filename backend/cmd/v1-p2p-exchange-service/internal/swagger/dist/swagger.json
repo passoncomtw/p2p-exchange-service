@@ -1,0 +1,3988 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "P2P Exchange API v1",
+        "contact": {},
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/v1/version": {
+            "get": {
+                "description": "直接回傳 {\"version\":\"v1.0.0\"}，不含 {code,message,data} 包裝。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "查詢服務版本",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/app/auth/login": {
+            "post": {
+                "description": "以帳號密碼登入，成功回傳 JWT 與使用者資訊。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-auth"
+                ],
+                "summary": "App 使用者登入",
+                "parameters": [
+                    {
+                        "description": "登入資訊",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/app_interface.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.AppLoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "401": {
+                        "description": "帳號或密碼錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/auth/register": {
+            "post": {
+                "description": "成功等同登入，回傳與登入相同的結構。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-auth"
+                ],
+                "summary": "App 使用者註冊",
+                "parameters": [
+                    {
+                        "description": "請求內容",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/app_interface.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.AppLoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "409": {
+                        "description": "帳號已存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/listings": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-listings"
+                ],
+                "summary": "查詢掛單列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "example": 20,
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "active",
+                            "paused",
+                            "completed",
+                            "cancelled"
+                        ],
+                        "type": "string",
+                        "example": "active",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "buy",
+                            "sell"
+                        ],
+                        "type": "string",
+                        "example": "sell",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.ListListingsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "sell 掛單必須帶 paymentMethodId，並會凍結 totalAmount 的幣；buy 掛單不凍結。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-listings"
+                ],
+                "summary": "建立掛單",
+                "parameters": [
+                    {
+                        "description": "掛單內容",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/app_interface.CreateListingRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.CreateListingResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "參數驗證失敗或餘額不足",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/listings/mine": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-listings"
+                ],
+                "summary": "查詢我的掛單",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "example": 20,
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "active",
+                            "paused",
+                            "completed",
+                            "cancelled"
+                        ],
+                        "type": "string",
+                        "example": "active",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "buy",
+                            "sell"
+                        ],
+                        "type": "string",
+                        "example": "sell",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.ListListingsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/listings/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-listings"
+                ],
+                "summary": "查詢掛單詳情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 1,
+                        "description": "掛單 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.ListingItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "404": {
+                        "description": "掛單不存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/listings/{id}/cancel": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "僅 active / paused 的掛單可取消；仍有進行中訂單時回 400；sell 掛單會解凍剩餘數量。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-listings"
+                ],
+                "summary": "取消掛單",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 1,
+                        "description": "掛單 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Body"
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "404": {
+                        "description": "掛單不存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "409": {
+                        "description": "掛單狀態已變更",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/orders": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "role 為 buyer / seller 時只回該身分的訂單；留空則買賣雙方皆含。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-orders"
+                ],
+                "summary": "查詢訂單列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "example": 20,
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "buyer",
+                            "seller"
+                        ],
+                        "type": "string",
+                        "example": "buyer",
+                        "name": "role",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "matched",
+                            "paid",
+                            "releasing",
+                            "completed",
+                            "cancelled",
+                            "timeout",
+                            "disputed",
+                            "refunded"
+                        ],
+                        "type": "string",
+                        "example": "matched",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.ListOrdersResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "不可接自己的掛單；換算法幣金額須落在掛單的 minOrderFiat ~ maxOrderFiat。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-orders"
+                ],
+                "summary": "建立訂單（接單）",
+                "parameters": [
+                    {
+                        "description": "請求內容",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/app_interface.CreateOrderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.CreateOrderResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "404": {
+                        "description": "掛單不存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/orders/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-orders"
+                ],
+                "summary": "查詢訂單詳情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 1,
+                        "description": "訂單 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.OrderItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "404": {
+                        "description": "訂單不存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/orders/{id}/cancel": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "僅 matched 狀態可取消。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-orders"
+                ],
+                "summary": "取消訂單",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 1,
+                        "description": "訂單 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "請求內容",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/app_interface.CancelOrderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Body"
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "404": {
+                        "description": "訂單不存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "409": {
+                        "description": "訂單狀態已變更",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/orders/{id}/confirm": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "訂單必須為 paid 狀態，成功後轉為 completed 並放行幣給買方。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-orders"
+                ],
+                "summary": "確認收款",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 1,
+                        "description": "訂單 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Body"
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "404": {
+                        "description": "訂單不存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "409": {
+                        "description": "訂單狀態已變更",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/orders/{id}/dispute": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "僅 paid 狀態可申訴，成功後轉為 disputed。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-orders"
+                ],
+                "summary": "提出申訴",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 1,
+                        "description": "訂單 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "請求內容",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/app_interface.DisputeOrderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Body"
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "404": {
+                        "description": "訂單不存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "409": {
+                        "description": "訂單狀態已變更",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/orders/{id}/pay": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "訂單必須為 matched 狀態，成功後轉為 paid。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-orders"
+                ],
+                "summary": "標記已付款",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 1,
+                        "description": "訂單 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Body"
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "404": {
+                        "description": "訂單不存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "409": {
+                        "description": "訂單狀態已變更",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/payment-methods": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-payment-methods"
+                ],
+                "summary": "查詢收款帳戶列表",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.ListPaymentMethodsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-payment-methods"
+                ],
+                "summary": "新增收款帳戶",
+                "parameters": [
+                    {
+                        "description": "請求內容",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/app_interface.CreatePaymentMethodRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.CreatePaymentMethodResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/payment-methods/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-payment-methods"
+                ],
+                "summary": "刪除收款帳戶",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 1,
+                        "description": "收款帳戶 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Body"
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/profile": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-profile"
+                ],
+                "summary": "取得使用者資料",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.ProfileResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/profile/push-token": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "token 為空字串時直接回成功且不寫入。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-profile"
+                ],
+                "summary": "更新 Expo 推播 token",
+                "parameters": [
+                    {
+                        "description": "請求內容",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/app_interface.RegisterPushTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Body"
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/wallets": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-wallets"
+                ],
+                "summary": "查詢各幣別錢包餘額",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.ListWalletsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/wallets/crypto/deposit-info": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-crypto-deposit"
+                ],
+                "summary": "取得 USDT 充值地址與 memo",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.GetCryptoDepositInfoResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "503": {
+                        "description": "USDT 充值功能尚未開放",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/wallets/crypto/deposits": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-crypto-deposit"
+                ],
+                "summary": "查詢 USDT 充值紀錄",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "example": 20,
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.AppListCryptoDepositsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/wallets/crypto/withdraw": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "申請時會凍結對應餘額；最低 10 USDT。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-crypto-withdraw"
+                ],
+                "summary": "建立 USDT 提領申請",
+                "parameters": [
+                    {
+                        "description": "請求內容",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/app_interface.CryptoWithdrawRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.CryptoWithdrawResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/wallets/crypto/withdrawals": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-crypto-withdraw"
+                ],
+                "summary": "查詢 USDT 提領紀錄",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "example": 20,
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.AppListCryptoWithdrawalsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/wallets/fiat/deposit": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "前端以 POST form 將 formParams 送往 paymentUrl。金額 100 ~ 50000 TWD。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-fiat-deposit"
+                ],
+                "summary": "建立 TWD 入金訂單（導轉 ECPay）",
+                "parameters": [
+                    {
+                        "description": "請求內容",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/app_interface.FiatDepositRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.FiatDepositResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "503": {
+                        "description": "ECPay 未啟用",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/wallets/fiat/deposits": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-fiat-deposit"
+                ],
+                "summary": "查詢 TWD 入金紀錄",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "example": 20,
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.AppListFiatDepositsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/wallets/fiat/withdraw": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "狀態固定為 pending，等待後台審核；申請時會凍結對應餘額。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-fiat-withdraw"
+                ],
+                "summary": "建立 TWD 提領申請",
+                "parameters": [
+                    {
+                        "description": "請求內容",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/app_interface.FiatWithdrawRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.FiatWithdrawResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/wallets/fiat/withdrawals": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-fiat-withdraw"
+                ],
+                "summary": "查詢 TWD 提領紀錄",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "example": 20,
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.AppListFiatWithdrawalsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/wallets/{currency}/ledgers": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app-wallets"
+                ],
+                "summary": "查詢指定幣別的錢包帳本流水",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "USDT",
+                        "description": "幣別代碼",
+                        "name": "currency",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "example": 20,
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.ListWalletLedgersResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "404": {
+                        "description": "該幣別錢包不存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/backend/auth/login": {
+            "post": {
+                "description": "預設帳號 admin001。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "backend-auth"
+                ],
+                "summary": "後台管理員登入",
+                "parameters": [
+                    {
+                        "description": "請求內容",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_interface.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/backend_interface.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "401": {
+                        "description": "帳號或密碼錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/backend/dashboard": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "backend-admin"
+                ],
+                "summary": "後台 Dashboard",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/backend_interface.DashboardResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/backend/fiat-withdrawals": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "status 預設 pending；傳 all 回全部狀態。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "backend-fiat-withdrawals"
+                ],
+                "summary": "後台查詢法幣提領申請列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "example": 20,
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "pending",
+                            "approved",
+                            "rejected",
+                            "all"
+                        ],
+                        "type": "string",
+                        "example": "pending",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/backend_interface.BackendListFiatWithdrawalsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/backend/fiat-withdrawals/{id}/review": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "reject 時必須填寫 reason；審核人一律取自 Backend JWT。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "backend-fiat-withdrawals"
+                ],
+                "summary": "後台審核法幣提領申請（核可/駁回）",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 1,
+                        "description": "提領申請 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "請求內容",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_interface.BackendReviewFiatWithdrawalRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Body"
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "404": {
+                        "description": "申請不存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "409": {
+                        "description": "此申請已審核完畢",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/backend/listings": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "backend-admin"
+                ],
+                "summary": "後台查詢掛單列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "example": 20,
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "active",
+                            "paused",
+                            "completed",
+                            "cancelled"
+                        ],
+                        "type": "string",
+                        "example": "active",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "buy",
+                            "sell"
+                        ],
+                        "type": "string",
+                        "example": "sell",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.ListListingsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/backend/members": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "backend-members"
+                ],
+                "summary": "後台查詢會員列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "testdemo",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "example": 20,
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/backend_interface.BackendListMembersResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/backend/members/{id}/deposit": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "操作人一律取自 Backend JWT，不接受 body 指定。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "backend-members"
+                ],
+                "summary": "後台手動為會員入金",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 1,
+                        "description": "會員 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "請求內容",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_interface.BackendDepositRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/backend_interface.BackendDepositResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "404": {
+                        "description": "會員不存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/backend/orders": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "backend-admin"
+                ],
+                "summary": "後台查詢訂單列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "example": 20,
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "matched",
+                            "paid",
+                            "releasing",
+                            "completed",
+                            "cancelled",
+                            "timeout",
+                            "disputed",
+                            "refunded"
+                        ],
+                        "type": "string",
+                        "example": "disputed",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/app_interface.ListOrdersResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/backend/orders/{id}/resolve": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "僅 disputed 狀態可處理。action=complete 放行給買方；action=refund 退回賣方並將訂單轉為 refunded。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "backend-admin"
+                ],
+                "summary": "後台處理爭議訂單",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "example": 1,
+                        "description": "訂單 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "請求內容",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/backend_interface.ResolveOrderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Body"
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "404": {
+                        "description": "訂單不存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "409": {
+                        "description": "訂單狀態已變更",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/backend/platform/wallet-info": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "backend-platform-wallet"
+                ],
+                "summary": "查詢平台熱錢包鏈上餘額與虛擬餘額",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Body"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/backend_interface.PlatformWalletInfoResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "請求格式錯誤或驗證失敗",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    },
+                    "500": {
+                        "description": "內部錯誤",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorBody"
+                        }
+                    }
+                }
+            }
+        },
+        "/healthz": {
+            "get": {
+                "description": "回傳各依賴狀態，例如 {\"database\":\"ok\",\"redis\":\"ok\"}，不含 {code,message,data} 包裝；DB 不通回 503。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "健康檢查",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "依賴不健康",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/webhook/ecpay/notify": {
+            "post": {
+                "description": "由 ECPay 以 form-urlencoded 呼叫，不含 JWT。所有 form 欄位皆納入 CheckMacValue 驗簽。回應為純文字：成功 1|OK，失敗 0|錯誤訊息，HTTP 狀態碼一律 200。",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "ecpay-webhook"
+                ],
+                "summary": "ECPay 付款結果通知",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "P178495360000000",
+                        "description": "對應 fiat_deposits.merchant_trade_no",
+                        "name": "MerchantTradeNo",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "1",
+                        "description": "1 為付款成功，其餘視為失敗",
+                        "name": "RtnCode",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2611211230001234",
+                        "description": "ECPay 交易編號",
+                        "name": "TradeNo",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "example": "Credit_CreditCard",
+                        "description": "付款方式",
+                        "name": "PaymentType",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ECPay 簽章",
+                        "name": "CheckMacValue",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "1|OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/ws/app": {
+            "get": {
+                "description": "以 query 的 token 驗證（App JWT），驗證成功後升級為 WebSocket。",
+                "tags": [
+                    "websocket"
+                ],
+                "summary": "App WebSocket 連線",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App JWT",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "101": {
+                        "description": "Switching Protocols",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/ws/backend": {
+            "get": {
+                "description": "以 query 的 token 驗證（Backend JWT），驗證成功後升級為 WebSocket。",
+                "tags": [
+                    "websocket"
+                ],
+                "summary": "後台 WebSocket 連線",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Backend JWT",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "101": {
+                        "description": "Switching Protocols",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "app_interface.AppFiatWithdrawalItem": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string",
+                    "example": "1000.00"
+                },
+                "bankAccountTail": {
+                    "description": "遮蔽後的帳號，僅保留後 4 碼",
+                    "type": "string",
+                    "example": "9012"
+                },
+                "bankCode": {
+                    "type": "string",
+                    "example": "004"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "example": "2026-11-21T04:30:00Z"
+                },
+                "currency": {
+                    "type": "string",
+                    "example": "TWD"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "status": {
+                    "description": "pending / approved / rejected",
+                    "type": "string",
+                    "enum": [
+                        "pending",
+                        "approved",
+                        "rejected"
+                    ],
+                    "example": "pending"
+                }
+            }
+        },
+        "app_interface.AppListCryptoDepositsResponse": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/app_interface.CryptoDepositItem"
+                    }
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "app_interface.AppListCryptoWithdrawalsResponse": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/app_interface.CryptoWithdrawalItem"
+                    }
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "app_interface.AppListFiatDepositsResponse": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/app_interface.FiatDepositItem"
+                    }
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "app_interface.AppListFiatWithdrawalsResponse": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/app_interface.AppFiatWithdrawalItem"
+                    }
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "app_interface.AppLoginResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjF9.abc123"
+                },
+                "expireIn": {
+                    "type": "integer",
+                    "example": 86400
+                },
+                "user": {
+                    "$ref": "#/definitions/app_interface.AppLoginUserInfo"
+                }
+            }
+        },
+        "app_interface.AppLoginUserInfo": {
+            "type": "object",
+            "properties": {
+                "account": {
+                    "type": "string",
+                    "example": "testdemo001"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "name": {
+                    "type": "string",
+                    "example": "testdemo001"
+                }
+            }
+        },
+        "app_interface.CancelOrderRequest": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "description": "僅 matched 狀態可取消",
+                    "type": "string",
+                    "example": "買方無法付款"
+                }
+            }
+        },
+        "app_interface.CreateListingRequest": {
+            "type": "object",
+            "properties": {
+                "cryptoCurrency": {
+                    "type": "string",
+                    "example": "USDT"
+                },
+                "fiatCurrency": {
+                    "type": "string",
+                    "example": "TWD"
+                },
+                "maxOrderFiat": {
+                    "description": "不可小於 minOrderFiat",
+                    "type": "number",
+                    "example": 10000
+                },
+                "minOrderFiat": {
+                    "description": "不可為負",
+                    "type": "number",
+                    "example": 100
+                },
+                "paymentMethodId": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "paymentTimeLimit": {
+                    "description": "付款時限（分鐘），必須大於 0",
+                    "type": "integer",
+                    "example": 15
+                },
+                "price": {
+                    "description": "必須大於 0",
+                    "type": "number",
+                    "example": 32.5
+                },
+                "totalAmount": {
+                    "description": "必須大於 0",
+                    "type": "number",
+                    "example": 500
+                },
+                "type": {
+                    "description": "buy / sell；sell 必須帶 paymentMethodId，且會凍結 totalAmount",
+                    "type": "string",
+                    "enum": [
+                        "buy",
+                        "sell"
+                    ],
+                    "example": "sell"
+                }
+            }
+        },
+        "app_interface.CreateListingResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "app_interface.CreateOrderRequest": {
+            "type": "object",
+            "properties": {
+                "cryptoAmount": {
+                    "description": "必須為正數，最多 18 位小數；換算法幣須落在掛單 minOrderFiat ~ maxOrderFiat",
+                    "type": "number",
+                    "example": 100
+                },
+                "listingId": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "app_interface.CreateOrderResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "orderNo": {
+                    "type": "string",
+                    "example": "P2P20261121123456"
+                }
+            }
+        },
+        "app_interface.CreatePaymentMethodRequest": {
+            "type": "object",
+            "properties": {
+                "accountName": {
+                    "type": "string",
+                    "example": "王小明"
+                },
+                "accountNumber": {
+                    "type": "string",
+                    "example": "123456789012"
+                },
+                "bankName": {
+                    "type": "string",
+                    "example": "台灣銀行"
+                },
+                "type": {
+                    "description": "目前僅支援 bank_transfer",
+                    "type": "string",
+                    "enum": [
+                        "bank_transfer"
+                    ],
+                    "example": "bank_transfer"
+                }
+            }
+        },
+        "app_interface.CreatePaymentMethodResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "app_interface.CryptoDepositItem": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string",
+                    "example": "100.000000000000000000"
+                },
+                "confirmedAt": {
+                    "description": "尚未確認時為 null",
+                    "type": "string",
+                    "example": "2026-11-21T04:30:00Z"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "example": "2026-11-21T04:30:00Z"
+                },
+                "currency": {
+                    "type": "string",
+                    "example": "USDT"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "status": {
+                    "description": "pending / confirmed / failed",
+                    "type": "string",
+                    "enum": [
+                        "pending",
+                        "confirmed",
+                        "failed"
+                    ],
+                    "example": "confirmed"
+                },
+                "txHash": {
+                    "type": "string",
+                    "example": "9f2c1b7e5a3d4c8b6e0f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f"
+                }
+            }
+        },
+        "app_interface.CryptoWithdrawRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "description": "字串，十進位正數（最多 18 位小數），最低 10 USDT",
+                    "type": "string",
+                    "example": "10"
+                },
+                "toAddress": {
+                    "description": "Tron Base58Check 地址",
+                    "type": "string",
+                    "example": "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf"
+                }
+            }
+        },
+        "app_interface.CryptoWithdrawResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "status": {
+                    "description": "pending",
+                    "type": "string",
+                    "example": "pending"
+                }
+            }
+        },
+        "app_interface.CryptoWithdrawalItem": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string",
+                    "example": "10.000000000000000000"
+                },
+                "confirmedAt": {
+                    "description": "尚未確認時為 null",
+                    "type": "string",
+                    "example": "2026-11-21T04:30:00Z"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "example": "2026-11-21T04:30:00Z"
+                },
+                "currency": {
+                    "type": "string",
+                    "example": "USDT"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "status": {
+                    "description": "pending / broadcasting / confirmed / failed",
+                    "type": "string",
+                    "enum": [
+                        "pending",
+                        "broadcasting",
+                        "confirmed",
+                        "failed"
+                    ],
+                    "example": "confirmed"
+                },
+                "toAddress": {
+                    "type": "string",
+                    "example": "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf"
+                },
+                "txHash": {
+                    "description": "尚未廣播時為 null",
+                    "type": "string",
+                    "example": "9f2c1b7e5a3d4c8b6e0f1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f"
+                }
+            }
+        },
+        "app_interface.DisputeOrderRequest": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "description": "僅 paid 狀態可申訴",
+                    "type": "string",
+                    "example": "賣方已付款但買方未放行"
+                }
+            }
+        },
+        "app_interface.FiatDepositItem": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string",
+                    "example": "1000.00"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "example": "2026-11-21T04:30:00Z"
+                },
+                "currency": {
+                    "type": "string",
+                    "example": "TWD"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "merchantTradeNo": {
+                    "type": "string",
+                    "example": "P178495360000000"
+                },
+                "paidAt": {
+                    "description": "尚未付款時為 null",
+                    "type": "string",
+                    "example": "2026-11-21T04:30:00Z"
+                },
+                "paymentType": {
+                    "description": "尚未付款時為 null",
+                    "type": "string",
+                    "example": "Credit_CreditCard"
+                },
+                "status": {
+                    "description": "pending / paid / failed",
+                    "type": "string",
+                    "enum": [
+                        "pending",
+                        "paid",
+                        "failed"
+                    ],
+                    "example": "paid"
+                }
+            }
+        },
+        "app_interface.FiatDepositRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "description": "整數 TWD，範圍 100 ~ 50000",
+                    "type": "integer",
+                    "example": 1000
+                }
+            }
+        },
+        "app_interface.FiatDepositResponse": {
+            "type": "object",
+            "properties": {
+                "formParams": {
+                    "description": "已含 CheckMacValue，前端以 POST form 送往 paymentUrl",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "MerchantID": "2000132",
+                        "TotalAmount": "1000"
+                    }
+                },
+                "merchantTradeNo": {
+                    "type": "string",
+                    "example": "P178495360000000"
+                },
+                "paymentUrl": {
+                    "type": "string",
+                    "example": "https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5"
+                }
+            }
+        },
+        "app_interface.FiatWithdrawRequest": {
+            "type": "object",
+            "properties": {
+                "accountName": {
+                    "type": "string",
+                    "example": "王小明"
+                },
+                "amount": {
+                    "description": "字串，範圍 100 ~ 100000 TWD",
+                    "type": "string",
+                    "example": "1000"
+                },
+                "bankAccount": {
+                    "description": "6~20 位數字",
+                    "type": "string",
+                    "example": "123456789012"
+                },
+                "bankCode": {
+                    "description": "3 位數字",
+                    "type": "string",
+                    "example": "004"
+                }
+            }
+        },
+        "app_interface.FiatWithdrawResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "status": {
+                    "description": "固定為 pending，等待後台審核",
+                    "type": "string",
+                    "example": "pending"
+                }
+            }
+        },
+        "app_interface.GetCryptoDepositInfoResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf"
+                },
+                "contractAddress": {
+                    "type": "string",
+                    "example": "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj"
+                },
+                "currency": {
+                    "type": "string",
+                    "example": "USDT"
+                },
+                "memo": {
+                    "description": "8 位小寫十六進位的 userID；轉帳時必須帶入才能自動入帳",
+                    "type": "string",
+                    "example": "00000001"
+                },
+                "network": {
+                    "type": "string",
+                    "example": "nile"
+                }
+            }
+        },
+        "app_interface.ListListingsResponse": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/app_interface.ListingItem"
+                    }
+                }
+            }
+        },
+        "app_interface.ListOrdersResponse": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/app_interface.OrderItem"
+                    }
+                }
+            }
+        },
+        "app_interface.ListPaymentMethodsResponse": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/app_interface.PaymentMethodItem"
+                    }
+                }
+            }
+        },
+        "app_interface.ListWalletLedgersResponse": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/app_interface.WalletLedgerItem"
+                    }
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "app_interface.ListWalletsResponse": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/app_interface.WalletItem"
+                    }
+                }
+            }
+        },
+        "app_interface.ListingItem": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string",
+                    "example": "2026-11-21T04:30:00Z"
+                },
+                "cryptoCurrency": {
+                    "type": "string",
+                    "example": "USDT"
+                },
+                "fiatCurrency": {
+                    "type": "string",
+                    "example": "TWD"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "maxOrderFiat": {
+                    "type": "number",
+                    "example": 10000
+                },
+                "minOrderFiat": {
+                    "type": "number",
+                    "example": 100
+                },
+                "paymentFeeBase": {
+                    "type": "number",
+                    "example": 0
+                },
+                "paymentFeeRate": {
+                    "type": "number",
+                    "example": 0
+                },
+                "paymentMethodId": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "paymentTimeLimit": {
+                    "type": "integer",
+                    "example": 15
+                },
+                "platformFeeBase": {
+                    "type": "number",
+                    "example": 0
+                },
+                "platformFeeRate": {
+                    "type": "number",
+                    "example": 0
+                },
+                "price": {
+                    "type": "number",
+                    "example": 32.5
+                },
+                "remainingAmount": {
+                    "type": "number",
+                    "example": 500
+                },
+                "status": {
+                    "description": "active / paused / completed / cancelled",
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "paused",
+                        "completed",
+                        "cancelled"
+                    ],
+                    "example": "active"
+                },
+                "totalAmount": {
+                    "type": "number",
+                    "example": 500
+                },
+                "type": {
+                    "description": "buy / sell",
+                    "type": "string",
+                    "enum": [
+                        "buy",
+                        "sell"
+                    ],
+                    "example": "sell"
+                },
+                "userId": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "app_interface.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "example": "a12345678"
+                },
+                "username": {
+                    "description": "App 登入帳號；後台登入請用 admin001",
+                    "type": "string",
+                    "example": "testdemo001"
+                }
+            }
+        },
+        "app_interface.OrderItem": {
+            "type": "object",
+            "properties": {
+                "buyerId": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "cancelReason": {
+                    "type": "string",
+                    "example": "買方無法付款"
+                },
+                "cancelledAt": {
+                    "type": "string",
+                    "example": "2026-11-21T04:36:00Z"
+                },
+                "completedAt": {
+                    "type": "string",
+                    "example": "2026-11-21T04:41:00Z"
+                },
+                "confirmedAt": {
+                    "type": "string",
+                    "example": "2026-11-21T04:40:00Z"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "example": "2026-11-21T04:30:00Z"
+                },
+                "cryptoAmount": {
+                    "type": "number",
+                    "example": 100
+                },
+                "cryptoCurrency": {
+                    "type": "string",
+                    "example": "USDT"
+                },
+                "fiatAmount": {
+                    "type": "number",
+                    "example": 3250
+                },
+                "fiatCurrency": {
+                    "type": "string",
+                    "example": "TWD"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "listingId": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "listingType": {
+                    "description": "buy / sell",
+                    "type": "string",
+                    "enum": [
+                        "buy",
+                        "sell"
+                    ],
+                    "example": "sell"
+                },
+                "orderNo": {
+                    "type": "string",
+                    "example": "P2P20261121123456"
+                },
+                "paidAt": {
+                    "type": "string",
+                    "example": "2026-11-21T04:35:00Z"
+                },
+                "paymentDeadline": {
+                    "description": "UTC RFC3339",
+                    "type": "string",
+                    "example": "2026-11-21T04:45:00Z"
+                },
+                "paymentFeeAmount": {
+                    "type": "number",
+                    "example": 0
+                },
+                "paymentFeeBase": {
+                    "type": "number",
+                    "example": 0
+                },
+                "paymentMethodId": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "platformFeeAmount": {
+                    "type": "number",
+                    "example": 0
+                },
+                "platformFeeBase": {
+                    "type": "number",
+                    "example": 0
+                },
+                "price": {
+                    "type": "number",
+                    "example": 32.5
+                },
+                "sellerId": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "status": {
+                    "description": "matched / paid / releasing / completed / cancelled / timeout / disputed / refunded",
+                    "type": "string",
+                    "enum": [
+                        "matched",
+                        "paid",
+                        "releasing",
+                        "completed",
+                        "cancelled",
+                        "timeout",
+                        "disputed",
+                        "refunded"
+                    ],
+                    "example": "matched"
+                },
+                "totalAmount": {
+                    "type": "number",
+                    "example": 3250
+                },
+                "totalFee": {
+                    "type": "number",
+                    "example": 0
+                }
+            }
+        },
+        "app_interface.PaymentMethodItem": {
+            "type": "object",
+            "properties": {
+                "accountName": {
+                    "type": "string",
+                    "example": "王小明"
+                },
+                "accountNumber": {
+                    "type": "string",
+                    "example": "123456789012"
+                },
+                "bankName": {
+                    "type": "string",
+                    "example": "台灣銀行"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "bank_transfer"
+                    ],
+                    "example": "bank_transfer"
+                }
+            }
+        },
+        "app_interface.ProfileResponse": {
+            "type": "object",
+            "properties": {
+                "username": {
+                    "type": "string",
+                    "example": "testdemo001"
+                }
+            }
+        },
+        "app_interface.RegisterPushTokenRequest": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "description": "Expo 推播 token；空字串時不寫入",
+                    "type": "string",
+                    "example": "ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]"
+                }
+            }
+        },
+        "app_interface.RegisterRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "description": "至少 8 字元",
+                    "type": "string",
+                    "example": "a12345678"
+                },
+                "username": {
+                    "description": "3~50 字元",
+                    "type": "string",
+                    "example": "newuser001"
+                }
+            }
+        },
+        "app_interface.WalletItem": {
+            "type": "object",
+            "properties": {
+                "availableBalance": {
+                    "description": "字串（NUMERIC(38,18)），避免浮點誤差",
+                    "type": "string",
+                    "example": "1000.000000000000000000"
+                },
+                "currency": {
+                    "type": "string",
+                    "example": "USDT"
+                },
+                "frozenBalance": {
+                    "description": "字串（NUMERIC(38,18)），避免浮點誤差",
+                    "type": "string",
+                    "example": "0.000000000000000000"
+                }
+            }
+        },
+        "app_interface.WalletLedgerItem": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "description": "字串；正數為增加、負數為減少",
+                    "type": "string",
+                    "example": "1000.000000000000000000"
+                },
+                "balanceAfter": {
+                    "type": "string",
+                    "example": "1000.000000000000000000"
+                },
+                "createdAt": {
+                    "description": "UTC RFC3339",
+                    "type": "string",
+                    "example": "2026-11-21T04:30:00Z"
+                },
+                "refOrderNo": {
+                    "description": "關聯訂單編號，無關聯時為 null",
+                    "type": "string",
+                    "example": "P2P20261121123456"
+                },
+                "type": {
+                    "description": "deposit / withdraw / freeze / unfreeze / transfer_in / transfer_out / fee_deduct / crypto_deposit / crypto_withdraw / fiat_deposit / fiat_withdraw",
+                    "type": "string",
+                    "enum": [
+                        "deposit",
+                        "withdraw",
+                        "freeze",
+                        "unfreeze",
+                        "transfer_in",
+                        "transfer_out",
+                        "fee_deduct",
+                        "crypto_deposit",
+                        "crypto_withdraw",
+                        "fiat_deposit",
+                        "fiat_withdraw"
+                    ],
+                    "example": "deposit"
+                }
+            }
+        },
+        "backend_interface.BackendDepositRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "description": "字串，必須為正數",
+                    "type": "string",
+                    "example": "100"
+                },
+                "currency": {
+                    "description": "必須為 currencies 表內存在的幣別",
+                    "type": "string",
+                    "example": "USDT"
+                }
+            }
+        },
+        "backend_interface.BackendDepositResponse": {
+            "type": "object",
+            "properties": {
+                "available_balance": {
+                    "type": "string",
+                    "example": "1100.000000000000000000"
+                },
+                "currency": {
+                    "type": "string",
+                    "example": "USDT"
+                },
+                "frozen_balance": {
+                    "type": "string",
+                    "example": "0.000000000000000000"
+                }
+            }
+        },
+        "backend_interface.BackendListFiatWithdrawalsResponse": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_interface.FiatWithdrawalItem"
+                    }
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "backend_interface.BackendListMembersResponse": {
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/backend_interface.MemberItem"
+                    }
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "backend_interface.BackendReviewFiatWithdrawalRequest": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "approve | reject",
+                    "type": "string",
+                    "enum": [
+                        "approve",
+                        "reject"
+                    ],
+                    "example": "approve"
+                },
+                "reason": {
+                    "description": "action 為 reject 時必填",
+                    "type": "string",
+                    "example": "帳戶名稱與會員不符"
+                }
+            }
+        },
+        "backend_interface.DashboardResponse": {
+            "type": "object",
+            "properties": {
+                "role": {
+                    "type": "string",
+                    "example": "admin"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "admin001"
+                }
+            }
+        },
+        "backend_interface.ECPayInfo": {
+            "type": "object",
+            "properties": {
+                "baseUrl": {
+                    "type": "string",
+                    "example": "https://payment-stage.ecpay.com.tw"
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "merchantId": {
+                    "type": "string",
+                    "example": "2000132"
+                }
+            }
+        },
+        "backend_interface.FiatWithdrawalItem": {
+            "type": "object",
+            "properties": {
+                "accountName": {
+                    "type": "string",
+                    "example": "王小明"
+                },
+                "amount": {
+                    "type": "string",
+                    "example": "1000.00"
+                },
+                "bankAccount": {
+                    "type": "string",
+                    "example": "123456789012"
+                },
+                "bankCode": {
+                    "type": "string",
+                    "example": "004"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "example": "2026-11-21T04:30:00Z"
+                },
+                "currency": {
+                    "type": "string",
+                    "example": "TWD"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "rejectReason": {
+                    "description": "未駁回時為 null",
+                    "type": "string",
+                    "example": "帳戶名稱與會員不符"
+                },
+                "reviewedBy": {
+                    "description": "尚未審核時為 null",
+                    "type": "integer",
+                    "example": 1
+                },
+                "status": {
+                    "description": "pending / approved / rejected",
+                    "type": "string",
+                    "enum": [
+                        "pending",
+                        "approved",
+                        "rejected"
+                    ],
+                    "example": "pending"
+                },
+                "userId": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "backend_interface.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "example": "a12345678"
+                },
+                "username": {
+                    "description": "App 登入帳號；後台登入請用 admin001",
+                    "type": "string",
+                    "example": "testdemo001"
+                }
+            }
+        },
+        "backend_interface.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "expiresIn": {
+                    "type": "integer",
+                    "example": 86400
+                },
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjEsImV4cCI6MTc5NTI0MjYwMH0.abc123"
+                }
+            }
+        },
+        "backend_interface.MemberItem": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string",
+                    "example": "2026-11-21T04:30:00Z"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "testdemo001@example.com"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "example": "2026-11-21T04:30:00Z"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "testdemo001"
+                }
+            }
+        },
+        "backend_interface.PlatformWalletInfoResponse": {
+            "type": "object",
+            "properties": {
+                "ecpay": {
+                    "$ref": "#/definitions/backend_interface.ECPayInfo"
+                },
+                "tron": {
+                    "$ref": "#/definitions/backend_interface.TronWalletInfo"
+                }
+            }
+        },
+        "backend_interface.ResolveOrderRequest": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "complete（放行給買方）/ refund（退回賣方，狀態轉 refunded）；僅 disputed 狀態可處理",
+                    "type": "string",
+                    "enum": [
+                        "complete",
+                        "refund"
+                    ],
+                    "example": "complete"
+                },
+                "reason": {
+                    "type": "string",
+                    "example": "經查證買方已付款，放行給買方"
+                }
+            }
+        },
+        "backend_interface.TronWalletInfo": {
+            "type": "object",
+            "properties": {
+                "confirmationBlocks": {
+                    "type": "integer",
+                    "example": 6
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "hotWalletAddress": {
+                    "type": "string",
+                    "example": "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf"
+                },
+                "network": {
+                    "type": "string",
+                    "example": "nile"
+                },
+                "onChainBalance": {
+                    "description": "查詢失敗時為 \"0\"",
+                    "type": "string",
+                    "example": "5000.000000"
+                },
+                "platformVirtualBalance": {
+                    "description": "查詢失敗時為 \"0\"",
+                    "type": "string",
+                    "example": "4800.000000000000000000"
+                },
+                "usdtContractAddress": {
+                    "type": "string",
+                    "example": "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj"
+                }
+            }
+        },
+        "response.Body": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "data": {
+                    "type": "object"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "response.ErrorBody": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "data": {
+                    "type": "object"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "error message"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "description": "輸入 JWT 本身（不含 Bearer 前綴）",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

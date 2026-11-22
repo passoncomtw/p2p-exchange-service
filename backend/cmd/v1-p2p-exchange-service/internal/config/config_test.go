@@ -1,24 +1,19 @@
 package config
 
 import (
-	"os"
 	"testing"
 
 	"github.com/zeromicro/go-zero/core/conf"
 )
 
-// TestSensitiveFieldsRequireEnv 確保 AccessSecret/DSN/Redis 等敏感欄位在 config.yaml 留空時，
-// conf.Load 會自動呼叫 Config.Validate()（go-zero 的 Validator 慣例）並在環境變數沒設時失敗，
-// 避免用空字串靜默連線；設定對應環境變數後，Load 應成功且欄位值來自環境變數。
+// TestSensitiveFieldsRequireEnv 確保敏感欄位為空時 Config.Validate() 會失敗，避免用空字串靜默連線；
+// 設定對應環境變數後，conf.Load 應成功且欄位值來自環境變數。
+//
+// 未設環境變數的階段直接呼叫 Validate()，不經過 conf.Load：
+// go-zero 的 proc.Env 會快取第一次讀到的值（含空字串），先以空環境 Load 一次會讓後續 t.Setenv 失效。
 func TestSensitiveFieldsRequireEnv(t *testing.T) {
-	os.Unsetenv("APP_JWT_ACCESS_SECRET")
-	os.Unsetenv("BACKEND_JWT_ACCESS_SECRET")
-	os.Unsetenv("DATABASE_DSN")
-	os.Unsetenv("REDIS_ADDR")
-
-	var c Config
-	if err := conf.Load("../constants/config.yaml", &c); err == nil {
-		t.Fatal("expected conf.Load to fail when sensitive env vars are unset, got nil")
+	if err := (Config{}).Validate(); err == nil {
+		t.Fatal("expected Validate to fail when sensitive fields are empty, got nil")
 	}
 
 	t.Setenv("APP_JWT_ACCESS_SECRET", "test-app-secret")

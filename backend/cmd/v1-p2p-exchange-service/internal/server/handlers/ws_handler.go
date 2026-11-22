@@ -28,6 +28,14 @@ func NewWSHandler(c *config.Config, hub *pkgws.Hub) *WSHandler {
 }
 
 // AppWS 處理 App 端 WebSocket 連線（/ws/app?token=<app_jwt>）。
+//
+//	@Summary		App WebSocket 連線
+//	@Description	以 query 的 token 驗證（App JWT），驗證成功後升級為 WebSocket。
+//	@Tags			websocket
+//	@Param			token	query		string	true	"App JWT"
+//	@Success		101		{string}	string	"Switching Protocols"
+//	@Failure		401		{string}	string	"unauthorized"
+//	@Router			/ws/app [get]
 func (h *WSHandler) AppWS(w http.ResponseWriter, r *http.Request) {
 	uid, ok := parseWSJWT(r, h.config.App.AccessSecret)
 	if !ok {
@@ -44,6 +52,14 @@ func (h *WSHandler) AppWS(w http.ResponseWriter, r *http.Request) {
 }
 
 // BackendWS 處理後台 WebSocket 連線（/ws/backend?token=<backend_jwt>）。
+//
+//	@Summary		後台 WebSocket 連線
+//	@Description	以 query 的 token 驗證（Backend JWT），驗證成功後升級為 WebSocket。
+//	@Tags			websocket
+//	@Param			token	query		string	true	"Backend JWT"
+//	@Success		101		{string}	string	"Switching Protocols"
+//	@Failure		401		{string}	string	"unauthorized"
+//	@Router			/ws/backend [get]
 func (h *WSHandler) BackendWS(w http.ResponseWriter, r *http.Request) {
 	uid, ok := parseWSJWT(r, h.config.Backend.AccessSecret)
 	if !ok {

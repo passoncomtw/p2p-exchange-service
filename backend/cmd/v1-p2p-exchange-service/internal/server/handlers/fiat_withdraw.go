@@ -17,6 +17,19 @@ func NewFiatWithdrawHandler(svc fiatwithdraw_service.FiatWithdrawService) *FiatW
 	return &FiatWithdrawHandler{svc: svc}
 }
 
+// Create 建立 TWD 提領申請。
+//
+//	@Summary		建立 TWD 提領申請
+//	@Description	狀態固定為 pending，等待後台審核；申請時會凍結對應餘額。
+//	@Tags			app-fiat-withdraw
+//	@Security		ApiKeyAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body	app_interface.FiatWithdrawRequest	true	"請求內容"
+//	@Success		200	{object}	response.Body{data=app_interface.FiatWithdrawResponse}
+//	@Failure		400	{object}	response.ErrorBody	"請求格式錯誤或驗證失敗"
+//	@Failure		500	{object}	response.ErrorBody	"內部錯誤"
+//	@Router			/app/wallets/fiat/withdraw [post]
 func (h *FiatWithdrawHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req app_interface.FiatWithdrawRequest
 	if err := httpx.Parse(r, &req); err != nil {
@@ -34,6 +47,17 @@ func (h *FiatWithdrawHandler) Create(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJsonCtx(r.Context(), w, http.StatusOK, response.Success(resp))
 }
 
+// List 查詢 TWD 提領紀錄。
+//
+//	@Summary		查詢 TWD 提領紀錄
+//	@Tags			app-fiat-withdraw
+//	@Security		ApiKeyAuth
+//	@Produce		json
+//	@Param			request	query	app_interface.AppListFiatWithdrawalsRequest	false	"查詢條件"
+//	@Success		200	{object}	response.Body{data=app_interface.AppListFiatWithdrawalsResponse}
+//	@Failure		400	{object}	response.ErrorBody	"請求格式錯誤或驗證失敗"
+//	@Failure		500	{object}	response.ErrorBody	"內部錯誤"
+//	@Router			/app/wallets/fiat/withdrawals [get]
 func (h *FiatWithdrawHandler) List(w http.ResponseWriter, r *http.Request) {
 	var req app_interface.AppListFiatWithdrawalsRequest
 	if err := httpx.Parse(r, &req); err != nil {

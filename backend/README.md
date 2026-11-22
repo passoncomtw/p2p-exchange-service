@@ -15,6 +15,7 @@
 - [架構說明](#架構說明)
 - [Swagger UI](#swagger-ui)
 - [設定檔說明](#設定檔說明)
+- [ECPay 測試環境](#ecpay-測試環境)
 
 ---
 
@@ -23,8 +24,8 @@
 | 路徑 | 說明 |
 |------|------|
 | `cmd/v1-p2p-exchange-service/main.go` | 程式進入點（main，`uber-fx` 依賴注入啟動） |
-| `cmd/v1-p2p-exchange-service/swagger.api` | API 定義檔（go-zero DSL，僅用於產生 Swagger 文件） |
-| `cmd/v1-p2p-exchange-service/Makefile` | Swagger 產生指令 |
+| `cmd/v1-p2p-exchange-service/internal/swagger/dist/swagger.json` | 由 handler 註解產生的 Swagger spec（`make swagger`） |
+| `cmd/v1-p2p-exchange-service/Makefile` | Swagger 產生指令（swaggo/swag） |
 | `cmd/v1-p2p-exchange-service/internal/constants/config.yaml` | 服務設定範本（機敏欄位由環境變數注入） |
 | `cmd/v1-p2p-exchange-service/internal/config/` | 設定結構定義 |
 | `cmd/v1-p2p-exchange-service/internal/model/entity/` | 資料表對應的 entity |
@@ -45,8 +46,7 @@
 | 工具 | 版本 | 安裝方式 |
 |------|------|----------|
 | Go | >= 1.23 | https://go.dev/dl |
-| goctl | >= 1.10 | `go install github.com/zeromicro/go-zero/tools/goctl@latest` |
-| goctl-swagger | 最新 | `go install github.com/zeromicro/goctl-swagger@latest` |
+| swag | >= 1.16 | `go install github.com/swaggo/swag/cmd/swag@latest` |
 
 ---
 
@@ -89,13 +89,32 @@ HTTP 層：解析請求、呼叫 service、組裝回應。不含商業邏輯。
 服務啟動後，瀏覽器開啟 `http://localhost:8888/swagger`。
 
 新增 API 時：
-1. 在 `cmd/v1-p2p-exchange-service/swagger.api` 補上對應的 type 與 route 定義
-2. 執行 `cd cmd/v1-p2p-exchange-service && make swagger` 重新產生 `internal/swagger/dist/spec.json`
+1. 在 `interfaces/` 的 struct 欄位加上 `example`、`enums` 等 tag
+2. 在 handler 上方加 swag 註解（`@Summary`、`@Param`、`@Success`、`@Failure`、`@Router`，可參考 `internal/server/handlers/order.go`）
+3. 執行 `cd cmd/v1-p2p-exchange-service && make swagger` 重新產生 `internal/swagger/dist/swagger.json`，並一併提交
 
-> `swagger.api` 僅用於產生文件，不用於程式碼生成；handler/service/repository 皆為手動維護。
+> spec 完全由程式碼產生，不需另外維護 API 定義檔；成功回應統一寫成 `response.Body{data=<型別>}`，失敗回應用 `response.ErrorBody`。
 
 ---
 
 ## 設定檔說明
 
 設定檔位於 `cmd/v1-p2p-exchange-service/internal/constants/config.yaml`，機敏欄位（JWT Secret、DB DSN、Redis、NATS、Tron、ECPay 憑證）一律透過環境變數注入，不寫入設定檔。詳細環境變數清單見 `internal/config/config.go` 的欄位標籤。
+
+---
+
+## ECPay 測試環境
+
+API 網址：`https://payment-stage.ecpay.com.tw`（設定檔預設值）
+
+| 類型 | MerchantID | HashKey | HashIV |
+|------|-----------|---------|--------|
+| 一般特店（模擬 3D 驗證） | 3002607 | pwFHCqoQZGmho4w6 | EkRm7iFT261dpevs |
+| 一般特店（模擬無 3D 驗證） | 2000132 | 5294y06JbISpM5x9 | v77hoKGq4kWxNNIS |
+| 平台商 | 3003008 | FCnGLNS7P3xQ2q3E | awL5GRWRhyaybq13 |
+
+> 設定檔 `MerchantID` 預設為 `2000132`（無 3D 驗證），`.env` 中的 `ECPAY_HASH_KEY` / `ECPAY_HASH_IV` 需與 MerchantID 對應。
+
+測試廠商後台：`https://vendor-stage.ecpay.com.tw`（商店代號 3002607，帳號 stagetest3 / 密碼 test1234）
+
+API 線上模擬：`https://developersmock.ecpay.com.tw`

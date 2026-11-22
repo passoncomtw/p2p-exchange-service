@@ -38,7 +38,7 @@ backend/
       server/handlers/                HTTP handler
       wsserver/                       WebSocket
       swagger/                        產生的 spec
-    swagger.api  Makefile             API DSL 與 swagger 產生
+    Makefile                          swagger 產生（swaggo/swag）
   internal/{errors,response,infra}    共用基礎
   pkg/                                ecpay、tron、mq、ws、notification、schedule 等
   cmd/migrate/                        獨立 migration 執行檔（Dockerfile.migrate、db-migrate.yml 使用）
@@ -58,7 +58,7 @@ k8s/             backend 與 local（nats、redis）
 # 本機依賴（Redis 6379、NATS 4222/8222，含 JetStream）
 docker compose up -d
 
-# 產生 Swagger（需 goctl 與 goctl-swagger、python3）
+# 產生 Swagger（需 swag：go install github.com/swaggo/swag/cmd/swag@latest）
 cd backend/cmd/v1-p2p-exchange-service && make swagger
 
 # 後端測試（目前僅 16 個 _test.go）
