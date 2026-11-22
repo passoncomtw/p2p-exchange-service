@@ -1,15 +1,17 @@
 package app_interface
 
+import "p2p-exchange/internal/money"
+
 type CreateListingRequest struct {
-	Type             string  `json:"type" enums:"buy,sell" example:"sell"` // buy / sell；sell 必須帶 paymentMethodId，且會凍結 totalAmount
-	CryptoCurrency   string  `json:"cryptoCurrency" example:"USDT"`
-	FiatCurrency     string  `json:"fiatCurrency" example:"TWD"`
-	TotalAmount      float64 `json:"totalAmount" example:"500"`     // 必須大於 0
-	Price            float64 `json:"price" example:"32.5"`          // 必須大於 0
-	MinOrderFiat     float64 `json:"minOrderFiat" example:"100"`    // 不可為負
-	MaxOrderFiat     float64 `json:"maxOrderFiat" example:"10000"`  // 不可小於 minOrderFiat
-	PaymentTimeLimit int64   `json:"paymentTimeLimit" example:"15"` // 付款時限（分鐘），必須大於 0
-	PaymentMethodID  *int64  `json:"paymentMethodId,omitempty" example:"1"`
+	Type             string       `json:"type" enums:"buy,sell" example:"sell"` // buy / sell；sell 必須帶 paymentMethodId，且會凍結 totalAmount
+	CryptoCurrency   string       `json:"cryptoCurrency" example:"USDT"`
+	FiatCurrency     string       `json:"fiatCurrency" example:"TWD"`
+	TotalAmount      money.Amount `json:"totalAmount" example:"500"`     // 必須大於 0
+	Price            money.Amount `json:"price" example:"32.5"`          // 必須大於 0
+	MinOrderFiat     money.Amount `json:"minOrderFiat" example:"100"`    // 不可為負
+	MaxOrderFiat     money.Amount `json:"maxOrderFiat" example:"10000"`  // 不可小於 minOrderFiat
+	PaymentTimeLimit int64        `json:"paymentTimeLimit" example:"15"` // 付款時限（分鐘），必須大於 0
+	PaymentMethodID  *int64       `json:"paymentMethodId,omitempty" example:"1"`
 }
 
 type ListListingsRequest struct {

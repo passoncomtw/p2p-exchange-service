@@ -3,7 +3,8 @@ package listing_service
 import (
 	"context"
 	"errors"
-	"math"
+	"github.com/shopspring/decimal"
+	"p2p-exchange/internal/money"
 	"testing"
 
 	app_interface "p2p-exchange/cmd/v1-p2p-exchange-service/internal/interfaces/app"
@@ -21,7 +22,7 @@ type fakeWalletRepo struct {
 	freezeCalls int
 }
 
-func (r *fakeWalletRepo) Freeze(_ context.Context, _ int64, _ string, _ float64) error {
+func (r *fakeWalletRepo) Freeze(_ context.Context, _ int64, _ string, _ decimal.Decimal) error {
 	r.freezeCalls++
 	return nil
 }
@@ -37,16 +38,21 @@ func (r *fakeListingRepo) Create(_ context.Context, _ *entity.Listing) (int64, e
 	return 1, nil
 }
 
+// amt 以測試用的字串建立 API 金額型別。
+func amt(s string) money.Amount {
+	return money.Amount{Decimal: decimal.RequireFromString(s)}
+}
+
 func validSellListingRequest() app_interface.CreateListingRequest {
 	paymentMethodID := int64(5)
 	return app_interface.CreateListingRequest{
 		Type:             "sell",
 		CryptoCurrency:   "USDT",
 		FiatCurrency:     "TWD",
-		TotalAmount:      100,
-		Price:            32.5,
-		MinOrderFiat:     100,
-		MaxOrderFiat:     3250,
+		TotalAmount:      amt("100"),
+		Price:            amt("32.5"),
+		MinOrderFiat:     amt("100"),
+		MaxOrderFiat:     amt("3250"),
 		PaymentTimeLimit: 15,
 		PaymentMethodID:  &paymentMethodID,
 	}
@@ -61,20 +67,12 @@ func TestCreateListingValidatesAmounts(t *testing.T) {
 		name   string
 		mutate func(*app_interface.CreateListingRequest)
 	}{
-		{name: "negative totalAmount", mutate: func(r *app_interface.CreateListingRequest) { r.TotalAmount = -1000 }},
-		{name: "zero totalAmount", mutate: func(r *app_interface.CreateListingRequest) { r.TotalAmount = 0 }},
-		{name: "NaN totalAmount", mutate: func(r *app_interface.CreateListingRequest) { r.TotalAmount = math.NaN() }},
-		{name: "Inf totalAmount", mutate: func(r *app_interface.CreateListingRequest) { r.TotalAmount = math.Inf(1) }},
-		{name: "negative price", mutate: func(r *app_interface.CreateListingRequest) { r.Price = -1 }},
-		{name: "zero price", mutate: func(r *app_interface.CreateListingRequest) { r.Price = 0 }},
-		{name: "NaN price", mutate: func(r *app_interface.CreateListingRequest) { r.Price = math.NaN() }},
-		{name: "Inf price", mutate: func(r *app_interface.CreateListingRequest) { r.Price = math.Inf(1) }},
-		{name: "negative minOrderFiat", mutate: func(r *app_interface.CreateListingRequest) { r.MinOrderFiat = -1 }},
-		{name: "NaN minOrderFiat", mutate: func(r *app_interface.CreateListingRequest) { r.MinOrderFiat = math.NaN() }},
-		{name: "-Inf minOrderFiat", mutate: func(r *app_interface.CreateListingRequest) { r.MinOrderFiat = math.Inf(-1) }},
-		{name: "min greater than max", mutate: func(r *app_interface.CreateListingRequest) { r.MinOrderFiat, r.MaxOrderFiat = 500, 100 }},
-		{name: "NaN maxOrderFiat", mutate: func(r *app_interface.CreateListingRequest) { r.MaxOrderFiat = math.NaN() }},
-		{name: "Inf maxOrderFiat", mutate: func(r *app_interface.CreateListingRequest) { r.MaxOrderFiat = math.Inf(1) }},
+		{name: "negative totalAmount", mutate: func(r *app_interface.CreateListingRequest) { r.TotalAmount = amt("-1000") }},
+		{name: "zero totalAmount", mutate: func(r *app_interface.CreateListingRequest) { r.TotalAmount = amt("0") }},
+		{name: "negative price", mutate: func(r *app_interface.CreateListingRequest) { r.Price = amt("-1") }},
+		{name: "zero price", mutate: func(r *app_interface.CreateListingRequest) { r.Price = amt("0") }},
+		{name: "negative minOrderFiat", mutate: func(r *app_interface.CreateListingRequest) { r.MinOrderFiat = amt("-1") }},
+		{name: "min greater than max", mutate: func(r *app_interface.CreateListingRequest) { r.MinOrderFiat, r.MaxOrderFiat = amt("500"), amt("100") }},
 		{name: "zero paymentTimeLimit", mutate: func(r *app_interface.CreateListingRequest) { r.PaymentTimeLimit = 0 }},
 		{name: "negative paymentTimeLimit", mutate: func(r *app_interface.CreateListingRequest) { r.PaymentTimeLimit = -5 }},
 	}
@@ -109,8 +107,8 @@ func TestCreateListingAcceptsValidInput(t *testing.T) {
 		mutate func(*app_interface.CreateListingRequest)
 	}{
 		{name: "typical", mutate: func(*app_interface.CreateListingRequest) {}},
-		{name: "min equals max", mutate: func(r *app_interface.CreateListingRequest) { r.MinOrderFiat, r.MaxOrderFiat = 1000, 1000 }},
-		{name: "zero minOrderFiat", mutate: func(r *app_interface.CreateListingRequest) { r.MinOrderFiat = 0 }},
+		{name: "min equals max", mutate: func(r *app_interface.CreateListingRequest) { r.MinOrderFiat, r.MaxOrderFiat = amt("1000"), amt("1000") }},
+		{name: "zero minOrderFiat", mutate: func(r *app_interface.CreateListingRequest) { r.MinOrderFiat = amt("0") }},
 	}
 
 	for _, tc := range cases {

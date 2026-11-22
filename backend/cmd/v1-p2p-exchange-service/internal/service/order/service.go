@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"math/rand"
 	"strconv"
 	"time"
@@ -20,9 +19,11 @@ import (
 	walletrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/wallet"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/service/orderallocation"
 	apierrors "p2p-exchange/internal/errors"
+	"p2p-exchange/internal/money"
 	"p2p-exchange/pkg/mq"
 	pkgws "p2p-exchange/pkg/ws"
 
+	"github.com/shopspring/decimal"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"go.uber.org/fx"
 )
@@ -33,9 +34,6 @@ var errOrderStatusChanged = apierrors.New(409, "order status changed")
 
 // errInsufficientRemaining 掛單剩餘量不足以成立這筆訂單（鎖內檢查或條件式扣量影響 0 列）。
 var errInsufficientRemaining = apierrors.New(400, "insufficient remaining amount in listing")
-
-// minCryptoAmount 為 NUMERIC(38, 18) 可表示的最小正數。
-const minCryptoAmount = 1e-18
 
 type OrderService interface {
 	Create(ctx context.Context, uid int64, req app_interface.CreateOrderRequest) (*app_interface.CreateOrderResponse, error)
@@ -85,7 +83,7 @@ func New(p Params) OrderService {
 }
 
 func (s *orderService) Create(ctx context.Context, uid int64, req app_interface.CreateOrderRequest) (*app_interface.CreateOrderResponse, error) {
-	if !isPositiveFinite(req.CryptoAmount) {
+	if !req.CryptoAmount.IsPositive() {
 		return nil, apierrors.New(400, "cryptoAmount must be a positive finite number")
 	}
 
@@ -106,15 +104,15 @@ func (s *orderService) Create(ctx context.Context, uid int64, req app_interface.
 			return err
 		}
 
-		order, err = buildOrder(uid, listing, req.CryptoAmount, takerPaymentMethods, takerPaymentErr)
+		order, err = buildOrder(uid, listing, req.CryptoAmount.Decimal, takerPaymentMethods, takerPaymentErr)
 		if err != nil {
 			return err
 		}
 
 		// buy 掛單由吃單者（賣方）凍結 cryptoAmount；sell 掛單的額度已在掛單時凍結，這裡不再凍結。
-		// 金額字串格式與 UnfreezeInTx / TransferInTx 內部的 %.18f 一致，凍結與釋放才會是同一個數值。
+		// 金額字串格式與 UnfreezeInTx / TransferInTx 內部的固定 18 位小數一致，凍結與釋放才會是同一個數值。
 		if listing.Type == "buy" {
-			if err := s.walletRepo.FreezeInTx(ctx, session, order.SellerID, order.CryptoCurrency, formatCryptoAmount(order.CryptoAmount)); err != nil {
+			if err := s.walletRepo.FreezeInTx(ctx, session, order.SellerID, order.CryptoCurrency, order.CryptoAmount.StringFixed(money.Scale)); err != nil {
 				return err
 			}
 		}
@@ -158,7 +156,7 @@ func (s *orderService) Create(ctx context.Context, uid int64, req app_interface.
 
 // buildOrder 以鎖內讀到的掛單再驗證吃單條件並組出訂單（尚未寫入）。
 // takerPaymentMethods / takerPaymentErr 為交易外查到的吃單者收款帳戶，只在 buy 掛單未指定收款帳戶時使用。
-func buildOrder(uid int64, listing *entity.Listing, cryptoAmount float64, takerPaymentMethods []*entity.PaymentMethod, takerPaymentErr error) (*entity.Order, error) {
+func buildOrder(uid int64, listing *entity.Listing, cryptoAmount decimal.Decimal, takerPaymentMethods []*entity.PaymentMethod, takerPaymentErr error) (*entity.Order, error) {
 	// 買賣方為同一人沒有合法的交易意義，且屬於單一帳號自行造幣的路徑，一律拒絕。
 	if listing.UserID == uid {
 		return nil, apierrors.New(400, "cannot take own listing")
@@ -166,25 +164,25 @@ func buildOrder(uid int64, listing *entity.Listing, cryptoAmount float64, takerP
 	if listing.Status != "active" {
 		return nil, apierrors.New(400, "listing is not active")
 	}
-	if listing.RemainingAmount < cryptoAmount {
+	if listing.RemainingAmount.LessThan(cryptoAmount) {
 		return nil, errInsufficientRemaining
 	}
-	if !isStorableCryptoAmount(cryptoAmount) {
-		return nil, apierrors.New(400, "cryptoAmount must be at least 1e-18 with at most 18 decimal places")
+	if !money.IsStorable(cryptoAmount) {
+		return nil, apierrors.New(400, "cryptoAmount must have at most 18 decimal places")
 	}
 
-	fiatAmount := cryptoAmount * listing.Price
-	if fiatAmount < listing.MinOrderFiat {
+	fiatAmount := money.Round(cryptoAmount.Mul(listing.Price))
+	if fiatAmount.LessThan(listing.MinOrderFiat) {
 		return nil, apierrors.New(400, "order amount below minimum")
 	}
-	if fiatAmount > listing.MaxOrderFiat {
+	if fiatAmount.GreaterThan(listing.MaxOrderFiat) {
 		return nil, apierrors.New(400, "order amount above maximum")
 	}
 
-	platformFeeAmount := fiatAmount * listing.PlatformFeeRate
-	paymentFeeAmount := fiatAmount * listing.PaymentFeeRate
-	totalFee := listing.PlatformFeeBase + platformFeeAmount + listing.PaymentFeeBase + paymentFeeAmount
-	totalAmount := fiatAmount + totalFee
+	platformFeeAmount := money.Round(fiatAmount.Mul(listing.PlatformFeeRate))
+	paymentFeeAmount := money.Round(fiatAmount.Mul(listing.PaymentFeeRate))
+	totalFee := listing.PlatformFeeBase.Add(platformFeeAmount).Add(listing.PaymentFeeBase).Add(paymentFeeAmount)
+	totalAmount := fiatAmount.Add(totalFee)
 
 	var buyerID, sellerID int64
 	if listing.Type == "sell" {
@@ -456,27 +454,6 @@ func (s *orderService) publishOrderStatusChanged(order *entity.Order, status str
 	s.mqPublisher.PublishAsync(pkgws.SubjectNotifyAdmin, data)
 	s.mqPublisher.PublishAsync(pkgws.SubjectNotifyBuyerPrefix+strconv.FormatInt(order.BuyerID, 10), data)
 	s.mqPublisher.PublishAsync(pkgws.SubjectNotifySellerPrefix+strconv.FormatInt(order.SellerID, 10), data)
-}
-
-// isPositiveFinite 回傳 v 是否為大於零的有限值（排除 NaN 與 ±Inf）。
-func isPositiveFinite(v float64) bool {
-	return !math.IsNaN(v) && !math.IsInf(v, 0) && v > 0
-}
-
-// formatCryptoAmount 把加密貨幣數量格式化為 18 位小數字串，與錢包 UnfreezeInTx / TransferInTx 內部格式一致。
-func formatCryptoAmount(v float64) string {
-	return fmt.Sprintf("%.18f", v)
-}
-
-// isStorableCryptoAmount 回傳 v 是否不小於 1e-18，且格式化為 18 位小數後再解析仍是同一個值。
-// 不符合時，寫入 NUMERIC(38, 18) 的訂單量、凍結量與後續釋放量會各自被捨入成不同的數值，
-// 或被捨入成 0 而形成「凍結 0、訂單非 0」的帳務落差。
-func isStorableCryptoAmount(v float64) bool {
-	if v < minCryptoAmount {
-		return false
-	}
-	parsed, err := strconv.ParseFloat(formatCryptoAmount(v), 64)
-	return err == nil && parsed == v
 }
 
 // toAppError 保留交易中回傳的 AppError；其餘（資料庫等）錯誤一律轉為 500，不把內部訊息回給使用者。

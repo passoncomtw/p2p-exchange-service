@@ -1,8 +1,10 @@
 package app_interface
 
+import "p2p-exchange/internal/money"
+
 type CreateOrderRequest struct {
-	ListingID    int64   `json:"listingId" example:"1"`
-	CryptoAmount float64 `json:"cryptoAmount" example:"100"` // 必須為正數，最多 18 位小數；換算法幣須落在掛單 minOrderFiat ~ maxOrderFiat
+	ListingID    int64        `json:"listingId" example:"1"`
+	CryptoAmount money.Amount `json:"cryptoAmount" example:"100"` // 必須為正數，最多 18 位小數；換算法幣須落在掛單 minOrderFiat ~ maxOrderFiat
 }
 
 type GetOrderRequest struct {

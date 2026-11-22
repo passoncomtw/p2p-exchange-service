@@ -3,6 +3,7 @@ package listingrepo
 import (
 	"context"
 	"database/sql"
+	"github.com/shopspring/decimal"
 	"strings"
 	"testing"
 
@@ -68,7 +69,7 @@ func TestFindByIDForUpdateInTxLocksRow(t *testing.T) {
 func TestDeductAmountInTxGuardsStatusAndRemaining(t *testing.T) {
 	for _, rows := range []int64{0, 1} {
 		s := &recordingSession{rowsAffected: rows}
-		n, err := New(nil).DeductAmountInTx(context.Background(), s, 10, 2.5)
+		n, err := New(nil).DeductAmountInTx(context.Background(), s, 10, decimal.RequireFromString("2.5"))
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -86,7 +87,7 @@ func TestDeductAmountInTxGuardsStatusAndRemaining(t *testing.T) {
 				t.Fatalf("query must contain %q, got %q", want, q)
 			}
 		}
-		if s.args[0][0] != 2.5 || s.args[0][1] != int64(10) {
+		if !decimal.RequireFromString("2.5").Equal(s.args[0][0].(decimal.Decimal)) || s.args[0][1] != int64(10) {
 			t.Fatalf("unexpected args (want amount, id): %v", s.args[0])
 		}
 	}

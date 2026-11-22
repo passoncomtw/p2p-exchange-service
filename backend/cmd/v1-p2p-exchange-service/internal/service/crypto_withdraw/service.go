@@ -4,25 +4,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/big"
-	"regexp"
 	"strings"
 	"time"
 
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 
+	"github.com/shopspring/decimal"
 	app_interface "p2p-exchange/cmd/v1-p2p-exchange-service/internal/interfaces/app"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/model/entity"
 	cryptowithdrawrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/crypto_withdraw"
 	walletrepo "p2p-exchange/cmd/v1-p2p-exchange-service/internal/repository/wallet"
 	apierrors "p2p-exchange/internal/errors"
+	"p2p-exchange/internal/money"
 	"p2p-exchange/pkg/tron"
 )
 
-const (
-	// minUSDTWithdraw 單筆最低提領金額（USDT），與 legacy 一致。
-	minUSDTWithdraw = "10"
+// minUSDTWithdraw 單筆最低提領金額（USDT），與 legacy 一致。
+var minUSDTWithdraw = decimal.NewFromInt(10)
 
+const (
 	// 預設分頁筆數與上限，與 legacy 一致（超出上限一律退回預設值）。
 	defaultWithdrawPageSize = 20
 	maxWithdrawPageSize     = 100
@@ -31,11 +31,6 @@ const (
 
 	statusPending = "pending"
 )
-
-// amountRe 只接受十進位正數金額字串（不接受正負號與科學記號），
-// 小數位上限對齊 crypto_withdrawals.amount NUMERIC(38,18)：
-// 提前擋掉會被 DB 四捨五入的輸入，確保「凍結的金額」與「單據金額」是同一個字串。
-var amountRe = regexp.MustCompile(`^\d{1,20}(\.\d{1,18})?$`)
 
 // CryptoWithdrawService 提供 App 端鏈上 USDT 提領申請與查詢。
 type CryptoWithdrawService interface {
@@ -74,19 +69,11 @@ func (s *cryptoWithdrawService) RequestWithdraw(ctx context.Context, uid int64, 
 	if _, err := tron.TronBase58ToBytes(toAddress); err != nil {
 		return nil, apierrors.New(400, "無效的 Tron 地址")
 	}
-	if !amountRe.MatchString(amount) {
+	parsed, err := money.Parse(amount)
+	if err != nil || !parsed.IsPositive() {
 		return nil, apierrors.New(400, "無效的提領金額")
 	}
-
-	parsed, _, err := new(big.Float).Parse(amount, 10)
-	if err != nil || parsed.Sign() <= 0 {
-		return nil, apierrors.New(400, "無效的提領金額")
-	}
-	minAmount, _, err := new(big.Float).Parse(minUSDTWithdraw, 10)
-	if err != nil {
-		return nil, apierrors.ErrInternal
-	}
-	if parsed.Cmp(minAmount) < 0 {
+	if parsed.LessThan(minUSDTWithdraw) {
 		return nil, apierrors.New(400, fmt.Sprintf("最低提領金額為 %s USDT", minUSDTWithdraw))
 	}
 

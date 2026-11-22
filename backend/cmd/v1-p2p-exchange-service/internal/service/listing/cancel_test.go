@@ -3,6 +3,7 @@ package listing_service
 import (
 	"context"
 	"errors"
+	"github.com/shopspring/decimal"
 	"reflect"
 	"testing"
 
@@ -19,9 +20,9 @@ const testCancelListingID int64 = 10
 // cancelState 是會隨交易回滾的狀態：掛單狀態、剩餘量與掛單者錢包。
 type cancelState struct {
 	status    string
-	remaining float64
-	available float64
-	frozen    float64
+	remaining string
+	available string
+	frozen    string
 }
 
 // cancelStore 共用狀態與呼叫紀錄；fakeTxConn 在交易失敗時把 state 還原，模擬資料庫回滾。
@@ -37,7 +38,7 @@ type cancelStore struct {
 	hasActiveOrders bool
 	// forceCancelRows 不為 nil 時覆寫條件式取消的影響列數。
 	forceCancelRows *int64
-	unfreezeAmounts []float64
+	unfreezeAmounts []string
 }
 
 type fakeTxConn struct {
@@ -76,7 +77,7 @@ func (r *cancelListingRepo) FindByIDForUpdateInTx(_ context.Context, session sql
 	r.store.calls = append(r.store.calls, "lockListing")
 	l := r.store.locked
 	l.Status = r.store.state.status
-	l.RemainingAmount = r.store.state.remaining
+	l.RemainingAmount = decimal.RequireFromString(r.store.state.remaining)
 	return &l, nil
 }
 
@@ -110,22 +111,22 @@ type cancelWalletRepo struct {
 	store *cancelStore
 }
 
-func (r *cancelWalletRepo) UnfreezeInTx(_ context.Context, _ sqlx.Session, _ int64, _ string, amount float64) error {
+func (r *cancelWalletRepo) UnfreezeInTx(_ context.Context, _ sqlx.Session, _ int64, _ string, amount decimal.Decimal) error {
 	r.store.calls = append(r.store.calls, "unfreeze")
-	r.store.unfreezeAmounts = append(r.store.unfreezeAmounts, amount)
-	r.store.state.frozen -= amount
-	r.store.state.available += amount
+	r.store.unfreezeAmounts = append(r.store.unfreezeAmounts, amount.String())
+	r.store.state.frozen = decimal.RequireFromString(r.store.state.frozen).Sub(amount).String()
+	r.store.state.available = decimal.RequireFromString(r.store.state.available).Add(amount).String()
 	return nil
 }
 
 // newCancelDeps：掛單者 testUID 的 sell 掛單，total 100，鎖內 remaining 60，錢包凍結 100（40 屬於在途訂單）。
 // 交易外讀到的 remaining 刻意設為過期值 100，用來驗證解凍額度取自鎖內讀值。
 func newCancelDeps(listingType string) (*cancelStore, ListingService) {
-	base := entity.Listing{ID: testCancelListingID, UserID: testUID, Type: listingType, CryptoCurrency: "USDT", TotalAmount: 100}
+	base := entity.Listing{ID: testCancelListingID, UserID: testUID, Type: listingType, CryptoCurrency: "USDT", TotalAmount: decimal.NewFromInt(100)}
 	pre := base
-	pre.Status, pre.RemainingAmount = "active", 100
+	pre.Status, pre.RemainingAmount = "active", decimal.NewFromInt(100)
 	st := &cancelStore{
-		state:   cancelState{status: "active", remaining: 60, available: 0, frozen: 100},
+		state:   cancelState{status: "active", remaining: "60", available: "0", frozen: "100"},
 		preRead: pre,
 		locked:  base,
 	}
@@ -168,12 +169,12 @@ func TestCancelListingWithoutActiveOrders(t *testing.T) {
 		{
 			listingType: "sell",
 			wantCalls:   []string{"findListing", "lockListing", "hasActiveOrders", "cancelListing", "unfreeze"},
-			wantState:   cancelState{status: "cancelled", remaining: 60, available: 60, frozen: 40},
+			wantState:   cancelState{status: "cancelled", remaining: "60", available: "60", frozen: "40"},
 		},
 		{
 			listingType: "buy",
 			wantCalls:   []string{"findListing", "lockListing", "hasActiveOrders", "cancelListing"},
-			wantState:   cancelState{status: "cancelled", remaining: 60, available: 0, frozen: 100},
+			wantState:   cancelState{status: "cancelled", remaining: "60", available: "0", frozen: "100"},
 		},
 	}
 	for _, tc := range cases {

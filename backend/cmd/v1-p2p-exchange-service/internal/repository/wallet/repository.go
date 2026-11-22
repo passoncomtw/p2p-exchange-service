@@ -3,14 +3,15 @@ package walletrepo
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"regexp"
 	"strings"
 
+	"github.com/shopspring/decimal"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/model/entity"
 	apierrors "p2p-exchange/internal/errors"
 	"p2p-exchange/internal/infra/rdb"
+	"p2p-exchange/internal/money"
 )
 
 const (
@@ -30,14 +31,14 @@ type walletRow struct {
 }
 
 type WalletRepository interface {
-	Freeze(ctx context.Context, userID int64, currency string, amount float64) error
+	Freeze(ctx context.Context, userID int64, currency string, amount decimal.Decimal) error
 	// FreezeInTx 與 Freeze 相同（可用餘額轉入凍結餘額並寫 type='freeze' 帳本），
 	// 但在呼叫端傳入的交易 session 內執行，讓「凍結 + 建立單據」可以是同一個原子交易。
 	// 不自行取 Redis 鎖（比照 UnfreezeInTx / TransferInTx）：需要鎖時由呼叫端負責；
 	// 餘額檢查本身由 SELECT ... FOR UPDATE 的列鎖保證原子性。
 	FreezeInTx(ctx context.Context, session sqlx.Session, userID int64, currency string, amount string) error
-	UnfreezeInTx(ctx context.Context, session sqlx.Session, userID int64, currency string, amount float64) error
-	TransferInTx(ctx context.Context, session sqlx.Session, sellerID, buyerID int64, currency string, amount float64, orderNo string) error
+	UnfreezeInTx(ctx context.Context, session sqlx.Session, userID int64, currency string, amount decimal.Decimal) error
+	TransferInTx(ctx context.Context, session sqlx.Session, sellerID, buyerID int64, currency string, amount decimal.Decimal, orderNo string) error
 	AcquireLocks(ctx context.Context, userIDs []int64, currency string) (unlock func(), err error)
 
 	// FindByUserID 查詢使用者所有幣種的錢包，依幣別排序。
@@ -71,7 +72,7 @@ type WalletRepository interface {
 	// UnfreezeBalanceInTx 與 UnfreezeBalance 相同的守衛
 	// （frozen_balance >= amount 條件式 UPDATE + RowsAffected 檢查、type='unfreeze' 帳本），
 	// 但在呼叫端傳入的交易 session 內執行，讓「提領駁回的狀態轉換 + 解凍」可以是同一個原子交易。
-	// 金額為字串（與 fiat_withdrawals.amount 一致），有別於給 order escrow 用的 float64 版 UnfreezeInTx。
+	// 金額為字串（與 fiat_withdrawals.amount 一致），有別於給 order escrow 用的 decimal 版 UnfreezeInTx。
 	// 不自行取 Redis 鎖（比照 UnfreezeInTx / TransferInTx）：需要鎖時由呼叫端負責；
 	// 餘額檢查本身由 SELECT ... FOR UPDATE 的列鎖保證原子性。
 	UnfreezeBalanceInTx(ctx context.Context, session sqlx.Session, userID int64, currency, amount string) error
@@ -99,9 +100,13 @@ func walletLockKey(userID int64, currency string) string {
 	return fmt.Sprintf("lock:wallet:%d:%s", userID, currency)
 }
 
-func (r *walletRepository) Freeze(ctx context.Context, userID int64, currency string, amount float64) error {
-	// 比照 FreezeInTx：轉成字串後先驗證為正數，負數、零、NaN、Inf 一律在取鎖與送出 SQL 之前拒絕。
-	amountStr := fmt.Sprintf("%.18f", amount)
+func (r *walletRepository) Freeze(ctx context.Context, userID int64, currency string, amount decimal.Decimal) error {
+	// 比照 FreezeInTx：轉成字串後先驗證為正數，負數、零一律在取鎖與送出 SQL 之前拒絕；
+	// 超過 18 位小數的金額會被四捨五入而與呼叫端認知的數值不同，同樣拒絕。
+	if !money.IsStorable(amount) {
+		return apierrors.New(400, "invalid amount")
+	}
+	amountStr := amountString(amount)
 	if err := validateAmount(amountStr); err != nil {
 		return err
 	}
@@ -135,15 +140,15 @@ func freezeInTx(ctx context.Context, session sqlx.Session, userID int64, currenc
 		return err
 	}
 
-	avail, _, err := new(big.Float).Parse(w.AvailableBalance, 10)
+	avail, err := decimal.NewFromString(w.AvailableBalance)
 	if err != nil {
 		return err
 	}
-	amt, _, err := new(big.Float).Parse(amount, 10)
+	amt, err := decimal.NewFromString(amount)
 	if err != nil {
 		return apierrors.New(400, "invalid amount")
 	}
-	if avail.Cmp(amt) < 0 {
+	if avail.LessThan(amt) {
 		return apierrors.New(400, "insufficient balance")
 	}
 
@@ -163,8 +168,8 @@ func freezeInTx(ctx context.Context, session sqlx.Session, userID int64, currenc
 	return err
 }
 
-func (r *walletRepository) UnfreezeInTx(ctx context.Context, session sqlx.Session, userID int64, currency string, amount float64) error {
-	amountStr := fmt.Sprintf("%.18f", amount)
+func (r *walletRepository) UnfreezeInTx(ctx context.Context, session sqlx.Session, userID int64, currency string, amount decimal.Decimal) error {
+	amountStr := amountString(amount)
 
 	var w walletRow
 	if err := session.QueryRowCtx(ctx, &w,
@@ -191,9 +196,9 @@ func (r *walletRepository) UnfreezeInTx(ctx context.Context, session sqlx.Sessio
 	return err
 }
 
-func (r *walletRepository) TransferInTx(ctx context.Context, session sqlx.Session, sellerID, buyerID int64, currency string, amount float64, orderNo string) error {
-	amountStr := fmt.Sprintf("%.18f", amount)
-	negAmountStr := fmt.Sprintf("-%.18f", amount)
+func (r *walletRepository) TransferInTx(ctx context.Context, session sqlx.Session, sellerID, buyerID int64, currency string, amount decimal.Decimal, orderNo string) error {
+	amountStr := amountString(amount)
+	negAmountStr := "-" + amountStr
 
 	var seller walletRow
 	if err := session.QueryRowCtx(ctx, &seller,
@@ -562,4 +567,9 @@ func (r *walletRepository) AcquireLocks(ctx context.Context, userIDs []int64, cu
 		keys[i] = walletLockKey(uid, currency)
 	}
 	return r.rdb.AcquireLocks(ctx, keys, 5*1e9)
+}
+
+// amountString 把金額格式化為固定 18 位小數的字串，凍結、釋放與轉帳使用同一種格式才會是同一個數值。
+func amountString(amount decimal.Decimal) string {
+	return amount.StringFixed(money.Scale)
 }

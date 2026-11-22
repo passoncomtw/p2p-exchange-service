@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/shopspring/decimal"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"p2p-exchange/cmd/v1-p2p-exchange-service/internal/model/entity"
 )
@@ -22,11 +23,11 @@ type ListingRepository interface {
 	FindByIDForUpdateInTx(ctx context.Context, session sqlx.Session, id int64) (*entity.Listing, error)
 	// DeductAmountInTx 在交易內以條件式 UPDATE 扣減掛單剩餘量，只在掛單仍為 active
 	// 且剩餘量足夠時生效，回傳影響列數；影響 0 列代表不可扣減，呼叫端必須回滾整筆交易。
-	DeductAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount float64) (int64, error)
+	DeductAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount decimal.Decimal) (int64, error)
 	// CancelInTx 在交易內以條件式 UPDATE 把 active 或 paused 的掛單轉為 cancelled，回傳影響列數；
 	// 影響 0 列代表掛單狀態已被其他請求改變，呼叫端不得再解凍任何額度。
 	CancelInTx(ctx context.Context, session sqlx.Session, id int64) (int64, error)
-	RestoreAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount float64) error
+	RestoreAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount decimal.Decimal) error
 }
 
 const (
@@ -128,7 +129,7 @@ func (r *listingRepository) FindByIDForUpdateInTx(ctx context.Context, session s
 	return &l, nil
 }
 
-func (r *listingRepository) DeductAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount float64) (int64, error) {
+func (r *listingRepository) DeductAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount decimal.Decimal) (int64, error) {
 	return execRowsAffected(ctx, session, deductAmountQuery, amount, id)
 }
 
@@ -136,7 +137,7 @@ func (r *listingRepository) CancelInTx(ctx context.Context, session sqlx.Session
 	return execRowsAffected(ctx, session, cancelQuery, id)
 }
 
-func (r *listingRepository) RestoreAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount float64) error {
+func (r *listingRepository) RestoreAmountInTx(ctx context.Context, session sqlx.Session, id int64, amount decimal.Decimal) error {
 	_, err := session.ExecCtx(ctx,
 		`UPDATE listings SET remaining_amount = remaining_amount + $1, updated_at = NOW() WHERE id = $2`,
 		amount, id,

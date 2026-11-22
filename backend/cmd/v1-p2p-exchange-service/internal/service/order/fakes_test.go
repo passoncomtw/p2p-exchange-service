@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strconv"
+	"github.com/shopspring/decimal"
 	"strings"
 
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -32,7 +32,16 @@ type walletKey struct {
 }
 
 type balance struct {
-	available, frozen float64
+	available, frozen decimal.Decimal
+}
+
+func (b balance) equals(o balance) bool {
+	return b.available.Equal(o.available) && b.frozen.Equal(o.frozen)
+}
+
+// toDecimal 把測試用的數值字面量轉成 decimal；測試輸入以 float64 字面量書寫較易閱讀，正式程式碼不使用 float64。
+func toDecimal(v float64) decimal.Decimal {
+	return decimal.NewFromFloat(v)
 }
 
 // ledgerState 是會隨交易回滾的資料狀態，模擬資料庫內容。
@@ -76,7 +85,7 @@ type fakeStore struct {
 	forceDeductRows *int64
 
 	freezeAmounts   []string
-	unfreezeAmounts []float64
+	unfreezeAmounts []decimal.Decimal
 }
 
 func newFakeStore(listing entity.Listing) *fakeStore {
@@ -109,15 +118,15 @@ func (st *fakeStore) wallet(userID int64) balance {
 }
 
 func (st *fakeStore) setWallet(userID int64, available, frozen float64) {
-	st.state.wallets[walletKey{userID, "USDT"}] = balance{available: available, frozen: frozen}
+	st.state.wallets[walletKey{userID, "USDT"}] = balance{available: toDecimal(available), frozen: toDecimal(frozen)}
 }
 
 // totalUSDT 回傳所有錢包 available + frozen 的總和，用來驗證資金守恆。
-func (st *fakeStore) totalUSDT() float64 {
-	var sum float64
+func (st *fakeStore) totalUSDT() decimal.Decimal {
+	sum := decimal.Zero
 	for k, b := range st.state.wallets {
 		if k.currency == "USDT" {
-			sum += b.available + b.frozen
+			sum = sum.Add(b.available).Add(b.frozen)
 		}
 	}
 	return sum
@@ -254,7 +263,7 @@ func (r *fakeListingRepo) FindByIDForUpdateInTx(_ context.Context, session sqlx.
 	return &l, nil
 }
 
-func (r *fakeListingRepo) DeductAmountInTx(_ context.Context, session sqlx.Session, id int64, amount float64) (int64, error) {
+func (r *fakeListingRepo) DeductAmountInTx(_ context.Context, session sqlx.Session, id int64, amount decimal.Decimal) (int64, error) {
 	if err := r.store.requireTx(session); err != nil {
 		return 0, err
 	}
@@ -265,14 +274,14 @@ func (r *fakeListingRepo) DeductAmountInTx(_ context.Context, session sqlx.Sessi
 		return *r.store.forceDeductRows, nil
 	}
 	l := &r.store.state.listing
-	if l.ID != id || l.Status != "active" || l.RemainingAmount < amount {
+	if l.ID != id || l.Status != "active" || l.RemainingAmount.LessThan(amount) {
 		return 0, nil
 	}
-	l.RemainingAmount -= amount
+	l.RemainingAmount = l.RemainingAmount.Sub(amount)
 	return 1, nil
 }
 
-func (r *fakeListingRepo) RestoreAmountInTx(_ context.Context, session sqlx.Session, id int64, amount float64) error {
+func (r *fakeListingRepo) RestoreAmountInTx(_ context.Context, session sqlx.Session, id int64, amount decimal.Decimal) error {
 	if err := r.store.requireTx(session); err != nil {
 		return err
 	}
@@ -280,12 +289,12 @@ func (r *fakeListingRepo) RestoreAmountInTx(_ context.Context, session sqlx.Sess
 		return err
 	}
 	if r.store.state.listing.ID == id {
-		r.store.state.listing.RemainingAmount += amount
+		r.store.state.listing.RemainingAmount = r.store.state.listing.RemainingAmount.Add(amount)
 	}
 	return nil
 }
 
-// fakeWalletRepo 以 float64 模擬錢包：FreezeInTx 檢查可用餘額；UnfreezeInTx / TransferInTx
+// fakeWalletRepo 以 decimal 模擬錢包：FreezeInTx 檢查可用餘額；UnfreezeInTx / TransferInTx
 // 與真實實作相同不檢查凍結餘額，讓重複解凍會直接反映成負的凍結餘額。
 type fakeWalletRepo struct {
 	walletrepo.WalletRepository
@@ -304,8 +313,8 @@ func (r *fakeWalletRepo) FreezeInTx(_ context.Context, session sqlx.Session, use
 		return err
 	}
 	r.store.freezeAmounts = append(r.store.freezeAmounts, amount)
-	amt, err := strconv.ParseFloat(amount, 64)
-	if err != nil || amt <= 0 {
+	amt, err := decimal.NewFromString(amount)
+	if err != nil || !amt.IsPositive() {
 		return apierrors.New(400, "invalid amount")
 	}
 	k := walletKey{userID, currency}
@@ -313,16 +322,16 @@ func (r *fakeWalletRepo) FreezeInTx(_ context.Context, session sqlx.Session, use
 	if !ok {
 		return apierrors.New(400, "wallet not found for currency "+currency)
 	}
-	if b.available < amt {
+	if b.available.LessThan(amt) {
 		return apierrors.New(400, "insufficient balance")
 	}
-	b.available -= amt
-	b.frozen += amt
+	b.available = b.available.Sub(amt)
+	b.frozen = b.frozen.Add(amt)
 	r.store.state.wallets[k] = b
 	return nil
 }
 
-func (r *fakeWalletRepo) UnfreezeInTx(_ context.Context, session sqlx.Session, userID int64, currency string, amount float64) error {
+func (r *fakeWalletRepo) UnfreezeInTx(_ context.Context, session sqlx.Session, userID int64, currency string, amount decimal.Decimal) error {
 	if err := r.store.requireTx(session); err != nil {
 		return err
 	}
@@ -332,13 +341,13 @@ func (r *fakeWalletRepo) UnfreezeInTx(_ context.Context, session sqlx.Session, u
 	r.store.unfreezeAmounts = append(r.store.unfreezeAmounts, amount)
 	k := walletKey{userID, currency}
 	b := r.store.state.wallets[k]
-	b.frozen -= amount
-	b.available += amount
+	b.frozen = b.frozen.Sub(amount)
+	b.available = b.available.Add(amount)
 	r.store.state.wallets[k] = b
 	return nil
 }
 
-func (r *fakeWalletRepo) TransferInTx(_ context.Context, session sqlx.Session, sellerID, buyerID int64, currency string, amount float64, _ string) error {
+func (r *fakeWalletRepo) TransferInTx(_ context.Context, session sqlx.Session, sellerID, buyerID int64, currency string, amount decimal.Decimal, _ string) error {
 	if err := r.store.requireTx(session); err != nil {
 		return err
 	}
@@ -347,10 +356,10 @@ func (r *fakeWalletRepo) TransferInTx(_ context.Context, session sqlx.Session, s
 	}
 	sk, bk := walletKey{sellerID, currency}, walletKey{buyerID, currency}
 	s := r.store.state.wallets[sk]
-	s.frozen -= amount
+	s.frozen = s.frozen.Sub(amount)
 	r.store.state.wallets[sk] = s
 	b := r.store.state.wallets[bk]
-	b.available += amount
+	b.available = b.available.Add(amount)
 	r.store.state.wallets[bk] = b
 	return nil
 }
