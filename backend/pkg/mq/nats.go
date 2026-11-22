@@ -23,6 +23,7 @@ type Client struct {
 	nc           *nats.Conn
 	js           nats.JetStreamContext
 	consumerName string
+	streamName   string
 }
 
 func NewNats(cfg Config, lc fx.Lifecycle) *Client {
@@ -60,7 +61,7 @@ func NewNats(cfg Config, lc fx.Lifecycle) *Client {
 	}
 
 	logx.Infof("nats jetstream connected: %s", cfg.URL)
-	client := &Client{nc: nc, js: js, consumerName: cfg.ConsumerName}
+	client := &Client{nc: nc, js: js, consumerName: cfg.ConsumerName, streamName: cfg.StreamName}
 
 	lc.Append(fx.Hook{
 		OnStop: func(_ context.Context) error {
