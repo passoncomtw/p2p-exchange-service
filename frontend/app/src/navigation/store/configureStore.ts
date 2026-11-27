@@ -71,8 +71,10 @@ export const store = configureStore({
       },
     }).concat(sagaMiddleware),
   devTools: false,
-  enhancers: (getDefaultEnhancers) => 
-    getDefaultEnhancers().concat(devToolsEnhancer()),
+  enhancers: (getDefaultEnhancers) =>
+    __DEV__
+      ? getDefaultEnhancers().concat(devToolsEnhancer())
+      : getDefaultEnhancers(),
 });
 
 /**
