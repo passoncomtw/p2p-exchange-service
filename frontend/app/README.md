@@ -94,3 +94,32 @@ adb install <path-to.apk>
 | `preview` | 實機測試 | .ipa（Ad Hoc） | .apk |
 | `production` | 上架 App Store / Play Store | .ipa | .aab |
 | `production-apk` | 上架但產出 APK | — | .apk |
+
+---
+
+## Redux DevTools
+
+使用 [`redux-devtools-expo-dev-plugin`](https://www.npmjs.com/package/redux-devtools-expo-dev-plugin)，僅在 development build（`__DEV__ === true`）下啟用。
+
+### 開啟方式
+
+1. 啟動 dev server 並執行 iOS 模擬器
+
+```bash
+yarn ios
+```
+
+2. app 啟動後，在 iOS 模擬器按 **Cmd+D** 開啟 Expo dev menu
+
+3. TOOLS 區塊點擊 **Open Redux DevTools**，即可在瀏覽器查看 state tree 與 action log
+
+> 若 dev menu 沒有出現 **Open Redux DevTools** 選項，先點 **Reload**，等 app 重新載入後再按 Cmd+D 重試。
+
+### Dev / Prod 切換說明
+
+| 環境 | `__DEV__` | Redux DevTools |
+|------|-----------|----------------|
+| `expo start`（開發） | `true` | 啟用 |
+| `eas build --profile production` | `false` | 停用 |
+
+無需手動設定，`__DEV__` 由 Expo build 環境自動決定。
