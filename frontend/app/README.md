@@ -109,11 +109,13 @@ adb install <path-to.apk>
 yarn ios
 ```
 
-2. app 啟動後，在 iOS 模擬器按 **Cmd+D** 開啟 Expo dev menu
+2. app 啟動後，在執行 dev server 的終端機按 **Shift+M** 開啟工具清單
 
-3. TOOLS 區塊點擊 **Open Redux DevTools**，即可在瀏覽器查看 state tree 與 action log
+3. 選擇 **Open redux-devtools-expo-dev-plugin**，即可在瀏覽器查看 state tree 與 action log
 
-> 若 dev menu 沒有出現 **Open Redux DevTools** 選項，先點 **Reload**，等 app 重新載入後再按 Cmd+D 重試。
+也可以直接用瀏覽器開啟 `http://localhost:8081/_expo/plugins/redux-devtools-expo-dev-plugin/`。
+
+> 模擬器內的 Expo dev menu（Cmd+D）不會列出 Redux DevTools；其中的 **Open DevTools** 開啟的是 React Native DevTools。
 
 ### Dev / Prod 切換說明
 
