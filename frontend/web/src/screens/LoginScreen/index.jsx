@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Navigate } from 'react-router-dom'
+import { Navigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
   Box,
