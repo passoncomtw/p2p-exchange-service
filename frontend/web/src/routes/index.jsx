@@ -1,5 +1,5 @@
 import { lazy } from 'react'
-import { useRoutes, Navigate } from 'react-router-dom'
+import { useRoutes, Navigate } from 'react-router'
 import Loadable from 'src/components/Loadable'
 import ProtectedRoute from 'src/components/ProtectedRoute'
 import MainLayout from 'src/layout/MainLayout'
